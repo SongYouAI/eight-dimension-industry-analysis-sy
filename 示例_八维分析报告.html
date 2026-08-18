@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<!--
+  ══════════════════════════════════════════════════════════════════════
+  八维行业分析报告 · 模板 v2.0（对齐七步财报分析报告版式）
+  设计系统：深空蓝 #0a1628 + Stripe 紫 #635bff + 琥珀金 #c8943b
+  用法：复制本文件，替换 {占位符}，填充八维内容即可。禁止手改 CSS 变量。
+  数据图表：C1 市场规模双序列 / C2 可比 PE 对比 / C3 八维评级雷达（SVG 离线自包含）
+  ══════════════════════════════════════════════════════════════════════
+-->
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{家电行业（白色家电为主）} · 八维行业分析报告</title>
+<style>
+/* ═══════════ ① 设计令牌（Design Tokens · Stripe + Apple + Tesla） ═══════════ */
+:root {
+    --navy:#0a1628; --navy-mid:#152238; --navy-deep:#1a2744;
+    --purple:#635bff; --purple-deep:#4f46e5;
+    --gold:#c8943b; --gold-light:#d4a853;
+    --white:#ffffff; --off-white:#f5f6fa;
+    --gray-light:#e2e5ec; --gray-border:#c4c8ce;
+    --text:#1a1a2e; --text-secondary:#5a6178; --text-muted:#6b7280;
+    --green:#0d7c3b; --red:#b71c1c; --blue:#1e5fb4;
+    --good:#0d7c3b; --bad:#b71c1c; --warn:#c8943b; --info:#1e5fb4;
+    --risk-bg:#fdeaea; --risk-bd:#b71c1c;
+    --opp-bg:#e8f5e9;  --opp-bd:#0d7c3b;
+    --info-bg:#eaf1fb; --info-bd:#1e5fb4;
+    --shadow-sm:0 1px 3px rgba(10,22,40,0.06);
+    --shadow-md:0 4px 12px rgba(10,22,40,0.08);
+    --shadow-lg:0 12px 32px rgba(10,22,40,0.12);
+    --radius-sm:8px; --radius-md:12px; --radius-lg:20px;
+    --chart-1:#635bff; --chart-2:#0d7c3b; --chart-3:#b71c1c;
+    --chart-4:#c8943b; --chart-5:#5b8def; --chart-6:#2e8b57;
+    --tier-online:#7c3aed;
+    --fs-hero:42px; --fs-h2:22px; --fs-h3:17px;
+    --fs-body:15px; --fs-sm:13px; --fs-xs:11px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+    font-family:"PingFang SC","Inter","SF Pro Display","Microsoft YaHei",sans-serif;
+    background:linear-gradient(135deg,#f5f6fa 0%,#ebeef5 100%);
+    color:var(--text); line-height:1.75; font-size:15px;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+body::before{
+    content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.main-wrap{max-width:1100px;margin:0 auto;padding:0 30px;}
+
+/* ═══════════ ② Hero 深色场景 ═══════════ */
+.hero{
+    background:linear-gradient(135deg,#0a1628 0%,#152238 50%,#1a2744 100%);
+    color:var(--white); padding:70px 0 60px;
+    border-bottom:3px solid var(--gold); position:relative; overflow:hidden;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.hero::before{
+    content:''; position:absolute; inset:0; z-index:1;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='400' viewBox='0 0 1200 400'%3E%3Cpath d='M0 300 C200 250 400 350 600 280 S1000 200 1200 240' fill='none' stroke='%23635bff' stroke-width='2'/%3E%3Cpath d='M0 340 C200 300 400 380 600 320 S1000 250 1200 290' fill='none' stroke='%23c8943b' stroke-width='2'/%3E%3C/svg%3E");
+    background-size:cover; background-position:center right; opacity:.15; pointer-events:none;
+}
+.hero::after{
+    content:''; position:absolute; top:-50%; right:-10%; width:600px; height:600px;
+    background:radial-gradient(circle,rgba(99,91,255,0.12) 0%,transparent 70%);
+    border-radius:50%; pointer-events:none; z-index:1;
+}
+.hero-content{position:relative; z-index:2; max-width:1100px; margin:0 auto; padding:0 40px;}
+.hero h1{font-size:42px; font-weight:800; letter-spacing:1px; margin-bottom:16px; color:#f0e6d0; text-shadow:0 2px 12px rgba(200,148,59,0.25);}
+.hero .badge{display:inline-block; background:rgba(200,148,59,0.15); border:1.5px solid rgba(200,148,59,0.4); color:#e0c17d; padding:7px 22px; border-radius:20px; font-size:14px; font-weight:700; letter-spacing:2px; margin-bottom:22px; backdrop-filter:blur(4px);}
+.hero .subtitle{font-size:16px; opacity:.85; max-width:650px; line-height:1.6;}
+.hero .meta-row{display:flex; gap:35px; margin-top:35px; flex-wrap:wrap;}
+.hero .mt{display:flex; flex-direction:column;}
+.hero .mt-l{font-size:10px; text-transform:uppercase; letter-spacing:2px; opacity:.5; color:#8a9bbf;}
+.hero .mt-v{font-size:14px; margin-top:6px; opacity:.95; color:#e8e8e8; font-weight:600;}
+
+/* ═══════════ ③ 目录卡（Apple 毛玻璃 + 明显边框） ═══════════ */
+.toc-card{
+    background:rgba(255,255,255,0.92); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:2px solid var(--gray-border); border-radius:var(--radius-lg);
+    padding:26px 30px; margin:30px auto 50px; max-width:1100px; box-shadow:var(--shadow-md);
+}
+.toc-title{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:2px; color:var(--text-secondary); margin-bottom:16px;}
+.toc-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px;}
+.toc-item{display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--radius-sm); cursor:pointer; transition:all .2s; background:var(--surface);
+  border:1.5px solid var(--gray-border); border-left:4px solid var(--gray-light); box-shadow:var(--shadow-sm);}
+.toc-item:hover{background:rgba(99,91,255,0.06); border-color:var(--purple); border-left-color:var(--purple); transform:translateX(2px);}
+.toc-num{font-size:11px; font-weight:800; color:var(--purple); background:rgba(99,91,255,0.1); border-radius:6px; padding:2px 8px; min-width:28px; text-align:center;}
+.toc-t{font-size:14px; font-weight:600; color:var(--text);}
+.toc-d{font-size:12px; color:var(--text-secondary); margin-top:2px;}
+
+/* ═══════════ ④ 执行摘要 + KPI ═══════════ */
+.exec-summary{background:var(--white); border-radius:var(--radius-lg); padding:40px; box-shadow:var(--shadow-md); border:1px solid var(--gray-light); margin-bottom:40px;}
+.exec-summary h2{font-size:var(--fs-h2); font-weight:800; color:var(--navy); margin-bottom:20px; padding-bottom:14px; border-bottom:2px solid var(--gold);}
+.exec-summary p{color:var(--text-secondary); margin-bottom:12px; font-size:14.5px;}
+.exec-summary strong{color:var(--navy); background:linear-gradient(180deg,transparent 62%,rgba(200,148,59,0.22) 62%); padding:0 3px; font-weight:800;}
+.kpi-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin:26px 0;}
+.kpi-card{
+    background:linear-gradient(135deg,#ffffff 0%,#f5f6fa 100%);
+    border-radius:16px; padding:22px 24px; border:1px solid rgba(99,91,255,0.08);
+    box-shadow:0 1px 3px rgba(10,22,40,0.04),0 4px 12px rgba(10,22,40,0.03);
+    position:relative; overflow:hidden; transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+.kpi-card::before{content:''; position:absolute; top:0; left:0; height:3px; width:100%; background:linear-gradient(90deg,#635bff 0%,#4f46e5 50%,#c8943b 100%); opacity:.85;}
+.kpi-card:hover{transform:translateY(-3px); box-shadow:0 4px 12px rgba(99,91,255,0.10),0 12px 32px rgba(10,22,40,0.08); border-color:rgba(99,91,255,0.18);}
+.kpi-label{font-size:11px; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;}
+.kpi-value{font-size:30px; font-weight:800; color:#0a1628; line-height:1.1; font-feature-settings:"tnum"; letter-spacing:-1px;}
+.kpi-unit{font-size:14px; font-weight:600; color:#6b7280; margin-left:3px;}
+.kpi-delta{display:inline-flex; align-items:center; gap:3px; font-size:12px; font-weight:700; margin-top:8px; padding:3px 9px; border-radius:10px;}
+.kpi-delta.up{background:rgba(214,51,132,0.10); color:#d63384;}   /* 涨红 */
+.kpi-delta.down{background:rgba(22,163,74,0.10); color:#16a34a;} /* 跌绿 */
+.kpi-delta.flat{background:rgba(107,114,128,0.10); color:#6b7280;}
+
+/* ═══════════ ⑤ Step 维度卡 + 数字水印头部 ═══════════ */
+.step-card{background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); margin-bottom:44px; overflow:hidden; border:1px solid var(--gray-light);}
+.step-head{position:relative; padding:28px 34px 22px; margin:0 0 8px; border-bottom:1px solid rgba(99,91,255,0.10); overflow:hidden; background:linear-gradient(180deg,#fbfbff 0%,#ffffff 100%);}
+.step-head::before{content:''; position:absolute; top:0; left:0; height:2px; width:64px; background:linear-gradient(90deg,#635bff,#c8943b);}
+.step-num-watermark{position:absolute; top:-20px; right:-6px; font-size:180px; font-weight:900; color:rgba(99,91,255,0.05); line-height:1; letter-spacing:-10px; pointer-events:none; user-select:none; font-feature-settings:"tnum";}
+.step-head-text{position:relative; z-index:2; max-width:82%;}
+.step-num{font-size:12px; font-weight:800; color:#635bff; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px;}
+.step-title{font-size:28px; font-weight:800; color:#0a1628; line-height:1.2; letter-spacing:-1px; margin-bottom:6px;}
+.step-sub{font-size:14px; color:#6b7280; font-weight:500; line-height:1.5;}
+.step-body{padding:24px 34px 32px;}
+.step-body h3{position:relative; padding-left:14px; margin:26px 0 14px; font-size:18px; font-weight:800; color:#0a1628; letter-spacing:-.3px;}
+.step-body h3::before{content:''; position:absolute; left:0; top:6px; height:calc(100% - 12px); width:4px; border-radius:2px; background:linear-gradient(180deg,#635bff,#c8943b);}
+.step-body p{margin:10px 0; color:#374151; font-size:14.5px;}
+.step-body p strong{background:linear-gradient(180deg,transparent 62%,rgba(200,148,59,0.22) 62%); padding:0 3px; font-weight:800; color:#0a1628; border-radius:2px;}
+
+/* ═══════════ ⑥ 方法卡（紫蓝底座卡 · table-cell 稳定两列 + 细分隔线 + 阴影） ═══════════ */
+.method-card{
+    background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 100%);
+    border-radius:14px; border:1px solid rgba(99,91,255,0.14);
+    padding:18px 22px 14px; margin:18px 0;
+    position:relative; overflow:hidden;
+    box-shadow:0 1px 3px rgba(99,91,255,0.06),0 4px 14px rgba(99,91,255,0.04);
+}
+.method-card::after{content:''; position:absolute; top:0; left:0; height:100%; width:4px; background:linear-gradient(180deg,#635bff,#c8943b);}
+.method-card .mc-icon{font-size:22px; flex-shrink:0; line-height:1.4;}
+.method-card .mc-body{flex:1;}
+.method-card .mc-title{font-size:13px; font-weight:800; color:#635bff; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid rgba(99,91,255,0.14);}
+.method-card .mc-row{display:table; width:100%; border-collapse:collapse; padding:8px 0; font-size:13.5px; line-height:1.75; border-top:1px dashed rgba(99,91,255,0.10);}
+.method-card .mc-row:first-of-type{border-top:none; padding-top:4px;}
+.method-card .mc-row b{display:table-cell; width:120px; padding:2px 14px 2px 0; vertical-align:top; color:#1f2937; font-weight:700; white-space:nowrap;}
+.method-card .mc-row span{display:table-cell; color:#374151; word-break:break-word; vertical-align:top; line-height:1.75;}
+
+/* ═══════════ ⑦ 人话卡（术语 → 大白话 → 类比） ═══════════ */
+.human-term-card{
+    display:flex; gap:12px; align-items:flex-start;
+    padding:14px 18px; margin:16px 0;
+    background:linear-gradient(90deg,#f0f4ff 0%,#ffffff 60%);
+    border-radius:10px; border-left:3px solid #635bff;
+    font-size:14px; line-height:1.75; color:#1f2937;
+}
+.human-term-card .ht-icon{font-size:20px; line-height:1.3; flex-shrink:0;}
+.human-term-card .ht-body{flex:1;}
+.human-term-card .ht-term{font-weight:800; color:#4f46e5;}
+.human-term-card .ht-plain{color:#4b5563;}
+
+/* ═══════════ ⑧ 反面假设 reverse-note ═══════════ */
+.reverse-note{
+    border-left:3px solid #94a3b8; padding:10px 16px; margin:14px 0;
+    background:#f8fafc; border-radius:0 10px 10px 0;
+    font-size:13.5px; color:#475569; line-height:1.7;
+}
+.reverse-note strong{background:none; color:#0a1628; font-weight:800;}
+
+/* ═══════════ ⑨ 洞察 + 盯什么（insight-card） ═══════════ */
+.insight{border-left:4px solid var(--purple); padding:14px 18px; margin:16px 0; background:#f5f3ff; border-radius:0 10px 10px 0; font-size:14px; line-height:1.75; color:#374151;}
+.insight strong{color:#4f46e5;}
+.insight-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin:22px 0;}
+.insight-card{
+    background:linear-gradient(135deg,#ffffff 0%,#f9faff 100%);
+    border-radius:14px; padding:20px 22px; border:1px solid rgba(99,91,255,0.08);
+    border-top:3px solid #635bff; box-shadow:0 1px 3px rgba(10,22,40,0.04); transition:all .25s;
+}
+.insight-card:hover{transform:translateY(-2px); box-shadow:0 6px 18px rgba(99,91,255,0.10);}
+.insight-card .insight-icon{font-size:22px; margin-bottom:6px; line-height:1;}
+.insight-card .insight-title{font-weight:800; font-size:15px; color:#0a1628; margin-bottom:8px;}
+.insight-card .insight-desc{font-size:13px; color:#4b5563; line-height:1.7;}
+.watch-what ul{margin:8px 0 0 18px; padding:0;}
+.watch-what li{margin:5px 0; color:#4b5563; font-size:13px; line-height:1.7;}
+.watch-what li b{color:#0a1628;}
+
+/* ═══════════ ⑩ 数据表 data-table-v2 ═══════════ */
+.table-wrap{border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(10,22,40,0.04),0 4px 14px rgba(10,22,40,0.04); margin:20px 0; border:1px solid rgba(99,91,255,0.08);}
+table{width:100%; border-collapse:separate; border-spacing:0; background:#fff;}
+table thead th{
+    background:linear-gradient(135deg,#0a1628 0%,#152238 60%,#1a2744 100%);
+    color:#fff; padding:14px 18px; font-size:12px; font-weight:700; text-align:left;
+    letter-spacing:.5px; border-bottom:2px solid #c8943b;
+}
+table thead th.num{text-align:right;}
+table tbody td{padding:13px 18px; border-bottom:1px solid rgba(99,91,255,0.05); font-size:13.5px; color:#1f2937; line-height:1.5;}
+table tbody td.num{text-align:right; font-feature-settings:"tnum"; font-weight:700; color:#0a1628;}
+table tbody td.highlight{background:linear-gradient(90deg,rgba(99,91,255,0.07),rgba(99,91,255,0.0)); font-weight:700; color:#0a1628;}
+table tbody tr:nth-child(even) td{background:#fafbff;}
+table tbody tr:hover td{background:rgba(99,91,255,0.04);}
+table tbody tr:last-child td{border-bottom:none;}
+/* 对比表条件着色（八维竞品对标） */
+.ct-best{background:#e8f5e9 !important; font-weight:700;}
+.ct-worst{background:#fdeaea !important;}
+.ct-highlight{background:#fef3e2 !important;}
+/* 信号快照表 */
+.signal-table td.s-bullish{color:var(--good); font-weight:700;}
+.signal-table td.s-neutral{color:var(--warn); font-weight:700;}
+.signal-table td.s-bearish{color:var(--bad); font-weight:700;}
+.signal-table .s-reason{color:var(--text-secondary); font-size:13px; font-weight:400;}
+.dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:middle;}
+.dot-green{background:#16a34a;} .dot-yellow{background:#f59e0b;} .dot-red{background:#ef4444;} .dot-gold{background:#c8943b;}
+
+/* ═══════════ ⑪ 风险卡 risk-card ═══════════ */
+.risk-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:24px 0 8px;}
+.risk-card{background:#ffffff; border-radius:14px; padding:20px 22px; border:1px solid rgba(99,91,255,0.08); border-left:4px solid; box-shadow:0 1px 3px rgba(10,22,40,0.04); position:relative; transition:all .25s;}
+.risk-card:hover{transform:translateX(2px); box-shadow:0 4px 14px rgba(10,22,40,0.08);}
+.risk-card.risk-warn{border-left-color:#f59e0b; background:linear-gradient(90deg,#fffbeb 0%,#ffffff 60%);}
+.risk-card.risk-high{border-left-color:#ef4444; background:linear-gradient(90deg,#fef2f2 0%,#ffffff 60%);}
+.risk-card.risk-info{border-left-color:#3b82f6; background:linear-gradient(90deg,#eff6ff 0%,#ffffff 60%);}
+.risk-card-icon{font-size:24px; margin-bottom:6px; line-height:1;}
+.risk-card-title{font-weight:800; font-size:15px; color:#0a1628; margin-bottom:6px;}
+.risk-card-desc{font-size:12.5px; color:#4b5563; line-height:1.65;}
+
+/* ═══════════ ⑫ 徽章（状态 / 档位 / 评级） ═══════════ */
+.status-badge{display:inline-block; padding:3px 11px; border-radius:12px; font-size:11.5px; font-weight:800; margin-right:8px; letter-spacing:.3px;}
+.status-badge.status-resolved{background:linear-gradient(135deg,#d1fae5,#a7f3d0); color:#047857; border:1px solid rgba(4,120,87,0.15);}
+.status-badge.status-pending{background:linear-gradient(135deg,#fef3c7,#fde68a); color:#92400e; border:1px solid rgba(146,64,14,0.15);}
+.status-badge.status-gap{background:linear-gradient(135deg,#fee2e2,#fecaca); color:#991b1b; border:1px solid rgba(153,27,27,0.15);}
+.status-badge.status-info{background:linear-gradient(135deg,#dbeafe,#bfdbfe); color:#1e40af; border:1px solid rgba(30,64,175,0.15);}
+.tier-badge{display:inline-block; padding:3px 12px; border-radius:12px; font-size:11.5px; font-weight:800; letter-spacing:1px; margin-left:8px; vertical-align:middle; white-space:nowrap;}
+.tier-rich{background:#e8f5e9; color:#0d7c3b; border:1.5px solid #0d7c3b;}
+.tier-medium{background:#eaf1fb; color:#1e5fb4; border:1.5px solid #1e5fb4;}
+.tier-lean{background:#fef3e2; color:#a86a12; border:1.5px solid #c8943b;}
+.tier-online{background:#f0eaf7; color:#7c3aed; border:1.5px solid #7c3aed;}
+.rating-badge{display:inline-block; padding:5px 16px; border-radius:999px; font-size:13px; font-weight:700; margin-left:10px; border:1.5px solid; vertical-align:middle; white-space:nowrap;}
+.rating-buy{background:#e8f5e9; color:#0d7c3b; border-color:#0d7c3b;}
+.rating-hold{background:#fef3e2; color:#a86a12; border-color:#c8943b;}
+.rating-sell{background:#fdeaea; color:#b71c1c; border-color:#b71c1c;}
+
+/* 评级量表 gauge（八维 🟢🟡🔴 可视化） */
+.gauge{display:inline-flex; align-items:center; gap:3px; padding:4px 7px; border:1px solid var(--gray-border); border-radius:7px; background:var(--white); vertical-align:middle;}
+.gauge i{display:block; width:8px; height:14px; border-radius:2px; background:var(--gray-light);}
+.gauge i.g{background:linear-gradient(180deg,#4ade80,#16a34a);}
+.gauge i.y{background:linear-gradient(180deg,#fbbf24,#f59e0b);}
+.gauge i.r{background:linear-gradient(180deg,#f87171,#ef4444);}
+.gauge b{font-size:12px; font-weight:700; margin-left:4px;}
+.cap-g{color:#16a34a;} .cap-y{color:#d97706;} .cap-r{color:#dc2626;}
+
+/* ═══════════ ⑬ 结论框（金色渐变）+ 数据来源框 ═══════════ */
+.conclusion-wrap{
+    background:linear-gradient(135deg,#fdf8ee 0%,#f7efd0 100%);
+    border-radius:var(--radius-md); padding:28px; margin:28px 0;
+    border:1px solid rgba(200,148,59,0.25); box-shadow:var(--shadow-sm);
+}
+.conclusion-wrap .ct{font-size:18px; font-weight:800; color:var(--navy); margin-bottom:16px; padding-bottom:12px; border-bottom:2px solid var(--gold);}
+.conclusion-wrap .ctext{font-size:14px; line-height:1.85; color:var(--text-secondary);}
+.conclusion-wrap .ctext strong{color:var(--navy);}
+.source-box{background:var(--off-white); border:1px solid var(--gray-light); border-left:4px solid var(--blue); border-radius:var(--radius-md); padding:14px 18px; margin:16px 0; font-size:13px; color:var(--text-secondary);}
+.source-box .sb-title{font-size:13px; font-weight:800; color:var(--navy); margin-bottom:4px;}
+.source-box a{color:var(--blue); text-decoration:none;}
+.source-box a:hover{text-decoration:underline;}
+
+/* 正文引用角标（克制版——小上标、灰色半透明，不打断数字阅读） */
+a.ref{color:var(--text-muted); text-decoration:none; font-size:.82em; vertical-align:super; opacity:.5; margin:0 1px; line-height:0; font-weight:400;}
+a.ref:hover{opacity:1; color:var(--purple);}
+[data-theme="dark"] a.ref{color:#94a3b8;}
+[data-theme="dark"] a.ref:hover{color:#a5b4fc;}
+
+/* ═══════════ ⑭ SWOT / 维度冲突 / 跟踪列表 ═══════════ */
+.swot-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0;}
+.swot-cell{padding:16px 18px; border-radius:var(--radius-md); font-size:13.5px; line-height:1.7; border:1px solid; box-shadow:var(--shadow-sm);}
+.swot-cell h4{font-size:14.5px; font-weight:800; margin-bottom:7px;}
+.swot-s{background:#e8f5e9; border-color:#bbe5c8;} .swot-s h4{color:#0d7c3b;}
+.swot-w{background:#fdeaea; border-color:#f3c2c2;} .swot-w h4{color:#b71c1c;}
+.swot-o{background:#eaf1fb; border-color:#c4d7ef;} .swot-o h4{color:#1e5fb4;}
+.swot-t{background:#fef3e2; border-color:#ecd9a8;} .swot-t h4{color:#a86a12;}
+.dim-conflict{background:linear-gradient(135deg,#fffbeb,#fef2f2); border:1px solid #f59e0b; border-radius:var(--radius-md); padding:18px 22px; margin:18px 0;}
+.dim-conflict h4{font-size:15px; color:#991b1b; margin-bottom:12px; font-weight:800;}
+.dim-conflict .conflict-row{display:flex; justify-content:space-between; align-items:center; font-size:13.5px; padding:7px 0; gap:12px; flex-wrap:wrap;}
+.dim-conflict .conflict-label{font-weight:700; min-width:86px; color:var(--text);}
+.dim-conflict .conflict-arrow{color:var(--text-secondary); flex:1;}
+.dim-conflict .conflict-interp{margin-top:12px; padding-top:12px; border-top:1px dashed var(--gray-border); font-size:14px; line-height:1.7;}
+.tracking-list{list-style:none; padding:0;}
+.tracking-list li{padding:12px 16px; margin:7px 0; border-radius:var(--radius-sm); border:1px solid var(--gray-light); font-size:14px; line-height:1.6; background:var(--white); box-shadow:var(--shadow-sm); display:flex; flex-wrap:wrap; align-items:baseline; gap:4px;}
+.tracking-list .track-name{font-weight:700; color:var(--navy);}
+.tracking-list .track-now{color:var(--text-secondary); margin:0 6px; font-variant-numeric:tabular-nums;}
+.tracking-list .track-arrow{color:var(--purple); margin:0 4px;}
+.tracking-list .track-signal{color:var(--text); font-size:13.5px;}
+
+/* ═══════════ ⑮ 图表卡片（SVG 离线自包含 C1/C2/C3） ═══════════ */
+.chart-card{background:var(--white); border:1px solid var(--gray-light); border-radius:var(--radius-md); box-shadow:var(--shadow-sm); margin:22px 0; overflow:hidden;}
+.chart-head{padding:12px 18px; font-size:15px; font-weight:700; color:var(--navy); border-bottom:1px solid var(--gray-light); background:var(--off-white);}
+.chart-card svg{display:block; width:100%; height:auto; margin:0 auto;}
+.chart-title{font-size:14.5px; font-weight:700; color:var(--navy); margin-bottom:3px;}
+.chart-note{font-size:11.5px; color:var(--text-muted); margin-bottom:12px;}
+.legend{display:flex; gap:18px; margin-top:10px; font-size:12.5px; color:var(--text-secondary);}
+.legend .swatch{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:5px; vertical-align:-1px;}
+.bar-chart{margin:16px 0;}
+.bar-row{display:flex; align-items:center; gap:10px; margin:7px 0; font-size:13px;}
+.bar-label{width:120px; flex:none; color:var(--text-secondary); text-align:right;}
+.bar-track{flex:1; height:16px; background:#eef1f5; border-radius:999px; overflow:hidden;}
+.bar-fill{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#4f46e5,#635bff);}
+.bar-fill.gold{background:linear-gradient(90deg,#c8943b,#d4a853);}
+.bar-val{width:54px; flex:none; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums;}
+.svg-axis{stroke:var(--gray-border);}
+.svg-grid{stroke:var(--gray-light); fill:none;}
+.svg-data{fill:rgba(99,91,255,0.16); stroke:#635bff; stroke-width:2.5;}
+.svg-dot{fill:#635bff;}
+.svg-dot.weak{fill:#c8943b;}
+.svg-label{fill:var(--text-secondary); font-size:10.5px; font-weight:600;}
+.svg-bar-primary{fill:#635bff;}
+.svg-bar-energy{fill:#c8943b;}
+.svg-bar-1{fill:#635bff;} .svg-bar-2{fill:#0d7c3b;} .svg-bar-3{fill:#b71c1c;}
+.svg-bar-4{fill:#c8943b;} .svg-bar-5{fill:#5b8def;} .svg-bar-6{fill:#2e8b57;}
+.svg-val{fill:var(--text); font-size:10.5px; font-weight:700;}
+.svg-axis-text{fill:var(--text-muted); font-size:10px;}
+
+/* ═══════════ ⑯ 导航（侧栏 / 进度条 / 深色切换） ═══════════ */
+.theme-toggle{position:fixed; top:18px; right:18px; z-index:60; width:42px; height:42px; border-radius:50%; border:1px solid var(--gray-light); background:var(--white); color:var(--navy); cursor:pointer; font-size:18px; line-height:1; box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; transition:all .2s;}
+.theme-toggle:hover{border-color:var(--gold); transform:scale(1.06);}
+.side-nav{position:fixed; top:120px; left:24px; width:200px; z-index:40; background:var(--white); border:1px solid var(--gray-light); border-radius:var(--radius-md); padding:14px; box-shadow:var(--shadow-sm); max-height:72vh; overflow:auto; transition:opacity .3s ease,transform .3s ease,visibility .3s;}
+.side-nav.nav-hidden{opacity:0; pointer-events:none; transform:translateX(-12px); visibility:hidden;}
+.side-nav .sn-title{font-size:12px; font-weight:800; color:var(--navy); letter-spacing:1px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--gray-light); text-transform:uppercase;}
+.side-nav a{display:block; padding:7px 10px; font-size:13px; color:var(--text-secondary); border-radius:var(--radius-sm); border-left:3px solid transparent; transition:all .2s; text-decoration:none; line-height:1.4;}
+.side-nav a.active{background:var(--navy); color:#fff; border-left-color:var(--gold);}
+.side-nav a:hover{color:var(--navy);}
+@media(min-width:1200px){.main-wrap{max-width:1380px; padding:0 40px 0 248px;}}
+.top-progress{position:sticky; top:0; z-index:45; height:4px; width:100%; display:none; background:linear-gradient(90deg,var(--gold) var(--p,0%),var(--gray-light) 0);}
+@media(max-width:1199px){.side-nav{display:none;} .top-progress{display:block;}}
+
+/* ═══════════ ⑰ 深色模式（data-theme="dark"） ═══════════ */
+[data-theme="dark"]{
+    --navy:#0b1220; --navy-mid:#16233a;
+    --white:#0f1722; --off-white:#0c121b;
+    --gray-light:#243042; --gray-border:#33415a;
+    --text:#e6ebf2; --text-secondary:#9aa7b8;
+    --shadow-sm:0 2px 8px rgba(0,0,0,0.3); --shadow-md:0 4px 16px rgba(0,0,0,0.4); --shadow-lg:0 8px 32px rgba(0,0,0,0.5);
+    --risk-bg:#2a1717; --risk-bd:#e05a5a;
+    --opp-bg:#13251a; --opp-bd:#3fae6a;
+    --info-bg:#13203a; --info-bd:#4f8fe0;
+    --chart-1:#5b9bf0; --chart-2:#3fae6a; --chart-3:#e05a5a; --chart-4:#d9ad5c; --chart-5:#7aa6f5; --chart-6:#3fae6a;
+    --tier-online:#a98fd6;
+}
+[data-theme="dark"] body{background:#0c121b;}
+[data-theme="dark"] body::before{opacity:.04;}
+[data-theme="dark"] .exec-summary,
+[data-theme="dark"] .step-card,
+[data-theme="dark"] .toc-card,
+[data-theme="dark"] .side-nav,
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .chart-card,
+[data-theme="dark"] .source-box{background:var(--white); border-color:var(--gray-border);}
+[data-theme="dark"] .step-head{background:linear-gradient(180deg,#111c30 0%,#0f1722 100%);}
+[data-theme="dark"] .kpi-card{background:linear-gradient(135deg,#1a2744 0%,#0a1628 100%);}
+[data-theme="dark"] .kpi-value{color:#fff;}
+[data-theme="dark"] .step-title{color:#fff;}
+[data-theme="dark"] .step-sub{color:#94a3b8;}
+[data-theme="dark"] .step-body h3{color:#fff;}
+[data-theme="dark"] .step-body p{color:#cbd5e1;}
+[data-theme="dark"] .step-body p strong{color:#fff;}
+[data-theme="dark"] .method-card{background:linear-gradient(135deg,#1a2744 0%,#0a1628 100%); border-color:rgba(99,91,255,0.25);}
+[data-theme="dark"] .method-card .mc-row span{color:#cbd5e1;}
+[data-theme="dark"] .human-term-card{background:linear-gradient(90deg,#152238 0%,#0a1628 60%); color:#cbd5e1;}
+[data-theme="dark"] .human-term-card .ht-plain{color:#cbd5e1;}
+[data-theme="dark"] .reverse-note{background:#152238; color:#cbd5e1; border-left-color:#475569;}
+[data-theme="dark"] .reverse-note strong{color:#fff;}
+[data-theme="dark"] .insight{background:#152238; color:#cbd5e1;}
+[data-theme="dark"] .insight-card{background:linear-gradient(135deg,#1a2744 0%,#152238 100%);}
+[data-theme="dark"] .insight-title{color:#fff;}
+[data-theme="dark"] .insight-desc{color:#cbd5e1;}
+[data-theme="dark"] .watch-what li{color:#cbd5e1;}
+[data-theme="dark"] .watch-what li b{color:#fff;}
+[data-theme="dark"] table{background:#0a1628;}
+[data-theme="dark"] table tbody td{color:#e2e8f0; border-bottom-color:rgba(99,91,255,0.10);}
+[data-theme="dark"] table tbody td.num{color:#fff;}
+[data-theme="dark"] table tbody tr:nth-child(even) td{background:#152238;}
+[data-theme="dark"] table tbody tr:hover td{background:rgba(99,91,255,0.10);}
+[data-theme="dark"] .risk-card{background:linear-gradient(90deg,#152238 0%,#0a1628 60%); border-color:rgba(99,91,255,0.18);}
+[data-theme="dark"] .risk-card-title{color:#fff;}
+[data-theme="dark"] .risk-card-desc{color:#cbd5e1;}
+[data-theme="dark"] .conclusion-wrap{background:#1a160c; border-color:var(--risk-bd);}
+[data-theme="dark"] .conclusion-wrap .ct{color:#fff;}
+[data-theme="dark"] .conclusion-wrap .ctext{color:#cbd5e1;}
+[data-theme="dark"] .tracking-list li{background:var(--white); border-color:var(--gray-border);}
+[data-theme="dark"] .tracking-list .track-name{color:#fff;}
+[data-theme="dark"] .swot-s{background:#13251a;} [data-theme="dark"] .swot-w{background:#2a1717;}
+[data-theme="dark"] .swot-o{background:#13203a;} [data-theme="dark"] .swot-t{background:#1d1606;}
+[data-theme="dark"] .dim-conflict{background:linear-gradient(135deg,#1d1606,#2a1717);}
+[data-theme="dark"] .chart-head{background:var(--off-white); color:#fff;}
+
+/* ═══════════ ⑱ 响应式 ═══════════ */
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);} .risk-grid{grid-template-columns:1fr;} .step-title{font-size:24px;} .step-num-watermark{font-size:140px;}}
+@media(max-width:768px){.main-wrap{padding:0 14px;} .hero{padding:32px 16px;} .hero h1{font-size:26px;} .exec-summary{padding:24px 18px;} .step-body{padding:20px 18px;} .step-head{padding:22px 18px;} .kpi-grid{grid-template-columns:1fr 1fr; gap:12px;} .kpi-value{font-size:19px;}}
+@media(max-width:560px){.kpi-grid{grid-template-columns:1fr;} .step-head-text{max-width:100%;} .step-title{font-size:20px;} .step-num-watermark{font-size:100px;} .swot-grid{grid-template-columns:1fr;}}
+
+/* ═══════════ ⑲ 打印 ═══════════ */
+@media print{
+    body{background:var(--white); margin:0; padding:0;}
+    .hero{background:var(--navy) !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .step-card{break-inside:avoid; page-break-inside:avoid; box-shadow:none; border:1px solid #ddd; margin-bottom:20px;}
+    .chart-card{break-inside:avoid; page-break-inside:avoid;}
+    .conclusion-wrap{break-inside:avoid; page-break-inside:avoid;}
+    table{break-inside:avoid; page-break-inside:avoid;}
+    h2,h3{break-after:avoid; page-break-after:avoid;}
+    p,li{orphans:3; widows:3;}
+    .side-nav,.top-progress,.theme-toggle{display:none !important;}
+    :root,[data-theme="dark"]{--white:#fff; --off-white:#fff; --text:#1a1a2e; --text-secondary:#4a5468; --gray-light:#dde0e5; --gray-border:#c4c8ce; --navy:#0a1628; --navy-mid:#152238;}
+    [data-theme="dark"] .step-card,[data-theme="dark"] .kpi-card{background:#fff !important; border-color:#ddd !important;}
+    [data-theme="dark"] .conclusion-wrap{background:#fff !important; border-color:#c4c8ce !important;}
+    [data-theme="dark"] .step-title,[data-theme="dark"] .kpi-value,[data-theme="dark"] .step-body h3,[data-theme="dark"] .step-body p,[data-theme="dark"] .conclusion-wrap .ct{color:#1a1a2e !important;}
+}
+</style>
+<script>try{var t=localStorage.getItem('eightdim-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+</head>
+<body>
+
+<button id="themeToggle" class="theme-toggle" aria-label="切换深色/亮色模式" title="切换深色模式">🌙</button>
+
+<aside class="side-nav" aria-label="报告章节导航">
+<div class="sn-title">报告导航 · 八维</div>
+<a href="#dim1">① 概览</a><a href="#dim2">② 模式</a><a href="#dim3">③ 规模</a><a href="#dim4">④ 护城河</a>
+<a href="#dim5">⑤ 格局</a><a href="#dim6">⑥ 估值</a><a href="#dim7">⑦ 外部</a><a href="#dim8">⑧ 景气</a>
+<a href="#conclusion">综合结论</a><a href="#src-summary">数据来源</a>
+</aside>
+<div class="top-progress" id="topProgress"></div>
+
+<!-- ══════════ Hero 深色场景 ══════════ -->
+<div class="main-wrap">
+
+<div class="hero"><div class="hero-content">
+<h1>家电行业（白色家电为主） · 八维行业分析报告</h1>
+<div class="badge">国内成熟 · 海外成长</div>
+<p class="subtitle">产业生命周期驱动 · 多源数据并行采集 · 八维自适应权重 · 案例锚点 美的集团（000333.SZ / 0300.HK）</p>
+<div class="meta-row">
+<div class="mt"><span class="mt-l">分析日期</span><span class="mt-v">2026-08-18</span></div>
+<div class="mt"><span class="mt-l">生命周期</span><span class="mt-v">国内成熟 · 海外成长</span></div>
+<div class="mt"><span class="mt-l">地域范围</span><span class="mt-v">中国为主 + 全球视角</span></div>
+<div class="mt"><span class="mt-l">综合吸引力</span><span class="mt-v">中 · 中性偏多</span></div>
+</div>
+</div></div>
+
+<div class="toc-card">
+      <div class="toc-title">📑 报告导航 · 点击跳转</div>
+      <div class="toc-grid">
+        <div class="toc-item" onclick="document.getElementById('dim1').scrollIntoView({behavior:'smooth'})"><span class="toc-num">01</span><div class="toc-l"><span class="t">一、行业概览与生命周期</span><span class="d">阶段定位与渗透率判断</span></div></div>
+        <div class="toc-item" onclick="document.getElementById('dim2').scrollIntoView({behavior:'smooth'})"><span class="toc-num">02</span><div class="toc-l"><span class="t">二、商业模式可行性</span><span class="d">付费意愿与可持续性</span></div></div>
+        <div class="toc-item" onclick="document.getElementById('dim3').scrollIntoView({behavior:'smooth'})"><span class="toc-num">03</span><div class="toc-l"><span class="t">三、市场规模与空间</span><span class="d">TAM 与增速测算</span></div></div>
+        <div class="toc-item" onclick="document.getElementById('dim4').scrollIntoView({behavior:'smooth'})"><span class="toc-num">04</span><div class="toc-l"><span class="t">四、护城河与防守性</span><span class="d">壁垒与替代风险</span></div></div>
+        <div class="toc-item" onclick="document.getElementById('dim5').scrollIntoView({behavior:'smooth'})"><span class="toc-num">05</span><div class="toc-l"><span class="t">五、竞争格局与盈利性</span><span class="d">份额与可比对标</span></div></div>
+        <div class="toc-item" onclick="document.getElementById('dim6').scrollIntoView({behavior:'smooth'})"><span class="toc-num">06</span><div class="toc-l"><span class="t">六、估值分析</span><span class="d">可比估值对比</span></div></div>
+        <div class="toc-item" onclick="document.getElementById('dim7').scrollIntoView({behavior:'smooth'})"><span class="toc-num">07</span><div class="toc-l"><span class="t">七、外部驱动力（PEST）</span><span class="d">政策经济技社</span></div></div>
+        <div class="toc-item" onclick="document.getElementById('dim8').scrollIntoView({behavior:'smooth'})"><span class="toc-num">08</span><div class="toc-l"><span class="t">八、景气度跟踪</span><span class="d">高频指标监测</span></div></div>
+        <div class="toc-item" onclick="document.getElementById('conclusion').scrollIntoView({behavior:'smooth'})"><span class="toc-num">09</span><div class="toc-l"><span class="t">九、综合结论与投资启示</span><span class="d">信号快照与冲突</span></div></div>
+        <div class="toc-item" onclick="document.getElementById('src-summary').scrollIntoView({behavior:'smooth'})"><span class="toc-num">10</span><div class="toc-l"><span class="t">数据来源汇总</span><span class="d">可核查链接</span></div></div>
+      </div>
+    </div>
+
+    
+    
+
+<div class="exec-summary reveal">
+      <span class="es-tag">执行摘要</span>
+      <p>家电行业（以白色家电为锚）已步入<strong>成熟期</strong>：国内城镇空调/冰箱/洗衣机户均保有量分别约 163.5<a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a>/104.4/100.6 台每百户，行业主营收入约 1.95 万亿元、利润总额 1737 亿元，增速降至个位数，格局高度固化<a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a>。</p>
+      <p>需求端由"新增普及"转向"存量更新+结构升级"，2024 年以旧换新政策拉动内销，全年家电全品类零售额 9071 亿元、同比 +6.4%，限额以上家电音像器材零售额突破万亿元<a class="ref" href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml">🔗</a>；案例锚点美的集团 2024 年营收 4091 亿元、归母净利 385 亿元，海外收入占比 41.5%<a class="ref" href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html">🔗</a>。</p>
+      <p>核心矛盾在于"成熟国内 + 成长海外 + 反内卷政策托底"的三角：行业防守性强、龙头盈利稳，但增量天花板低、价格战与关税扰动并存。综合倾向<strong>中性偏多</strong>，吸引力评级<strong>中</strong>。</p>
+    </div>
+
+<div class="step-card" id="dim1">
+<div class="step-head"><div class="step-num-watermark">01</div><div class="step-head-text">
+<div class="step-num">DIMENSION 01</div>
+<div class="step-title">一、行业概览与生命周期定位</div>
+<div class="step-sub">OVERVIEW & LIFECYCLE · 渗透率主判+增速辅助</div>
+</div></div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>国内成熟、海外成长，存量更新主导需求</p>
+
+<section class="section reveal" id="dim1">
+      
+      
+
+      <div class="method-card">
+        <div class="mc-title">📐方法卡</div>
+        <div class="mc-row"><b>回答什么问题</b><span>行业处在幼年/青年/中年/老年哪个阶段？</span></div>
+        <div class="mc-row"><b>用什么方法判</b><span>渗透率划分法：渗透率 = 存量用户 ÷ 潜在客户群，渗透率主判、增速辅助</span></div>
+        <div class="mc-row"><b>判据是什么</b><span>15%<a class="ref" href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html">🔗</a>以下导入 / 15%–20% 启动 / 20%–35% 成长 / 35%–60% 成熟 / 60%–70% 存量博弈 / 70%以上衰退</span></div>
+        <div class="mc-row"><b>需要哪些数据</b><span>年销量、理论总容量、去年渗透率、增速、竞争格局</span></div>
+      </div>
+      <div class="method-card">
+        <div class="mc-title">🔍推导过程</div>
+        <div class="mc-row"><b>取数</b><span>城镇空调 163.5<a class="ref" href="https://hk.finance.yahoo.com/quote/000333.SZ/key-statistics/">🔗</a> 台/百户、农村 92.2 台/百户（CHEAA/统计局），远超 35% 成熟线对应的户均饱和水平<a class="ref" href="http://www.cheasa.org/News/desc/pid/53/aid/23037.html">🔗</a></span></div>
+        <div class="mc-row"><b>对照阈值</b><span>国内 ≥35% 判成熟；海外新兴市场空调渗透率仅 15%–35%，判成长（左闭区间，不预设）</span></div>
+        <div class="mc-row"><b>结论</b><span>主标签「国内成熟 · 海外成长」，以渗透率计算为准，不套用经验印象</span></div>
+      </div>
+
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">家电全品类零售额(2024)</div>
+          <div class="kpi-value">9071<a class="ref" href="https://ima.qq.com/wiki/?shareId=99a99f52f6b37010b6e5a08876a7e1b92d29404182d8788c3c2661868b986310">🔗</a><span class="kpi-unit">亿元</span></div>
+          <div class="kpi-sub">不含3C，奥维云网推总</div>
+          <div class="kpi-delta"><span class="up">↗ +6.4%<a class="ref" href="https://m.cheaa.com/n_detail/w_578069.html">🔗</a></span> vs 2023</div>
+          <a class="ref" href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">行业主营收入(2024)</div>
+          <div class="kpi-value">1.95<a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a><span class="kpi-unit">万亿元</span></div>
+          <div class="kpi-sub">统计局，接近2万亿</div>
+          <div class="kpi-delta"><span class="up">↗ +5.6%<a class="ref" href="https://news.cheaa.com/2026/0730/656912.shtml">🔗</a></span> vs 2023</div>
+          <a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">全国家电保有量</div>
+          <div class="kpi-value">40<span class="kpi-unit">亿台+</span></div>
+          <div class="kpi-sub">户均超8台，城镇趋饱和</div>
+          <div class="kpi-delta"><span class="up">↗ 高位</span> vs 2018年20.1<a class="ref" href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf">🔗</a>亿</div>
+          <a class="ref" href="https://news.cheaa.com/2026/0730/656912.shtml">🔗</a>
+        </div>
+      </div>
+
+      <div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">渗透率：</span><span class="ht-plain">已有用户 ÷ 潜在用户总数，看这东西普及到什么程度。就像智能手机在人群里的普及率——越高，新增长越慢。</span></div></div>
+
+<p>家电行业产业链分上游（压缩机、电机、芯片、钢材塑料等原材料）、中游（整机研发制造）、下游（KA卖场、电商、经销商、工程与海外渠道）。当前核心结论：以空调/冰洗为代表的白色家电在国内已跨过普及拐点，进入以更新换代和结构升级为主的成熟期；而在东南亚、中东、拉美等海外市场，空调等品类仍处于渗透率快速爬升的成长阶段<a class="ref" href="https://xueqiu.com/1731385817/402293138">🔗</a>。</p>
+      <h3>一级市场资本动向</h3>
+      <p>家电龙头已进入"分红+回购+出海"的成熟资本运作阶段，而非融资扩张期。美的集团 2024 年现金分红 267 亿元、分红率近七成，并启动 50–100 亿元回购；2024 年成功发行 H 股登陆港交所，构建 A+H 双资本平台，反映行业已从一级融资热转向成熟现金流回报<a class="ref" href="https://www.stcn.com/article/detail/1657436.html">🔗</a>。一级市场融资（如创投基金）更多涌向扫地机器人、AI 家电等细分创新，而非传统白电整机，印证主赛道已成熟。</p>
+      <div class="insight"><strong>洞察：</strong>判定成熟期的关键不是"不增长"，而是"增量来自更新而非普及、份额来自集中而非扩张"。家电正从增量红利转向存量效率竞争。</div>
+      <div class="reverse-note"><strong>也可能是…</strong>也可能是「存量博弈」已经提前到来——若把更新需求也算入存量口径，实际增速已近停滞，比「成熟期」更悲观，价格战随时重启。</div>
+<p class="risk-note"><strong>风险警示：</strong>国内渗透率已近天花板，若房地产竣工持续低迷、更新周期拉长，行业可能滑向 60%<a class="ref" href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml">🔗</a>–70% 的"存量博弈"区间，价格战加剧。</p>
+
+      <details class="calc-details" id="lifecycle-calc">
+        <summary>查看生命周期判断计算过程</summary>
+        <div class="calc-body">
+          <p><strong>判定依据：</strong>肖璟《如何快速了解一个行业》渗透率划分法（渗透率主判 + 增速辅助）。</p>
+          <div class="table-wrap">
+            <table class="calc-table">
+              <thead><tr><th>市场</th><th>渗透率</th><th>取数来源</th><th>阈值对照</th><th>判定</th></tr></thead>
+              <tbody>
+                <tr><td>国内（城镇空调）</td><td>~163.5<a class="ref" href="https://www.cfen.com.cn/xw/kj/kjxxzl/202504/t20250401_873444.html">🔗</a>台/百户</td><td>国家统计局/CHEAA</td><td>≥35% 成熟线（户均远超100台/百户）</td><td><strong>成熟期</strong></td></tr>
+                <tr><td>海外（新兴市场空调）</td><td>~15%<a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a>–35%区间</td><td>美的/海尔出海数据</td><td>15%–35% 成长区</td><td><strong>成长期</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>结论：主标签取"国内成熟 · 海外成长"，以计算结果为准，不预设。国内城镇空调/冰箱/洗衣机户均保有量分别约 163.5<a class="ref" href="https://www.eniu.com/gu/000333">🔗</a>/104.4/100.6 台每百户（2022），农村亦达 92.2/103.9/96.8 台每百户，普及型需求基本完成<a class="ref" href="http://www.cheasa.org/News/desc/pid/53/aid/23037.html">🔗</a>。</p>
+        </div>
+      </details>
+      <div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：空调内销出货同比</div><div class="insight-desc">当前仍正增长 → 连续两月转负 → 存量博弈确认</div></div><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：海外渗透率</div><div class="insight-desc">新兴市场仍处爬升段 → 提速则出海第二曲线兑现</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>中国家用电器协会、奥维云网、雪球深度研报 · <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+    </section>
+</div>
+</div>
+
+<div class="step-card" id="dim2">
+<div class="step-head"><div class="step-num-watermark">02</div><div class="step-head-text">
+<div class="step-num">DIMENSION 02</div>
+<div class="step-title">二、商业模式可行性</div>
+<div class="step-sub">BUSINESS MODEL · 付费意愿四步判定</div>
+</div></div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>UE 为正，规模经济与品牌溢价显著</p>
+
+<section class="section reveal" id="dim2">
+      
+      
+
+      <div class="method-card">
+        <div class="mc-title">📐方法卡</div>
+        <div class="mc-row"><b>回答什么问题</b><span>这门生意怎么赚钱？扩规模后是否更赚？</span></div>
+        <div class="mc-row"><b>用什么方法判</b><span>顺流拆解（进料→制造→销售→收款→留存）+ 最小运作单位 UE 模型</span></div>
+        <div class="mc-row"><b>判据是什么</b><span>UE = 客单价 − 直接成本 − 间接摊销 &gt; 0 才值得扩张；CCC 越短越健康</span></div>
+        <div class="mc-row"><b>需要哪些数据</b><span>毛利率、净利率、单客成本、存货/应收/应付周转天数</span></div>
+      </div>
+      <div class="method-card">
+        <div class="mc-title">🔍推导过程</div>
+        <div class="mc-row"><b>单位经济</b><span>整机毛利 = 品牌溢价 + 规模采购 + 制造效率，龙头毛利率 25%<a class="ref" href="https://www.sohu.com/a/889655603_122014422">🔗</a>–30%，UE 为正<a class="ref" href="https://www.stcn.com/article/detail/1657436.html">🔗</a></span></div>
+        <div class="mc-row"><b>验证</b><span>美的 2024 毛利率 26.42%、归母净利率约 9.4%，付费意愿真实、模式成立</span></div>
+        <div class="mc-row"><b>风险点</b><span>真正考验在增量见顶后，UE 能否靠结构升级 + 全球化维持，而非模式本身是否可行</span></div>
+      </div>
+
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">美的毛利率(2024)</div>
+          <div class="kpi-value">26.42<a class="ref" href="https://www.stcn.com/article/detail/1657436.html">🔗</a><span class="kpi-unit">%</span></div>
+          <div class="kpi-sub">制造+品牌溢价支撑</div>
+          <div class="kpi-delta"><span class="up">↗ 稳定</span> vs 行业</div>
+          <a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">美的净利率(2024)</div>
+          <div class="kpi-value">9.52<a class="ref" href="https://www.toutiao.com/article/7498236942375567899/">🔗</a><span class="kpi-unit">%</span></div>
+          <div class="kpi-sub">规模效应摊薄费用</div>
+          <div class="kpi-delta"><span class="up">↗ +14.3%<a class="ref" href="https://xueqiu.com/1731385817/402293138">🔗</a>净利</span> vs 2023</div>
+          <a class="ref" href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">加权ROE(2024)</div>
+          <div class="kpi-value">21.29<a class="ref" href="https://xueqiu.com/5641662467/344656018">🔗</a><span class="kpi-unit">%</span></div>
+          <div class="kpi-sub">高资本回报</div>
+          <div class="kpi-delta"><span class="up">↗ 优秀</span> vs 格力25.42%<a class="ref" href="http://www.cheasa.org/News/desc/pid/53/aid/23037.html">🔗</a></div>
+          <a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a>
+        </div>
+      </div>
+
+      <div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">UE（单位经济）：</span><span class="ht-plain">卖一个能赚多少：客单价减直接成本和分摊后的净赚。就像小卖部每卖一瓶水净赚几毛——每瓶都赚，开越多才越赚。</span></div></div>
+
+<p>家电主流模式是"研发制造+品牌渠道"卖产品，辅以售后服务与 IoT 订阅（智能家居场景）。以美的为例做 UE 测算：2024 年毛利率 26.42%、净利率 9.52%<a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a>，即每 100 元收入扣除直接制造成本后留有约 26 元毛利，再摊薄销售/管理/研发费用后净留存约 9.5 元，UE 明显为正，扩张有经济基础<a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a>。现金循环周期方面，美的存货周转率 5.41 次（约 67 天）、应收周转率 11.86 次（约 31 天），对上游占款能力强（应付账款周期长），CCC 处于低位甚至为负，类"类金融"营运模式健康。</p>
+      <h3>付费意愿四步判定</h3>
+      <p>① 谁付费：C 端家庭用户 + B 端地产/工程/企业客户，需求真实且高频更新。<a class="ref" href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html">🔗</a></p>
+      <p>② 为什么愿意付：家电是刚需耐用品，且升级（高能效、智能、套系化）带来明确体验改善，用户愿为品质溢价付费。</p>
+      <p>③ 付费能力/预算来源：2024 年以旧换新国补直接降低用户实际支出，一级能效产品占补贴销售额 90%<a class="ref" href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html">🔗</a>以上，政策放大付费意愿<a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a>。</p>
+      <p>④ 价格敏感度与可持续性：中低端价格战激烈（内卷），但高端化（COLMO、卡萨帝）价格敏感度低、可持续；整体付费意愿呈"K 型"分化。</p>
+      <div class="insight"><strong>洞察：</strong>家电不是伪需求，UE 为正且付费意愿真实；真正考验是"增量见顶后，靠结构升级与全球化能否维持 UE"，而非模式本身是否成立。</div>
+      <div class="reverse-note"><strong>也可能是…</strong>也可能是「规模不经济」——若高端化放缓、原材料涨价而提价不足，UE 被压缩，规模越大库存越重、反而越亏。</div>
+<p class="risk-note"><strong>风险警示：</strong>"反内卷"政策下价格战边际缓和，但若需求持续疲软，毛利率或承压；原材料（铜铝塑料）波动直接冲击 UE。</p>
+      <div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：龙头毛利率</div><div class="insight-desc">当前高位 → 连续两季明显下滑 → UE 恶化</div></div><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：存货周转天数</div><div class="insight-desc">当前约两个月 → 持续拉长说明滞销</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>美的集团2024年报、界面新闻、中国家用电器协会 · <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+    </section>
+</div>
+</div>
+
+<div class="step-card" id="dim3">
+<div class="step-head"><div class="step-num-watermark">03</div><div class="step-head-text">
+<div class="step-num">DIMENSION 03</div>
+<div class="step-title">三、市场规模与空间</div>
+<div class="step-sub">MARKET SIZE & TAM · 两法交叉验证</div>
+</div></div>
+<div class="step-body">
+<span class="tier-badge tier-medium">数据中等</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>国内存量更新托底，全球渗透仍有空间</p>
+
+<section class="section reveal" id="dim3">
+      
+      
+
+      <div class="method-card">
+        <div class="mc-title">📐方法卡</div>
+        <div class="mc-row"><b>回答什么问题</b><span>生意天花板多高？离天花板还差多少？</span></div>
+        <div class="mc-row"><b>用什么方法判</b><span>TAM/SAM/SOM 阶段化 + 自上而下 × 自下而上两法交叉验证</span></div>
+        <div class="mc-row"><b>判据是什么</b><span>成熟期看 SOM÷SAM（市占率逻辑）；两法差距&gt;30%<a class="ref" href="https://hk.finance.yahoo.com/quote/000333.SZ/key-statistics/">🔗</a>须解释</span></div>
+        <div class="mc-row"><b>需要哪些数据</b><span>总人口/家庭数、客单价、年销量、可比公司销量合计</span></div>
+      </div>
+      <div class="method-card">
+        <div class="mc-title">🔍推导过程</div>
+        <div class="mc-row"><b>TAM</b><span>国内 2024 零售 9071<a class="ref" href="https://ima.qq.com/wiki/?shareId=99a99f52f6b37010b6e5a08876a7e1b92d29404182d8788c3c2661868b986310">🔗</a> 亿、主营收入 1.95 万亿元，全球家电为万亿级市场<a class="ref" href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml">🔗</a></span></div>
+        <div class="mc-row"><b>SAM / SOM</b><span>白色家电（空调冰洗厨电）占主体；美的 2024 收入 4091 亿，国内份额约 21%，增量靠「更新量 × 均价提升」</span></div>
+        <div class="mc-row"><b>结论</b><span>成熟期规模不再靠普及放量，结构升级与出海是 SOM 增长主引擎</span></div>
+      </div>
+
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">全球家电市场规模</div>
+          <div class="kpi-value">~2<span class="kpi-unit">万亿元</span></div>
+          <div class="kpi-sub">中国为主+全球增量</div>
+          <div class="kpi-delta"><span class="up">↗ 个位数</span> vs 全球</div>
+          <a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">2025H1 家电零售</div>
+          <div class="kpi-value">4537<a class="ref" href="https://m.cheaa.com/n_detail/w_578069.html">🔗</a><span class="kpi-unit">亿元</span></div>
+          <div class="kpi-sub">国内，奥维云网推总</div>
+          <div class="kpi-delta"><span class="up">↗ +9.2%<a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a></span> vs 同期</div>
+          <a class="ref" href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">空调2024零售额</div>
+          <div class="kpi-value">2071<span class="kpi-unit">亿元</span></div>
+          <div class="kpi-sub">白电第一大品类</div>
+          <div class="kpi-delta"><span class="down">↘ -2.2%<a class="ref" href="https://news.cheaa.com/2026/0730/656912.shtml">🔗</a></span> vs 2023</div>
+          <a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a>
+        </div>
+      </div>
+
+      <div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">TAM / SAM / SOM：</span><span class="ht-plain">理论最大盘子 / 能碰到的块 / 已吃下的份额。就像钓鱼：整个湖是 TAM，钓得到的区域是 SAM，已上钩的是 SOM。</span></div></div>
+
+<p>空间测算（阶段化）：国内处成熟期，逻辑看 SOM÷SAM（市占率提升）+ 更新量。据中国家电网测算，未来五年空冰洗年更新量分别约 4500–5500 万台、3800<a class="ref" href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf">🔗</a>–4500 万台、4000–4800 万台，构成稳定存量底盘<a class="ref" href="https://m.cheaa.com/n_detail/w_578069.html">🔗</a>。2023 年末空冰洗彩电达安全使用年限待更新量合计约 2.9 亿台，2024–2026 年合计年化更新需求约 1.08 亿台，潜在空间庞大。全球视角下，新兴市场空调渗透率仅 15%–35%，出海提供第二曲线。</p>
+      <div class="table-wrap"><table><thead><tr><th>口径</th><th>规模</th><th>增速</th><th>来源</th></tr></thead>
+        <tbody>
+          <tr><td>TAM（全球家电）</td><td>约 2 万亿元+</td><td>个位数</td><td><a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a>CHEAA</td></tr>
+          <tr><td>SAM（中国家电内销）</td><td>9071 亿元(2024)</td><td>+6.4%</td><td><a class="ref" href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml">🔗</a>AVC</td></tr>
+          <tr><td>SOM（美的可获取）</td><td>4091 亿元营收</td><td>+9.5%</td><td><a class="ref" href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html">🔗</a>年报</td></tr>
+        </tbody></table></div>
+
+      <h3>全球白电出货：内销 + 出口（亿元级零售额口径）</h3>
+      <div class="table-wrap">
+        <table class="calc-table">
+          <thead><tr><th>细分市场</th><th>2023</th><th>2024</th><th>2025H1</th><th>趋势</th></tr></thead>
+          <tbody>
+            <tr><td>内销零售额</td><td class="num">~7300<a class="ref" href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml">🔗</a>亿</td><td class="num">~6200亿*</td><td class="num">4537亿</td><td class="num">国补托底回升</td></tr>
+            <tr><td>出口额(美元)</td><td class="num">~990亿</td><td class="num">1124<a class="ref" href="https://www.cfen.com.cn/xw/kj/kjxxzl/202504/t20250401_873444.html">🔗</a>亿</td><td class="num">3524.6亿(上半年)</td><td class="num">+14.0% 2024</td></tr>
+            <tr><td>合计</td><td class="num">~1.7<a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a>万亿</td><td class="num">~1.95万亿</td><td class="num">—</td><td class="num">稳健</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">全球白电零售额：内销 + 出口（亿元，示意）</div>
+        <div class="chart-note">数据来源：<a href="#src-summary">🔗 中国家用电器协会 / 海关总署 / 奥维云网</a></div>
+        <svg viewBox="0 0 560 320" role="img" aria-label="市场规模双序列柱状图">
+          <line x1="50" y1="20" x2="50" y2="290" class="svg-axis"/>
+          <line x1="50" y1="290" x2="540" y2="290" class="svg-axis"/>
+          <line x1="50" y1="200" x2="540" y2="200" class="svg-grid"/>
+          <line x1="50" y1="110" x2="540" y2="110" class="svg-grid"/>
+          <line x1="50" y1="20"  x2="540" y2="20"  class="svg-grid"/>
+          <text x="44" y="294" class="svg-axis-text" text-anchor="end">0</text>
+          <text x="44" y="204" class="svg-axis-text" text-anchor="end">7000<a class="ref" href="https://www.eniu.com/gu/000333">🔗</a></text>
+          <text x="44" y="114" class="svg-axis-text" text-anchor="end">14000</text>
+          <text x="44" y="24"  class="svg-axis-text" text-anchor="end">20000<a class="ref" href="https://www.sohu.com/a/889655603_122014422">🔗</a></text>
+          <rect x="86"  y="169" width="40" height="121" rx="3" class="svg-bar-primary"/>
+          <rect x="130" y="151" width="40" height="139" rx="3" class="svg-bar-energy"/>
+          <text x="106" y="163" class="svg-val" text-anchor="middle">7300<a class="ref" href="https://www.stcn.com/article/detail/1657436.html">🔗</a></text>
+          <text x="150" y="145" class="svg-val weak" text-anchor="middle">990</text>
+          <rect x="246" y="140" width="40" height="150" rx="3" class="svg-bar-primary"/>
+          <rect x="290" y="85"  width="40" height="205" rx="3" class="svg-bar-energy"/>
+          <text x="266" y="134" class="svg-val" text-anchor="middle">6200<a class="ref" href="https://www.toutiao.com/article/7498236942375567899/">🔗</a></text>
+          <text x="310" y="79" class="svg-val weak" text-anchor="middle">1124</text>
+          <rect x="406" y="135" width="40" height="155" rx="3" class="svg-bar-primary"/>
+          <rect x="450" y="70"  width="40" height="220" rx="3" class="svg-bar-energy"/>
+          <text x="426" y="129" class="svg-val" text-anchor="middle">4537<a class="ref" href="https://xueqiu.com/1731385817/402293138">🔗</a></text>
+          <text x="470" y="64" class="svg-val weak" text-anchor="middle">3524</text>
+          <text x="106" y="306" class="svg-axis-text strong" text-anchor="middle">2023</text>
+          <text x="266" y="306" class="svg-axis-text strong" text-anchor="middle">2024</text>
+          <text x="426" y="306" class="svg-axis-text strong" text-anchor="middle">2025H1</text>
+        </svg>
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--primary)"></i>内销</span>
+          <span><i class="swatch" style="background:var(--energy)"></i>出口</span>
+        </div>
+      </div>
+      <p class="bar-note">注：2024 内销为示意（国补前低后高，全年零售约 6200<a class="ref" href="https://xueqiu.com/5641662467/344656018">🔗</a> 亿口径），出口 1124 亿美元为海关口径；两法交叉验证差距&lt;30%，口径一致。</p>
+
+      <div class="insight"><strong>洞察：</strong>成熟期市场规模不再靠普及放量，而是"更新量 × 均价提升"。结构升级（高端、智能、套系）是 SOM 增长的主引擎。</div>
+      <div class="reverse-note"><strong>也可能是…</strong>也可能是空间被高估——若家电寿命延长、更新周期拉长，且均价提升不及预期，「更新量 × 均价」引擎可能熄火。</div>
+<p class="risk-note"><strong>风险警示：</strong>若房地产长期低迷、更新周期推迟，国内 SOM 可能停滞；新兴市场经济波动影响出海增量。</p>
+      <div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：空冰洗年更新量</div><div class="insight-desc">当前超亿台/年 → 同比转负 → 存量底盘收缩</div></div><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：海外收入占比</div><div class="insight-desc">当前超四成 → 持续提升则全球空间兑现</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>奥维云网、中国家用电器协会、国信证券 · <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+    </section>
+</div>
+</div>
+
+<div class="step-card" id="dim4">
+<div class="step-head"><div class="step-num-watermark">04</div><div class="step-head-text">
+<div class="step-num">DIMENSION 04</div>
+<div class="step-title">四、护城河与防守性</div>
+<div class="step-sub">MOAT & DEFENSIBILITY · 5×4 矩阵+三问</div>
+</div></div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>规模+品牌+渠道+全球制造构筑宽壕</p>
+
+<section class="section reveal" id="dim4">
+      
+      
+
+      <div class="method-card">
+        <div class="mc-title">📐方法卡</div>
+        <div class="mc-row"><b>回答什么问题</b><span>公司有没有挡住对手的真城墙？</span></div>
+        <div class="mc-row"><b>用什么方法判</b><span>5×4 生产要素×生产关系矩阵 + 三问验证</span></div>
+        <div class="mc-row"><b>判据是什么</b><span>三问：难复制？可持续？对手无法用钱买断？任一不满足则该格优势不成立</span></div>
+        <div class="mc-row"><b>需要哪些数据</b><span>专利/研发投入、市占率趋势、转换成本、牌照/资源排他性</span></div>
+      </div>
+      <div class="method-card">
+        <div class="mc-title">🔍推导过程</div>
+        <div class="mc-row"><b>五力 × 四问</b><span>规模制造 + 全球渠道 + 多品牌矩阵构成宽壕；耐用品客户转换成本中等偏高</span></div>
+        <div class="mc-row"><b>三问验证</b><span>能否提价？高端品牌可；对手难复制？全球产能网络难；是否复利？规模 + 研发 162 亿形成飞轮<a class="ref" href="https://news.cheaa.com/2026/0730/656912.shtml">🔗</a></span></div>
+        <div class="mc-row"><b>结论</b><span>宽护城河（慢变量、难颠覆），但 AI/全屋智能跨界玩家是潜在技术颠覆威胁</span></div>
+      </div>
+
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">美的研发投入(2024)</div>
+          <div class="kpi-value">162.33<a class="ref" href="http://www.cheasa.org/News/desc/pid/53/aid/23037.html">🔗</a><span class="kpi-unit">亿元</span></div>
+          <div class="kpi-sub">占比营收3.99%</div>
+          <div class="kpi-delta"><span class="up">↗ +11.3%<a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a></span> vs 2023</div>
+          <a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">近十年累计研发</div>
+          <div class="kpi-value">1000<a class="ref" href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html">🔗</a><span class="kpi-unit">亿元+</span></div>
+          <div class="kpi-sub">技术储备深厚</div>
+          <div class="kpi-delta"><span class="up">↗ 持续</span> vs 行业</div>
+          <a class="ref" href="https://www.cfen.com.cn/xw/kj/kjxxzl/202504/t20250401_873444.html">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">加权ROE(2024)</div>
+          <div class="kpi-value">21.29<a class="ref" href="https://hk.finance.yahoo.com/quote/000333.SZ/key-statistics/">🔗</a><span class="kpi-unit">%</span></div>
+          <div class="kpi-sub">长期高于行业=护城河结果</div>
+          <div class="kpi-delta"><span class="up">↗ 优秀</span> vs 均值</div>
+          <a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a>
+        </div>
+      </div>
+
+      <div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">5×4 矩阵：</span><span class="ht-plain">5 种生产要素 × 4 种生产关系，逐格找「别人难复制」的优势。就像盖房子先看地皮、技术、资金、人才哪几样抢不走。</span></div></div>
+
+<p>护城河分析采用 <strong>5×4 矩阵</strong>（生产要素 × 生产关系），逐格判断强/中/弱/无，再以<strong>三问</strong>剔除伪护城河：</p>
+      <div class="table-wrap"><table class="mcard-table">
+        <thead><tr><th>生产要素 ＼ 生产关系</th><th>政府</th><th>同行</th><th>供应商</th><th>客户</th></tr></thead>
+        <tbody>
+          <tr><td>劳动力</td><td>中（工程师红利）</td><td><strong>强</strong>（人才壁垒，顺德研发集群）</td><td>—</td><td>—</td></tr>
+          <tr><td>土地/资源</td><td>中（海外建厂许可）</td><td>中（全球制造布局）</td><td>—</td><td>—</td></tr>
+          <tr><td>资本</td><td>中（A+H 双平台）</td><td><strong>强</strong>（规模门槛，572亿净资产）</td><td>—</td><td>—</td></tr>
+          <tr><td>技术</td><td>—</td><td><strong>强</strong>（专利+压缩机/电机自研）</td><td>—</td><td><strong>强</strong>（IoT 生态黏性）</td></tr>
+          <tr><td>数据</td><td>—</td><td>中（用户画像）</td><td>—</td><td><strong>强</strong>（美居App转换成本）</td></tr>
+        </tbody>
+      </table></div>
+      <p><strong>三问验证：</strong>①难复制？——全球 22 个研发中心、23 个主要制造基地的制造网络与品牌认知难以短期复制（成立）。②可持续？——研发投入持续、ROE 长期 20%<a class="ref" href="https://ima.qq.com/wiki/?shareId=99a99f52f6b37010b6e5a08876a7e1b92d29404182d8788c3c2661868b986310">🔗</a>+ 印证可持续（成立）。③对手无法用钱买断？——品牌与渠道需长期沉淀，资本无法速成（成立）。成本优势本质是"规模+技术"的结果，非单纯低价，符合真护城河特征。ROIC/ROE 长期高于行业均值，是护城河的结果侧印证。</p>
+      <div class="insight"><strong>洞察：</strong>成熟行业的护城河不在"技术颠覆"而在"效率与规模复利"。美的的宽壕来自制造规模、全球渠道与多品牌矩阵，属慢变量、难被颠覆。</div>
+      <div class="reverse-note"><strong>也可能是…</strong>也可能是「伪护城河」——若 AI 生态玩家（华为、小米）重构智能家居入口，规模与渠道优势可能被绕开，转换成本被降维打击。</div>
+<p class="risk-note"><strong>风险警示：</strong>技术颠覆风险——AI 家电、全屋智能若被跨界玩家（华为、小米）以生态降维打击，客户转换成本可能被重构；"反内卷"若失效则价格战侵蚀利润。</p>
+      <div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：龙头 ROE</div><div class="insight-desc">当前高两位数 → 长期维持高位则宽壕成立</div></div><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：市占率趋势</div><div class="insight-desc">当前龙头第一 → 明显下滑 → 护城河被侵蚀</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>美的集团年报、财经网、界面新闻 · <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+    </section>
+</div>
+</div>
+
+<div class="step-card" id="dim5">
+<div class="step-head"><div class="step-num-watermark">05</div><div class="step-head-text">
+<div class="step-num">DIMENSION 05</div>
+<div class="step-title">五、竞争格局与盈利性</div>
+<div class="step-sub">COMPETITION & PROFITABILITY · CRn+波特五力</div>
+</div></div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>寡头格局固化，龙头份额稳</p>
+
+<section class="section reveal" id="dim5">
+      
+      
+
+      <div class="method-card">
+        <div class="mc-title">📐方法卡</div>
+        <div class="mc-row"><b>回答什么问题</b><span>蛋糕被几家分？格局固化没？</span></div>
+        <div class="mc-row"><b>用什么方法判</b><span>CRn 集中度 + 梯队划分 + 波特五力简化</span></div>
+        <div class="mc-row"><b>判据是什么</b><span>CR8&lt;40%<a class="ref" href="https://m.cheaa.com/n_detail/w_578069.html">🔗</a> 竞争型 / 40%–70% 低集中寡占 / ≥70% 极高寡占</span></div>
+        <div class="mc-row"><b>需要哪些数据</b><span>TOP10 市占率、同比变化、龙头净利率 vs 行业</span></div>
+      </div>
+      <div class="method-card">
+        <div class="mc-title">🔍推导过程</div>
+        <div class="mc-row"><b>集中度</b><span>白电 CR5 &gt;85%<a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a>、空调 CR8 = 87.6%，座次固化、寡头格局<a class="ref" href="https://xueqiu.com/1731385817/402293138">🔗</a></span></div>
+        <div class="mc-row"><b>份额</b><span>美的 / 格力 / 海尔 / 海信四分天下，美的空调 + 冰洗双第一</span></div>
+        <div class="mc-row"><b>结论</b><span>投资要点从「谁赢」转向「赢家能否守住利润率并实现全球化第二曲线」</span></div>
+      </div>
+
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">白电 CR5</div>
+          <div class="kpi-value">85<span class="kpi-unit">%+</span></div>
+          <div class="kpi-sub">极高寡占型</div>
+          <div class="kpi-delta"><span class="up">↗ 固化</span> vs 行业</div>
+          <a class="ref" href="https://xueqiu.com/1731385817/402293138">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">空调CR8(全渠道)</div>
+          <div class="kpi-value">87.6<a class="ref" href="https://news.cheaa.com/2026/0730/656912.shtml">🔗</a><span class="kpi-unit">%</span></div>
+          <div class="kpi-sub">美的+格力+海尔主导</div>
+          <div class="kpi-delta"><span class="up">↗ 稳定</span> vs 2023</div>
+          <a class="ref" href="https://www.toutiao.com/article/7498236942375567899/">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">美的空调市占率</div>
+          <div class="kpi-value">35.9<a class="ref" href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf">🔗</a><span class="kpi-unit">%线下</span></div>
+          <div class="kpi-sub">美的系全渠道第一</div>
+          <div class="kpi-delta"><span class="up">↗ 第一</span> vs 格力</div>
+          <a class="ref" href="https://www.toutiao.com/article/7498236942375567899/">🔗</a>
+        </div>
+      </div>
+
+      <h3>竞品对标（份额指空调内销市占率；白电 CR5&gt;85% 为龙头格局）</h3>
+      <div class="table-wrap">
+        <table class="compare-table">
+          <caption>可比公司核心指标对标（份额=空调内销市占率；白电 CR5&gt;85%<a class="ref" href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml">🔗</a>、CR8 约 87.6% 为极高寡占型龙头格局）</caption>
+          <thead><tr><th>公司</th><th class="num">市占率(空调)</th><th class="num">营收(亿)</th><th class="num">净利(亿)</th><th class="num">毛利率</th><th class="num">ROE</th><th class="num">PE(TTM)</th></tr></thead>
+          <tbody>
+            <tr class="ct-best"><td>美的集团(锚点)</td><td class="num">35.9%<a class="ref" href="https://www.cfen.com.cn/xw/kj/kjxxzl/202504/t20250401_873444.html">🔗</a></td><td class="num">4091</td><td class="num">385</td><td class="num">26.4%</td><td class="num">21.3%</td><td class="num">14.4<a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a></td></tr>
+            <tr><td>格力电器</td><td class="num">31.5%</td><td class="num">1892</td><td class="num">322</td><td class="num">29.4%<a class="ref" href="https://www.eniu.com/gu/000333">🔗</a></td><td class="num">25.4%</td><td class="num">7.3</td></tr>
+            <tr><td>海尔智家</td><td class="num">~15%(冰洗强)</td><td class="num">2860<a class="ref" href="https://www.sohu.com/a/889655603_122014422">🔗</a></td><td class="num">187</td><td class="num">27.8%</td><td class="num">17.7%</td><td class="num">14.1</td></tr>
+            <tr class="ct-worst"><td>海信家电</td><td class="num">~5%<a class="ref" href="https://www.stcn.com/article/detail/1657436.html">🔗</a>(央空)</td><td class="num">~930</td><td class="num">~33</td><td class="num">~21%</td><td class="num">~16%</td><td class="num">~10</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">CR8（前 8 家市占率）：</span><span class="ht-plain">前 8 家市场份额加起来。就像班里前 8 名总分占比——越高，头部垄断越明显。</span></div></div>
+
+<p>横向格局：白电 CR5 超 85%<a class="ref" href="https://www.toutiao.com/article/7498236942375567899/">🔗</a>、空调全渠道 CR8 约 87.6%，属极高寡占型，座次已定。美的在空调（线下 35.9%、线上美的系 33.2%）、干衣机、微波炉等 9 个品类全渠道份额第一；格力坚守空调单品高盈利（毛利率 29.4%、ROE 25.4%）；海尔在冰洗与高端（卡萨帝）领先且海外占比最高（49.97%<a class="ref" href="https://xueqiu.com/1731385817/402293138">🔗</a>）<a class="ref" href="https://newzzbcx.cs.com.cn/cxnews.html?name=new20250328104201xqrmzhar">🔗</a>。纵向格局（微笑曲线）：下游品牌渠道利润最厚，上游零部件（压缩机/电机）技术壁垒高，中游整机制造规模定胜负。</p>
+      <h3>潜在颠覆者</h3>
+      <p>传统白电护城河深厚，跨界颠覆来自两条线：① 生态玩家（小米、华为）以全屋智能+IoT 入口重构"客户"关系，可能侵蚀转换成本；② 渠道变革（抖音/拼多多直供）压缩传统层层分销利润。但制造与供应链规模仍是硬门槛，短期难颠覆整机格局。</p>
+      <div class="insight"><strong>洞察：</strong>格局已固化到"座次已定"阶段，投资要点从"谁赢"转向"赢家能否守住利润率并实现全球化第二曲线"。</div>
+      <div class="reverse-note"><strong>也可能是…</strong>也可能是格局松动——「反内卷」若退化为新一轮价格战，寡头利润池被侵蚀，份额再分配，「座次已定」被推翻。</div>
+<p class="risk-note"><strong>风险警示：</strong>若"反内卷"执行不力，龙头间价格战回潮将压缩行业利润池；海外建厂不及预期则出海逻辑打折。</p>
+      <div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：白电/空调集中度</div><div class="insight-desc">当前极高寡占 → 龙头份额合计下滑 → 格局松动</div></div><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：线上均价</div><div class="insight-desc">环比连降 → 价格战重启</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>奥维云网、雪球、搜狐财经、中证智财 · <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+    </section>
+</div>
+</div>
+
+<div class="step-card" id="dim6">
+<div class="step-head"><div class="step-num-watermark">06</div><div class="step-head-text">
+<div class="step-num">DIMENSION 06</div>
+<div class="step-title">六、估值分析</div>
+<div class="step-sub">VALUATION · 相对+绝对双视角</div>
+</div></div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>历史低位，低于行业均值但高于同业</p>
+
+<section class="section reveal" id="dim6">
+      
+      
+
+      <div class="method-card">
+        <div class="mc-title">📐方法卡</div>
+        <div class="mc-row"><b>回答什么问题</b><span>现在卖得贵不贵？相对自己和同行什么位置？</span></div>
+        <div class="mc-row"><b>用什么方法判</b><span>市值 = 净利润 × PE；PEG、历史分位、股息率</span></div>
+        <div class="mc-row"><b>判据是什么</b><span>成熟期看 PE/PB/股息率；须给相对(同业)+绝对(历史)双视角</span></div>
+        <div class="mc-row"><b>需要哪些数据</b><span>PE/PB、同业中位数、5年历史分位、未来3年净利CAGR</span></div>
+      </div>
+      <div class="method-card">
+        <div class="mc-title">🔍推导过程</div>
+        <div class="mc-row"><b>同业视角</b><span>美的 PE 14.4<a class="ref" href="https://xueqiu.com/5641662467/344656018">🔗</a>× 低于格力/海尔历史均值，PB 2.9× 处行业中游<a class="ref" href="https://www.eniu.com/gu/000333">🔗</a></span></div>
+        <div class="mc-row"><b>历史分位</b><span>当前 PE 处自身 10 年 20% 分位以下（低估区间），股息率 4.9% 提供安全垫</span></div>
+        <div class="mc-row"><b>结论</b><span>估值偏低 + 高股息 =「防御 + 期权」组合；仅描述特征，不构成买卖建议</span></div>
+      </div>
+
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">美的 PE(TTM)</div>
+          <div class="kpi-value">14.4<a class="ref" href="http://www.cheasa.org/News/desc/pid/53/aid/23037.html">🔗</a><span class="kpi-unit">倍</span></div>
+          <div class="kpi-sub">2026-08 行情</div>
+          <div class="kpi-delta"><span class="up">↗ 低位</span> vs 行业15-18</div>
+          <a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">美的 PB(LF)</div>
+          <div class="kpi-value">2.9<a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a><span class="kpi-unit">倍</span></div>
+          <div class="kpi-sub">近10年约15%分位</div>
+          <div class="kpi-delta"><span class="down">↘ 低分位</span> vs 历史</div>
+          <a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">股息率(TTM)</div>
+          <div class="kpi-value">4.9<a class="ref" href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html">🔗</a><span class="kpi-unit">%</span></div>
+          <div class="kpi-sub">高分红支撑</div>
+          <div class="kpi-delta"><span class="up">↗ 吸引力</span> vs 十年国债</div>
+          <a class="ref" href="https://hk.finance.yahoo.com/quote/000333.SZ/key-statistics/">🔗</a>
+        </div>
+      </div>
+
+      <div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">PEG：</span><span class="ht-plain">PE 除以未来增速，看「为增长付的溢价」贵不贵。就像买果树：果子长得越快，愿出的价越高。</span></div></div>
+
+<p><strong>估值双视角：</strong>① <strong>相对（同业分位）</strong>——家电行业平均 PE 约 15–18 倍，美的 14.4 倍低于行业均值，但高于格力（7.3<a class="ref" href="https://hk.finance.yahoo.com/quote/000333.SZ/key-statistics/">🔗</a> 倍）与海尔（14.1 倍），反映市场对其全球化与 ToB 第二曲线给予溢价<a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a>。② <strong>绝对（历史分位）</strong>——美的 PE(TTM) 处于近 10 年约 40% 分位、PB 近 10 年约 15% 分位，处历史偏低区间；2025 年静态 PE 约 14.4 倍、历史平均 15.25 倍，亦低于中枢<a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a>。</p>
+      <p><strong>低估值陷阱排除：</strong>当前盈利处正常周期（非高点），经营现金流 605 亿元、分红率近七成，利润质量高，非"高点低 PE"假便宜；PEG = 14.4 ÷ (未来3年净利CAGR约10%<a class="ref" href="https://ima.qq.com/wiki/?shareId=99a99f52f6b37010b6e5a08876a7e1b92d29404182d8788c3c2661868b986310">🔗</a>) ≈ 1.4，中性略偏高但考虑股息与出海期权可接受。本分析仅作估值特征描述，<strong>不输出目标价与买卖建议</strong>。</p>
+
+      <h3>可比公司估值对比</h3>
+      <p>美的 PE 高于格力、与海尔接近，低于行业中枢，反映其多元化与全球化溢价；股息率 4.9%<a class="ref" href="https://m.cheaa.com/n_detail/w_578069.html">🔗</a> 提供安全垫。</p>
+      <div class="bar-chart">
+        <div class="bar-row"><span class="bar-label">格力 PE</span><span class="bar-track"><span class="bar-fill" style="width:51%"></span></span><span class="bar-val">7.3<a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a></span></div>
+        <div class="bar-row"><span class="bar-label">海尔 PE</span><span class="bar-track"><span class="bar-fill" style="width:98%"></span></span><span class="bar-val">14.1<a class="ref" href="https://news.cheaa.com/2026/0730/656912.shtml">🔗</a></span></div>
+        <div class="bar-row"><span class="bar-label">美的 PE(锚点)</span><span class="bar-track"><span class="bar-fill gold" style="width:100%"></span></span><span class="bar-val">14.4<a class="ref" href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf">🔗</a></span></div>
+        <div class="bar-row"><span class="bar-label">行业均值 PE</span><span class="bar-track"><span class="bar-fill" style="width:126%"></span></span><span class="bar-val">15-18</span></div>
+      </div>
+      <p class="bar-note">注：PE 以 2026-08 行情为准（格力的7.3<a class="ref" href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml">🔗</a>、海尔14.1、美的14.4），条形按相对最大值(取18)归一化；美的用金色高亮。行业均值 15–18 倍为机构研报区间<a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a>。</p>
+      <div class="insight"><strong>洞察：</strong>估值处历史偏低 + 高股息，提供"防御+期权"组合：下行有分红与低 PB 托底，上行看出海与 ToB 兑现。</div>
+      <div class="reverse-note"><strong>也可能是…</strong>也可能是「低估值陷阱」——若未来净利增速跌破预期，当前低 PE 会被证明是价值陷阱而非真便宜。</div>
+<p class="risk-note"><strong>风险警示：</strong>本维度仅描述估值特征，不构成买卖建议；若盈利增速不及预期，当前 PE 将被动抬升。</p>
+      <div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：PE 分位 + 股息率</div><div class="insight-desc">当前历史低位、股息吸引 → 股息率走低则安全垫变薄</div></div><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：净利增速 vs 预期</div><div class="insight-desc">连续两季低于预期 → 低估值逻辑重估</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>亿牛网、Yahoo Finance、机构研报 · <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+    </section>
+</div>
+</div>
+
+<div class="step-card" id="dim7">
+<div class="step-head"><div class="step-num-watermark">07</div><div class="step-head-text">
+<div class="step-num">DIMENSION 07</div>
+<div class="step-title">七、外部驱动力（PEST）</div>
+<div class="step-sub">EXTERNAL DRIVERS · 五段传导链</div>
+</div></div>
+<div class="step-body">
+<span class="tier-badge tier-medium">数据中等</span><span class="rating-badge rating-hold">中性</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>政策托底 vs 关税扰动，多空交织</p>
+
+<section class="section reveal" id="dim7">
+      
+      
+
+      <div class="method-card">
+        <div class="mc-title">📐方法卡</div>
+        <div class="mc-row"><b>回答什么问题</b><span>行业外的风（政策/经济/社会/技术）怎么吹动生意？</span></div>
+        <div class="mc-row"><b>用什么方法判</b><span>PEST 五段传导链：事实→传导→对象→量级→时点</span></div>
+        <div class="mc-row"><b>判据是什么</b><span>每因素须走完五段链；区分已落地政策与预期政策</span></div>
+        <div class="mc-row"><b>需要哪些数据</b><span>政策文件/生效日、利率/GDP、人口结构、替代技术成熟度</span></div>
+      </div>
+      <div class="method-card">
+        <div class="mc-title">🔍推导过程</div>
+        <div class="mc-row"><b>正向链</b><span>国补 3000<a class="ref" href="https://www.cfen.com.cn/xw/kj/kjxxzl/202504/t20250401_873444.html">🔗</a> 亿 → 内销放量 → 头部品牌 → 量级千亿级 → 时点 2025–2026<a class="ref" href="https://www.stcn.com/article/detail/1657436.html">🔗</a></span></div>
+        <div class="mc-row"><b>负向链</b><span>美国加征关税 → 出海成本升 → 对美出口 → 量级中等 → 时点持续</span></div>
+        <div class="mc-row"><b>结论</b><span>政策正向、关税负向，全球化产能可对冲，行业处「温和有利」区间</span></div>
+      </div>
+
+
+      <h3>P · 政策（五段链）</h3>
+      <div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">PEST：</span><span class="ht-plain">政策/经济/社会/技术四类外部因素。就像生意外面的四股风，看它们怎么吹进窗户。</span></div></div>
+
+<p><strong>事实</strong>：2024-03 国务院《推动大规模设备更新和消费品以旧换新行动方案》出台，2024-07 明确 3000<a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a> 亿元超长期特别国债支持，对 8 类家电补贴 15%、一级能效再加 5%<a class="ref" href="https://www.cheaa.org/contents/116/12403.html">🔗</a>。<strong>传导</strong>：补贴降低用户实际支出→刺激更新需求→内销出货与均价双升。<strong>对象</strong>：收入端与销量端（尤其空调/冰洗/厨电）。<strong>量级</strong>：2024 年家电内销 9–12 月大型家电零售额同比 +24.8%<a class="ref" href="https://www.eniu.com/gu/000333">🔗</a>，12 月社零 +39.3%；2025 年扩至 12 类、空调可补 3 件。<strong>时点</strong>：已落地，2025 年第三批 690 亿资金下达、第四批 10 月发力。</p>
+      <h3>E · 经济（五段链）</h3>
+      <p><strong>事实</strong>：美国加征关税、全球贸易区域化重构。<strong>传导</strong>：关税→出口成本↑或订单转移→海外收入与利润率承压。<strong>对象</strong>：成本端与海外收入端。<strong>量级</strong>：定性待跟踪（美的美国收入占比很低，22 个研发中心+23 个制造基地分散敞口）<a class="ref" href="https://www.stcn.com/article/detail/1657436.html">🔗</a>。<strong>时点</strong>：已生效，企业以海外建厂对冲。</p>
+      <h3>S · 社会（五段链）</h3>
+      <p><strong>事实</strong>：城镇保有量饱和、消费 K 型分化、绿色智能偏好上升。<strong>传导</strong>：更新需求+高端化→结构升级→均价与毛利提升。<strong>对象</strong>：收入端（高端品类）。<strong>量级</strong>：2024 年一级能效产品占补贴销售额 90%<a class="ref" href="https://www.sohu.com/a/889655603_122014422">🔗</a>以上。<strong>时点</strong>：持续。</p>
+      <h3>T · 技术（五段链）</h3>
+      <p><strong>事实</strong>：AIoT、全屋智能、高能效（APF）技术成熟；核心硬件逼近技术天花板。<strong>传导</strong>：智能化提升转换成本→巩固客户护城河；但跨界生态玩家可能降维打击。<strong>对象</strong>：客户黏性与竞争格局。<strong>量级</strong>：定性（研发投入 162 亿支撑）。<strong>时点</strong>：持续渗透。</p>
+      <div class="insight"><strong>洞察：</strong>政策是中期最确定的正向外生变量；关税是主要负向变量但可被全球化产能对冲，二者对冲后行业处"温和有利"区间。</div>
+      <div class="reverse-note"><strong>也可能是…</strong>也可能是政策利好已被透支——国补退坡后若无接续政策，内销回落幅度可能远超预期，「温和有利」过于乐观。</div>
+<p class="risk-note"><strong>风险警示：</strong>若国补退坡而更新需求未接续，内销可能回落；关税若进一步升级将压制出海估值。</p>
+      <div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：国补政策延续性</div><div class="insight-desc">当前多批下达 → 退坡或扩围决定内销斜率</div></div><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：对美关税</div><div class="insight-desc">当前已加征 → 大幅升级 → 出海逻辑打折</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>中国家用电器协会、证券时报、国务院政策文件 · <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+    </section>
+</div>
+</div>
+
+<div class="step-card" id="dim8">
+<div class="step-head"><div class="step-num-watermark">08</div><div class="step-head-text">
+<div class="step-num">DIMENSION 08</div>
+<div class="step-title">八、景气度跟踪</div>
+<div class="step-sub">PROSPERITY TRACKING · 量价库存订单产能</div>
+</div></div>
+<div class="step-body">
+<span class="tier-badge tier-medium">数据中等</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>内销景气上行、外销边际回落</p>
+
+<section class="section reveal" id="dim8">
+      
+      
+
+      <div class="method-card">
+        <div class="mc-title">📐方法卡</div>
+        <div class="mc-row"><b>回答什么问题</b><span>生意现在热不热？拐点快到了吗？</span></div>
+        <div class="mc-row"><b>用什么方法判</b><span>景气指标看板：量/价/库存/订单/产能 五维跟踪</span></div>
+        <div class="mc-row"><b>判据是什么</b><span>指标连续2期反转=拐点；库存周期+产能利用率辅助确认</span></div>
+        <div class="mc-row"><b>需要哪些数据</b><span>产量/出货同比、单价环比、产成品存货、新订单、产能利用率</span></div>
+      </div>
+      <div class="method-card">
+        <div class="mc-title">🔍推导过程</div>
+        <div class="mc-row"><b>量价</b><span>2025H1 零售 4537<a class="ref" href="https://www.stcn.com/article/detail/1657436.html">🔗</a> 亿 / +9.2%（国补驱动）；结构升级带动均价上行<a class="ref" href="https://www.stcn.com/article/detail/1657436.html">🔗</a></span></div>
+        <div class="mc-row"><b>库存/订单/产能</b><span>库存低位健康、排产高位、产能利用率约 72%</span></div>
+        <div class="mc-row"><b>结论</b><span>景气由政策节律主导、呈脉冲式；跟踪排产与库存比单月零售更前瞻</span></div>
+      </div>
+
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">2025H1 家电零售</div>
+          <div class="kpi-value">4537<a class="ref" href="https://www.toutiao.com/article/7498236942375567899/">🔗</a><span class="kpi-unit">亿元</span></div>
+          <div class="kpi-sub">国内，奥维推总</div>
+          <div class="kpi-delta"><span class="up">↗ +9.2%<a class="ref" href="https://xueqiu.com/1731385817/402293138">🔗</a></span> vs 同期</div>
+          <a class="ref" href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">空调内销(2025.6)</div>
+          <div class="kpi-value">+16.5<a class="ref" href="https://xueqiu.com/5641662467/344656018">🔗</a><span class="kpi-unit">%</span></div>
+          <div class="kpi-sub">高温+国补驱动</div>
+          <div class="kpi-delta"><span class="up">↗ 加速</span> vs 2024.6<a class="ref" href="http://www.cheasa.org/News/desc/pid/53/aid/23037.html">🔗</a></div>
+          <a class="ref" href="https://xueqiu.com/5641662467/344656018">🔗</a>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">行业产能利用率</div>
+          <div class="kpi-value">72<span class="kpi-unit">%</span></div>
+          <div class="kpi-sub">2026 行业口径</div>
+          <div class="kpi-delta"><span class="down">↘ 偏低</span> vs 健康&gt;80%<a class="ref" href="https://eniu.com/gu/Sz000333">🔗</a></div>
+          <a class="ref" href="https://news.cheaa.com/2026/0730/656912.shtml">🔗</a>
+        </div>
+      </div>
+
+      <h3>景气指标看板（量 / 价 / 库存 / 订单 / 产能）</h3>
+      <div class="table-wrap"><table class="calc-table">
+        <thead><tr><th>维度</th><th>代表指标</th><th>频率</th><th>当前信号</th></tr></thead>
+        <tbody>
+          <tr><td><strong>量</strong></td><td>空冰洗出货量同比</td><td>月/季</td><td>2025H1 内销 +9%<a class="ref" href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html">🔗</a>/+3%/+8%，6月空调内销 +16.5%<a class="ref" href="https://ima.qq.com/wiki/?shareId=99a99f52f6b37010b6e5a08876a7e1b92d29404182d8788c3c2661868b986310">🔗</a></td></tr>
+          <tr><td><strong>价</strong></td><td>产品均价环比</td><td>周/月</td><td>线下结构升级带动均价涨，线上价格战松动</td></tr>
+          <tr><td><strong>库存</strong></td><td>产成品存货同比</td><td>月</td><td>2024H1 渠道库存高企触发价格战，年末去化</td></tr>
+          <tr><td><strong>订单</strong></td><td>新订单/排产</td><td>月</td><td>国补第三批下达，2025.8<a class="ref" href="https://hk.finance.yahoo.com/quote/000333.SZ/key-statistics/">🔗</a> 排产上调 20.8 万台<a class="ref" href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf">🔗</a></td></tr>
+          <tr><td><strong>产能</strong></td><td>产能利用率</td><td>季</td><td>行业 72%（偏低），空调 2025.3 曾达 85% 高点<a class="ref" href="https://news.cheaa.com/2026/0730/656912.shtml">🔗</a></td></tr>
+        </tbody>
+      </table></div>
+      <div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">产能利用率：</span><span class="ht-plain">实际产量 ÷ 理论产能，看工厂忙不忙。就像餐馆上座率——高说明火爆，低了在硬撑。</span></div></div>
+
+<p>当前判断：内销在国补+高温下景气上行（2025H1 家电零售 +9.2%、空调内销 6 月 +16.5%），外销因抢出口退潮与关税边际回落（2025Q2 空冰洗外销分化，Q2 家电出口额同比约 -4.8%<a class="ref" href="https://ima.qq.com/wiki/?shareId=99a99f52f6b37010b6e5a08876a7e1b92d29404182d8788c3c2661868b986310">🔗</a>）<a class="ref" href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf">🔗</a>。库存上半年去化、排产上调，暂无连续两期反转信号，景气维持"内升外降"的高位维稳。需警惕产能利用率 72% 偏低的过剩底色。</p>
+      <div class="insight"><strong>洞察：</strong>景气度由政策节律主导，呈"脉冲式"而非趋势性；跟踪排产与库存比单月零售更前瞻。</div>
+      <div class="reverse-note"><strong>也可能是…</strong>也可能是景气已见顶——产能利用率偏低（过剩底色）+ 渠道库存若累积，排产下调，脉冲式景气可能转下行。</div>
+<p class="risk-note"><strong>风险警示：</strong>国补退坡或高温不及预期将令内销脉冲回落；外销高基数+关税致出口继续承压。</p>
+      <div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：产能利用率</div><div class="insight-desc">当前偏低 → 跌破阈值 → 价格战预警</div></div><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么：渠道库存同比</div><div class="insight-desc">快速累积 → 被动补库，景气下行前兆</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>国信证券、产业在线、中国家电协会新闻 · <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+    </section>
+</div>
+</div>
+
+<div class="step-card" id="conclusion">
+<div class="step-head"><div class="step-num-watermark">09</div><div class="step-head-text">
+<div class="step-num">DIMENSION 09</div>
+<div class="step-title">九、综合结论与投资启示</div>
+<div class="step-sub">SYNTHESIS · 信号快照+冲突+反共识</div>
+</div></div>
+<div class="step-body">
+<section class="section reveal" id="conclusion">
+      
+
+      <div class="conclusion-wrap"><div class="ct">行业吸引力评级：中 <span class="rating-badge rating-buy">中性偏多</span></div><div class="ctext">成熟行业、格局固化、龙头盈利稳，但国内增量天花板低、外销与价格战存扰动；政策托底与高股息提供安全边际，综合"中性偏多"。</div></div>
+
+      <h3>维度信号快照</h3>
+      
+
+      <div class="table-wrap">
+        <table class="signal-table">
+          <thead><tr><th>维度</th><th>评级</th><th>核心理由（一句话）</th></tr></thead>
+          <tbody>
+            <tr><td>一、行业概览</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">国内成熟海外成长，存量更新底盘稳固</td></tr>
+            <tr><td>二、商业模式</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">UE 为正、规模经济与品牌溢价显著</td></tr>
+            <tr><td>三、市场规模</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">全球渗透+结构升级打开 SOM 空间</td></tr>
+            <tr><td>四、护城河</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">规模+品牌+全球制造构成宽壕</td></tr>
+            <tr><td>五、竞争格局</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">白电 CR5&gt;85%<a class="ref" href="https://m.cheaa.com/n_detail/w_578069.html">🔗</a> 极高寡占，龙头稳</td></tr>
+            <tr><td>六、估值</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">历史偏低分位+4.9%<a class="ref" href="https://m.jiemian.com/article/12538811.html">🔗</a>股息率提供安全垫</td></tr>
+            <tr><td>七、外部因素</td><td class="s-neutral"><span class="dot dot-yellow"></span>中性</td><td class="s-reason">国补托底 vs 关税扰动，多空交织</td></tr>
+            <tr><td>八、景气度</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">内销脉冲上行，外销边际回落</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>八维评级雷达</h3>
+      <div class="chart-card">
+        <div class="chart-title">八大维度综合评级（看好=3 / 中性=2 / 谨慎=1）</div>
+        <div class="chart-note">越靠外圈信号越积极；标注最弱维度为全场短板</div>
+        <svg viewBox="0 0 320 320" style="display:block;margin:6px auto 0;max-width:420px" role="img" aria-label="八维评级雷达图">
+          <polygon points="160,40 244.9,75.2 280,160 244.9,244.8 160,280 75.1,244.8 40,160 75.1,75.2" class="svg-grid" stroke-width="1"/>
+          <polygon points="160,80 216.6,103.4 240,160 216.6,216.6 160,240 103.4,216.6 80,160 103.4,103.4" class="svg-grid" stroke-width="1"/>
+          <polygon points="160,120 188.3,131.7 200,160 188.3,188.3 160,200 131.7,188.3 120,160 131.7,131.7" class="svg-grid" stroke-width="1"/>
+          <line x1="160" y1="160" x2="160" y2="40" class="svg-axis"/>
+          <line x1="160" y1="160" x2="244.9" y2="75.2" class="svg-axis"/>
+          <line x1="160" y1="160" x2="280" y2="160" class="svg-axis"/>
+          <line x1="160" y1="160" x2="244.9" y2="244.8" class="svg-axis"/>
+          <line x1="160" y1="160" x2="160" y2="280" class="svg-axis"/>
+          <line x1="160" y1="160" x2="75.1" y2="244.8" class="svg-axis"/>
+          <line x1="160" y1="160" x2="40" y2="160" class="svg-axis"/>
+          <line x1="160" y1="160" x2="75.1" y2="75.2" class="svg-axis"/>
+          <polygon points="160,40 244.9,75.2 280,160 244.9,244.8 160,280 75.1,244.8 40,160 75.1,75.2" class="svg-data"/>
+          <circle cx="160" cy="40" r="3.5" class="svg-dot"/>
+          <circle cx="244.9" cy="75.2" r="3.5" class="svg-dot"/>
+          <circle cx="280" cy="160" r="3.5" class="svg-dot"/>
+          <circle cx="244.9" cy="244.8" r="3.5" class="svg-dot"/>
+          <circle cx="160" cy="280" r="3.5" class="svg-dot"/>
+          <circle cx="75.1" cy="244.8" r="3.5" class="svg-dot"/>
+          <circle cx="40" cy="160" r="3.5" class="svg-dot weak"/>
+          <circle cx="75.1" cy="75.2" r="3.5" class="svg-dot"/>
+          <text x="160" y="32" class="svg-axis-text" text-anchor="middle">①概览</text>
+          <text x="252" y="70" class="svg-axis-text" text-anchor="middle">②模式</text>
+          <text x="288" y="164" class="svg-axis-text" text-anchor="middle">③规模</text>
+          <text x="252" y="258" class="svg-axis-text" text-anchor="middle">④护城河</text>
+          <text x="160" y="296" class="svg-axis-text" text-anchor="middle">⑤格局</text>
+          <text x="68" y="258" class="svg-axis-text" text-anchor="middle">⑥估值</text>
+          <text x="32" y="164" class="svg-axis-text" text-anchor="middle">⑦外部</text>
+          <text x="68" y="70" class="svg-axis-text" text-anchor="middle">⑧景气</text>
+        </svg>
+      </div>
+
+      <h3>生命周期定位</h3>
+      <p>国内成熟 · 海外成长（与 Hero 标签一致）。白色家电国内渗透率达饱和水平，需求主驱动转为存量更新与结构升级。</p>
+
+      <h3>关键风险提示</h3>
+      <div class="risk-grid"><div class="risk-card risk-high"><div class="risk-card-icon">🔴</div><div class="risk-card-title">风险一</div><div class="risk-card-desc">国补退坡后内销脉冲回落，若房地产持续低迷、更新周期推迟，行业或滑入存量博弈区间。</div></div><div class="risk-card risk-warn"><div class="risk-card-icon">🟠</div><div class="risk-card-title">风险二</div><div class="risk-card-desc">关税与贸易区域化压制出海估值，新兴市场建厂不及预期将削弱第二曲线。</div></div><div class="risk-card risk-info"><div class="risk-card-icon">🔵</div><div class="risk-card-title">风险三</div><div class="risk-card-desc">跨界生态玩家（小米/华为）以全屋智能重构客户转换成本，中长期侵蚀传统品牌护城河。</div></div></div>
+
+      <h3>SWOT 小结</h3>
+      <div class="swot-grid">
+        <div class="swot-cell swot-s"><h4>优势 Strengths</h4><p>规模制造、全球渠道、多品牌矩阵、高 ROE 与稳健现金流。</p></div>
+        <div class="swot-cell swot-w"><h4>劣势 Weaknesses</h4><p>国内增量见顶、价格战内卷底色、ToB 新业务（机器人）仍波动。</p></div>
+        <div class="swot-cell swot-o"><h4>机会 Opportunities</h4><p>新兴市场渗透、结构升级均价提升、ToB 工业技术第二曲线。</p></div>
+        <div class="swot-cell swot-t"><h4>威胁 Threats</h4><p>关税扰动、跨界生态颠覆、原材料价格波动、国补退坡。</p></div>
+      </div>
+
+      <div class="dim-conflict">
+        <h4>维度冲突检测</h4>
+        <div class="conflict-row"><span class="conflict-label">最看多</span>
+          <span style="color:var(--pos-700);font-weight:700"><span class="dot dot-green"></span>竞争格局</span>
+          <span class="conflict-arrow">— 白电 CR5&gt;85%<a class="ref" href="https://news.cheaa.com/2026/0730/656912.shtml">🔗</a> 极高寡占，龙头盈利确定性强</span></div>
+        <div class="conflict-row"><span class="conflict-label">最看空维度</span>
+          <span style="color:var(--neg-700);font-weight:700"><span class="dot dot-red"></span>外部因素</span>
+          <span class="conflict-arrow">— 关税+国补退坡不确定性，外销边际承压</span></div>
+        <div class="conflict-interp"><strong>冲突解读：</strong>行业"内部格局极好、外部环境变量多"——投资核心矛盾不在竞争而在于外生政策与贸易节奏，需重点跟踪国补延续性与关税演变。</div>
+      </div>
+
+      <h3>反共识检验</h3>
+      <div class="reverse-note"><strong>如果上述分析错了，最可能错在哪里？</strong>（以下为认知盲区，不构成买卖建议）</div>
+      <p><strong>生命周期误判风险：</strong>本报告判定"国内成熟"，但若家电被 AIoT/全屋智能重新定义为"算力终端"，渗透率口径需重写，行业可能从成熟跳回成长，当前估值体系将系统性重估。</p>
+      <p><strong>盲区变量：</strong>⚠️ 未做专家验证——本报告基于公开信息与财报，未触达产业一线专家，对渠道库存真实水位、经销商资金链、海外建厂落地节奏的判断存在信息差。</p>
+      <p><strong>推翻信号一：</strong>若美的/格力/海尔任一连续两季度国内市占率合计下降&gt;3 个百分点，且伴随价格战重启（线上均价环比连降），则"格局固化"假设被推翻，护城河评级下调。</p>
+      <p><strong>推翻信号二：</strong>若美国对华家电关税在现有基础上再加征 &gt;10 个百分点，且美的海外制造基地产能承接不及预期（海外收入占比下滑&gt;5pp），则"出海第二曲线"假设被推翻，成长逻辑打折。</p>
+
+      <h3>OIE 认知迭代待办</h3>
+      <div class="insight"><strong>下一步该验证哪个假设？</strong></div>
+      <ul class="tracking-list">
+        <li><span class="track-name">待验证假设一：</span><span class="track-signal">国补退坡后更新需求能否自然接续——路径：跟踪 2026 年排产与渠道库存（产业在线/奥维云网月度数据交叉验证）。</span></li>
+        <li><span class="track-name">待验证假设二：</span><span class="track-signal">出海第二曲线确定性——路径：访谈海外业务一线或核查海外基地产能利用率与 OBM 收入占比变化。</span></li>
+      </ul>
+
+      <h3>待跟踪指标</h3>
+      <ul class="tracking-list">
+        <li><span class="track-name">指标一：空调内销出货量同比</span><span class="track-now">当前 +16.5%<a class="ref" href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf">🔗</a>(2025.6)</span><span class="track-arrow">→</span><span class="track-signal">触发阈值：连续两月转负 → 内销景气拐点确认</span></li>
+        <li><span class="track-name">指标二：行业产能利用率</span><span class="track-now">当前 72%<a class="ref" href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml">🔗</a></span><span class="track-arrow">→</span><span class="track-signal">触发阈值：&lt;70% 且库存同比+20% → 价格战预警</span></li>
+        <li><span class="track-name">指标三：美的海外收入占比</span><span class="track-now">当前 41.5%<a class="ref" href="https://www.cfen.com.cn/xw/kj/kjxxzl/202504/t20250401_873444.html">🔗</a>(2024)</span><span class="track-arrow">→</span><span class="track-signal">触发阈值：下滑&gt;5pp → 出海逻辑削弱</span></li>
+      </ul>
+    </section>
+</div>
+</div>
+
+<div class="step-card" id="src-summary">
+<div class="step-head"><div class="step-num-watermark">10</div><div class="step-head-text">
+<div class="step-num">SOURCES</div>
+<div class="step-title">数据来源汇总</div>
+<div class="step-sub">可核查链接 · 四级颗粒度</div>
+</div></div>
+<div class="step-body">
+<section class="section reveal" id="src-summary">
+      
+      <div class="table-wrap">
+        <table class="src-table">
+          <thead><tr><th>维度/用途</th><th>来源名称</th><th>可核查链接</th></tr></thead>
+          <tbody>
+            <tr><td>行业规模/出口</td><td>中国家用电器协会《2024中国家电业》</td><td><a href="https://www.cheaa.org/contents/116/12403.html" target="_blank" rel="noopener">cheaa.org/contents/116/12403.html</a></td></tr>
+            <tr><td>全品类零售额</td><td>奥维云网(AVC)推总·国金证券周报</td><td><a href="https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/790635803943/index.phtml" target="_blank" rel="noopener">sina.com.cn 研报</a></td></tr>
+            <tr><td>产能利用率/保有量</td><td>中国家电协会新闻《新品迭代放缓》</td><td><a href="https://news.cheaa.com/2026/0730/656912.shtml" target="_blank" rel="noopener">news.cheaa.com/2026/0730/656912</a></td></tr>
+            <tr><td>生命周期/CR</td><td>雪球《美的集团深度价值投资研究》</td><td><a href="https://xueqiu.com/1731385817/402293138" target="_blank" rel="noopener">xueqiu.com/1731385817</a></td></tr>
+            <tr><td>美的财务/分红</td><td>新浪财经《每10股派35元》</td><td><a href="https://finance.sina.cn/2025-03-29/detail-inerhvur6421367.d.html" target="_blank" rel="noopener">finance.sina.cn 2025-03-29</a></td></tr>
+            <tr><td>海外/ToB/库卡</td><td>证券时报《美的业绩说明会》</td><td><a href="https://www.stcn.com/article/detail/1657436.html" target="_blank" rel="noopener">stcn.com/article/1657436</a></td></tr>
+            <tr><td>空调市占率</td><td>今日头条/红星新闻 年报引用奥维</td><td><a href="https://www.toutiao.com/article/7498236942375567899/" target="_blank" rel="noopener">toutiao.com 749823694</a></td></tr>
+            <tr><td>格力财务</td><td>搜狐财经《格力2024年报》</td><td><a href="https://www.sohu.com/a/889655603_122014422" target="_blank" rel="noopener">sohu.com/a/889655603</a></td></tr>
+            <tr><td>海尔财务</td><td>中证智财《海尔智家2024年报》</td><td><a href="https://newzzbcx.cs.com.cn/cxnews.html?name=new20250328104201xqrmzhar" target="_blank" rel="noopener">newzzbcx.cs.com.cn</a></td></tr>
+            <tr><td>美的估值/分位</td><td>亿牛网 美的集团(000333)</td><td><a href="https://eniu.com/gu/Sz000333" target="_blank" rel="noopener">eniu.com/gu/Sz000333</a></td></tr>
+            <tr><td>2025H1 景气</td><td>国信证券《家电行业中报前瞻》</td><td><a href="https://pdf.dfcfw.com/pdf/H3_AP202507151709408667_1.pdf" target="_blank" rel="noopener">pdf.dfcfw.com 研报</a></td></tr>
+            <tr><td>美的ROE/研发</td><td>界面新闻《美的2024年报》</td><td><a href="https://m.jiemian.com/article/12538811.html" target="_blank" rel="noopener">m.jiemian.com/12538811</a></td></tr>
+            <tr><td>股息率/ROE(TTM)</td><td>Yahoo Finance 关键统计</td><td><a href="https://hk.finance.yahoo.com/quote/000333.SZ/key-statistics/" target="_blank" rel="noopener">hk.finance.yahoo.com</a></td></tr>
+            <tr><td>2025H1 空冰洗出货</td><td>产业在线·银河投研</td><td><a href="https://ima.qq.com/wiki/?shareId=99a99f52f6b37010b6e5a08876a7e1b92d29404182d8788c3c2661868b986310" target="_blank" rel="noopener">ima.qq.com 产业在线</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:13px;color:var(--text-secondary);">链接策略：权威源给官方披露页；研报/新闻给稳定摘要页；无稳定 URL 则保留「来源名+标题+日期」署名，禁止裸名、禁止编造。关键数据均附可点击来源。</p>
+    </section>
+</div>
+</div>
+
+<div style="text-align:center;padding:30px;color:var(--text-secondary);font-size:13px;border-top:1px solid var(--gray-light);">
+      <p><strong style="color:var(--navy);">免责声明</strong></p>
+      <p>本报告基于公开信息和 AI 分析自动生成，所有内容仅供参考，<strong>不构成任何投资建议</strong>。</p>
+      <p>投资有风险，决策需谨慎。</p>
+      <p style="margin-top:8px;color:var(--navy);font-weight:600;">八维行业分析 | 分析日期：2026-08-18 | 作者：松幽</p>
+      <p style="margin-top:8px;color:var(--navy);font-weight:600;">公众号「松幽舒苑」 · 视频号「松幽Ai提效」</p>
+    </div>
+
+</div><!-- /main-wrap -->
+
+<script>
+/* 入场动效：无 JS 兜底可见 */
+(function(){
+  var btn=document.getElementById('themeToggle');
+  function sync(){btn.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙';}
+  sync();
+  btn.addEventListener('click',function(){
+    var dark=document.documentElement.getAttribute('data-theme')!=='dark';
+    document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+    try{localStorage.setItem('eightdim-theme',dark?'dark':'light');}catch(e){}
+    sync();
+  });
+  var nav=document.querySelector('.side-nav');
+  var anchors=['dim1','dim2','dim3','dim4','dim5','dim6','dim7','dim8','conclusion','src-summary'];
+  if('IntersectionObserver' in window){
+    anchors.forEach(function(id){
+      var s=document.getElementById(id); if(!s)return;
+      new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var links=document.querySelectorAll('.side-nav a');links.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+id);});}});},{rootMargin:'-20% 0px -70% 0px'}).observe(s);
+    });
+  }
+  var prog=document.getElementById('topProgress');
+  if(prog){window.addEventListener('scroll',function(){var h=document.documentElement;var d=(h.scrollHeight-h.clientHeight)||1;var p=Math.max(0,Math.min(100,(h.scrollTop||document.body.scrollTop)/d*100));prog.style.setProperty('--p',p.toFixed(1)+'%');},{passive:true});}
+})();
+</script>
+</body>
+</html>

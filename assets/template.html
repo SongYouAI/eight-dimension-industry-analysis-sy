@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<!--
+  ══════════════════════════════════════════════════════════════════════
+  八维行业分析报告 · 模板 v2.0（对齐七步财报分析报告版式）
+  设计系统：深空蓝 #0a1628 + Stripe 紫 #635bff + 琥珀金 #c8943b
+  用法：复制本文件，替换 {占位符}，填充八维内容即可。禁止手改 CSS 变量。
+  数据图表：C1 市场规模双序列 / C2 可比 PE 对比 / C3 八维评级雷达（SVG 离线自包含）
+  ══════════════════════════════════════════════════════════════════════
+-->
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{行业名称} · 八维行业分析报告</title>
+<style>
+/* ═══════════ ① 设计令牌（Design Tokens · Stripe + Apple + Tesla） ═══════════ */
+:root {
+    --navy:#0a1628; --navy-mid:#152238; --navy-deep:#1a2744;
+    --purple:#635bff; --purple-deep:#4f46e5;
+    --gold:#c8943b; --gold-light:#d4a853;
+    --white:#ffffff; --off-white:#f5f6fa;
+    --gray-light:#e2e5ec; --gray-border:#c4c8ce;
+    --text:#1a1a2e; --text-secondary:#5a6178; --text-muted:#6b7280;
+    --green:#0d7c3b; --red:#b71c1c; --blue:#1e5fb4;
+    --good:#0d7c3b; --bad:#b71c1c; --warn:#c8943b; --info:#1e5fb4;
+    --risk-bg:#fdeaea; --risk-bd:#b71c1c;
+    --opp-bg:#e8f5e9;  --opp-bd:#0d7c3b;
+    --info-bg:#eaf1fb; --info-bd:#1e5fb4;
+    --shadow-sm:0 1px 3px rgba(10,22,40,0.06);
+    --shadow-md:0 4px 12px rgba(10,22,40,0.08);
+    --shadow-lg:0 12px 32px rgba(10,22,40,0.12);
+    --radius-sm:8px; --radius-md:12px; --radius-lg:20px;
+    --chart-1:#635bff; --chart-2:#0d7c3b; --chart-3:#b71c1c;
+    --chart-4:#c8943b; --chart-5:#5b8def; --chart-6:#2e8b57;
+    --tier-online:#7c3aed;
+    --fs-hero:42px; --fs-h2:22px; --fs-h3:17px;
+    --fs-body:15px; --fs-sm:13px; --fs-xs:11px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+    font-family:"PingFang SC","Inter","SF Pro Display","Microsoft YaHei",sans-serif;
+    background:linear-gradient(135deg,#f5f6fa 0%,#ebeef5 100%);
+    color:var(--text); line-height:1.75; font-size:15px;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+body::before{
+    content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.main-wrap{max-width:1100px;margin:0 auto;padding:0 30px;}
+
+/* ═══════════ ② Hero 深色场景 ═══════════ */
+.hero{
+    background:linear-gradient(135deg,#0a1628 0%,#152238 50%,#1a2744 100%);
+    color:var(--white); padding:70px 0 60px;
+    border-bottom:3px solid var(--gold); position:relative; overflow:hidden;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.hero::before{
+    content:''; position:absolute; inset:0; z-index:1;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='400' viewBox='0 0 1200 400'%3E%3Cpath d='M0 300 C200 250 400 350 600 280 S1000 200 1200 240' fill='none' stroke='%23635bff' stroke-width='2'/%3E%3Cpath d='M0 340 C200 300 400 380 600 320 S1000 250 1200 290' fill='none' stroke='%23c8943b' stroke-width='2'/%3E%3C/svg%3E");
+    background-size:cover; background-position:center right; opacity:.15; pointer-events:none;
+}
+.hero::after{
+    content:''; position:absolute; top:-50%; right:-10%; width:600px; height:600px;
+    background:radial-gradient(circle,rgba(99,91,255,0.12) 0%,transparent 70%);
+    border-radius:50%; pointer-events:none; z-index:1;
+}
+.hero-content{position:relative; z-index:2; max-width:1100px; margin:0 auto; padding:0 40px;}
+.hero h1{font-size:42px; font-weight:800; letter-spacing:1px; margin-bottom:16px; color:#f0e6d0; text-shadow:0 2px 12px rgba(200,148,59,0.25);}
+.hero .badge{display:inline-block; background:rgba(200,148,59,0.15); border:1.5px solid rgba(200,148,59,0.4); color:#e0c17d; padding:7px 22px; border-radius:20px; font-size:14px; font-weight:700; letter-spacing:2px; margin-bottom:22px; backdrop-filter:blur(4px);}
+.hero .subtitle{font-size:16px; opacity:.85; max-width:650px; line-height:1.6;}
+.hero .meta-row{display:flex; gap:35px; margin-top:35px; flex-wrap:wrap;}
+.hero .mt{display:flex; flex-direction:column;}
+.hero .mt-l{font-size:10px; text-transform:uppercase; letter-spacing:2px; opacity:.5; color:#8a9bbf;}
+.hero .mt-v{font-size:14px; margin-top:6px; opacity:.95; color:#e8e8e8; font-weight:600;}
+
+/* ═══════════ ③ 目录卡（Apple 毛玻璃 + 明显边框） ═══════════ */
+.toc-card{
+    background:rgba(255,255,255,0.92); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:2px solid var(--gray-border); border-radius:var(--radius-lg);
+    padding:26px 30px; margin:30px auto 50px; max-width:1100px; box-shadow:var(--shadow-md);
+}
+.toc-title{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:2px; color:var(--text-secondary); margin-bottom:16px;}
+.toc-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px;}
+.toc-item{display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--radius-sm); cursor:pointer; transition:all .2s; background:var(--surface);
+  border:1.5px solid var(--gray-border); border-left:4px solid var(--gray-light); box-shadow:var(--shadow-sm);}
+.toc-item:hover{background:rgba(99,91,255,0.06); border-color:var(--purple); border-left-color:var(--purple); transform:translateX(2px);}
+.toc-num{font-size:11px; font-weight:800; color:var(--purple); background:rgba(99,91,255,0.1); border-radius:6px; padding:2px 8px; min-width:28px; text-align:center;}
+.toc-t{font-size:14px; font-weight:600; color:var(--text);}
+.toc-d{font-size:12px; color:var(--text-secondary); margin-top:2px;}
+
+/* ═══════════ ④ 执行摘要 + KPI ═══════════ */
+.exec-summary{background:var(--white); border-radius:var(--radius-lg); padding:40px; box-shadow:var(--shadow-md); border:1px solid var(--gray-light); margin-bottom:40px;}
+.exec-summary h2{font-size:var(--fs-h2); font-weight:800; color:var(--navy); margin-bottom:20px; padding-bottom:14px; border-bottom:2px solid var(--gold);}
+.exec-summary p{color:var(--text-secondary); margin-bottom:12px; font-size:14.5px;}
+.exec-summary strong{color:var(--navy); background:linear-gradient(180deg,transparent 62%,rgba(200,148,59,0.22) 62%); padding:0 3px; font-weight:800;}
+.kpi-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin:26px 0;}
+.kpi-card{
+    background:linear-gradient(135deg,#ffffff 0%,#f5f6fa 100%);
+    border-radius:16px; padding:22px 24px; border:1px solid rgba(99,91,255,0.08);
+    box-shadow:0 1px 3px rgba(10,22,40,0.04),0 4px 12px rgba(10,22,40,0.03);
+    position:relative; overflow:hidden; transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+.kpi-card::before{content:''; position:absolute; top:0; left:0; height:3px; width:100%; background:linear-gradient(90deg,#635bff 0%,#4f46e5 50%,#c8943b 100%); opacity:.85;}
+.kpi-card:hover{transform:translateY(-3px); box-shadow:0 4px 12px rgba(99,91,255,0.10),0 12px 32px rgba(10,22,40,0.08); border-color:rgba(99,91,255,0.18);}
+.kpi-label{font-size:11px; color:#6b7280; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;}
+.kpi-value{font-size:30px; font-weight:800; color:#0a1628; line-height:1.1; font-feature-settings:"tnum"; letter-spacing:-1px;}
+.kpi-unit{font-size:14px; font-weight:600; color:#6b7280; margin-left:3px;}
+.kpi-delta{display:inline-flex; align-items:center; gap:3px; font-size:12px; font-weight:700; margin-top:8px; padding:3px 9px; border-radius:10px;}
+.kpi-delta.up{background:rgba(214,51,132,0.10); color:#d63384;}   /* 涨红 */
+.kpi-delta.down{background:rgba(22,163,74,0.10); color:#16a34a;} /* 跌绿 */
+.kpi-delta.flat{background:rgba(107,114,128,0.10); color:#6b7280;}
+
+/* ═══════════ ⑤ Step 维度卡 + 数字水印头部 ═══════════ */
+.step-card{background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); margin-bottom:44px; overflow:hidden; border:1px solid var(--gray-light);}
+.step-head{position:relative; padding:28px 34px 22px; margin:0 0 8px; border-bottom:1px solid rgba(99,91,255,0.10); overflow:hidden; background:linear-gradient(180deg,#fbfbff 0%,#ffffff 100%);}
+.step-head::before{content:''; position:absolute; top:0; left:0; height:2px; width:64px; background:linear-gradient(90deg,#635bff,#c8943b);}
+.step-num-watermark{position:absolute; top:-20px; right:-6px; font-size:180px; font-weight:900; color:rgba(99,91,255,0.05); line-height:1; letter-spacing:-10px; pointer-events:none; user-select:none; font-feature-settings:"tnum";}
+.step-head-text{position:relative; z-index:2; max-width:82%;}
+.step-num{font-size:12px; font-weight:800; color:#635bff; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px;}
+.step-title{font-size:28px; font-weight:800; color:#0a1628; line-height:1.2; letter-spacing:-1px; margin-bottom:6px;}
+.step-sub{font-size:14px; color:#6b7280; font-weight:500; line-height:1.5;}
+.step-body{padding:24px 34px 32px;}
+.step-body h3{position:relative; padding-left:14px; margin:26px 0 14px; font-size:18px; font-weight:800; color:#0a1628; letter-spacing:-.3px;}
+.step-body h3::before{content:''; position:absolute; left:0; top:6px; height:calc(100% - 12px); width:4px; border-radius:2px; background:linear-gradient(180deg,#635bff,#c8943b);}
+.step-body p{margin:10px 0; color:#374151; font-size:14.5px;}
+.step-body p strong{background:linear-gradient(180deg,transparent 62%,rgba(200,148,59,0.22) 62%); padding:0 3px; font-weight:800; color:#0a1628; border-radius:2px;}
+
+/* ═══════════ ⑥ 方法卡（紫蓝底座卡 · table-cell 稳定两列 + 细分隔线 + 阴影） ═══════════ */
+.method-card{
+    background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 100%);
+    border-radius:14px; border:1px solid rgba(99,91,255,0.14);
+    padding:18px 22px 14px; margin:18px 0;
+    position:relative; overflow:hidden;
+    box-shadow:0 1px 3px rgba(99,91,255,0.06),0 4px 14px rgba(99,91,255,0.04);
+}
+.method-card::after{content:''; position:absolute; top:0; left:0; height:100%; width:4px; background:linear-gradient(180deg,#635bff,#c8943b);}
+.method-card .mc-icon{font-size:22px; flex-shrink:0; line-height:1.4;}
+.method-card .mc-body{flex:1;}
+.method-card .mc-title{font-size:13px; font-weight:800; color:#635bff; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid rgba(99,91,255,0.14);}
+.method-card .mc-row{display:table; width:100%; border-collapse:collapse; padding:8px 0; font-size:13.5px; line-height:1.75; border-top:1px dashed rgba(99,91,255,0.10);}
+.method-card .mc-row:first-of-type{border-top:none; padding-top:4px;}
+.method-card .mc-row b{display:table-cell; width:120px; padding:2px 14px 2px 0; vertical-align:top; color:#1f2937; font-weight:700; white-space:nowrap;}
+.method-card .mc-row span{display:table-cell; color:#374151; word-break:break-word; vertical-align:top; line-height:1.75;}
+
+/* ═══════════ ⑦ 人话卡（术语 → 大白话 → 类比） ═══════════ */
+.human-term-card{
+    display:flex; gap:12px; align-items:flex-start;
+    padding:14px 18px; margin:16px 0;
+    background:linear-gradient(90deg,#f0f4ff 0%,#ffffff 60%);
+    border-radius:10px; border-left:3px solid #635bff;
+    font-size:14px; line-height:1.75; color:#1f2937;
+}
+.human-term-card .ht-icon{font-size:20px; line-height:1.3; flex-shrink:0;}
+.human-term-card .ht-body{flex:1;}
+.human-term-card .ht-term{font-weight:800; color:#4f46e5;}
+.human-term-card .ht-plain{color:#4b5563;}
+
+/* ═══════════ ⑧ 反面假设 reverse-note ═══════════ */
+.reverse-note{
+    border-left:3px solid #94a3b8; padding:10px 16px; margin:14px 0;
+    background:#f8fafc; border-radius:0 10px 10px 0;
+    font-size:13.5px; color:#475569; line-height:1.7;
+}
+.reverse-note strong{background:none; color:#0a1628; font-weight:800;}
+
+/* ═══════════ ⑨ 洞察 + 盯什么（insight-card） ═══════════ */
+.insight{border-left:4px solid var(--purple); padding:14px 18px; margin:16px 0; background:#f5f3ff; border-radius:0 10px 10px 0; font-size:14px; line-height:1.75; color:#374151;}
+.insight strong{color:#4f46e5;}
+.insight-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin:22px 0;}
+.insight-card{
+    background:linear-gradient(135deg,#ffffff 0%,#f9faff 100%);
+    border-radius:14px; padding:20px 22px; border:1px solid rgba(99,91,255,0.08);
+    border-top:3px solid #635bff; box-shadow:0 1px 3px rgba(10,22,40,0.04); transition:all .25s;
+}
+.insight-card:hover{transform:translateY(-2px); box-shadow:0 6px 18px rgba(99,91,255,0.10);}
+.insight-card .insight-icon{font-size:22px; margin-bottom:6px; line-height:1;}
+.insight-card .insight-title{font-weight:800; font-size:15px; color:#0a1628; margin-bottom:8px;}
+.insight-card .insight-desc{font-size:13px; color:#4b5563; line-height:1.7;}
+.watch-what ul{margin:8px 0 0 18px; padding:0;}
+.watch-what li{margin:5px 0; color:#4b5563; font-size:13px; line-height:1.7;}
+.watch-what li b{color:#0a1628;}
+
+/* ═══════════ ⑩ 数据表 data-table-v2 ═══════════ */
+.table-wrap{border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(10,22,40,0.04),0 4px 14px rgba(10,22,40,0.04); margin:20px 0; border:1px solid rgba(99,91,255,0.08);}
+table{width:100%; border-collapse:separate; border-spacing:0; background:#fff;}
+table thead th{
+    background:linear-gradient(135deg,#0a1628 0%,#152238 60%,#1a2744 100%);
+    color:#fff; padding:14px 18px; font-size:12px; font-weight:700; text-align:left;
+    letter-spacing:.5px; border-bottom:2px solid #c8943b;
+}
+table thead th.num{text-align:right;}
+table tbody td{padding:13px 18px; border-bottom:1px solid rgba(99,91,255,0.05); font-size:13.5px; color:#1f2937; line-height:1.5;}
+table tbody td.num{text-align:right; font-feature-settings:"tnum"; font-weight:700; color:#0a1628;}
+table tbody td.highlight{background:linear-gradient(90deg,rgba(99,91,255,0.07),rgba(99,91,255,0.0)); font-weight:700; color:#0a1628;}
+table tbody tr:nth-child(even) td{background:#fafbff;}
+table tbody tr:hover td{background:rgba(99,91,255,0.04);}
+table tbody tr:last-child td{border-bottom:none;}
+/* 对比表条件着色（八维竞品对标） */
+.ct-best{background:#e8f5e9 !important; font-weight:700;}
+.ct-worst{background:#fdeaea !important;}
+.ct-highlight{background:#fef3e2 !important;}
+/* 信号快照表 */
+.signal-table td.s-bullish{color:var(--good); font-weight:700;}
+.signal-table td.s-neutral{color:var(--warn); font-weight:700;}
+.signal-table td.s-bearish{color:var(--bad); font-weight:700;}
+.signal-table .s-reason{color:var(--text-secondary); font-size:13px; font-weight:400;}
+.dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:middle;}
+.dot-green{background:#16a34a;} .dot-yellow{background:#f59e0b;} .dot-red{background:#ef4444;} .dot-gold{background:#c8943b;}
+
+/* ═══════════ ⑪ 风险卡 risk-card ═══════════ */
+.risk-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:24px 0 8px;}
+.risk-card{background:#ffffff; border-radius:14px; padding:20px 22px; border:1px solid rgba(99,91,255,0.08); border-left:4px solid; box-shadow:0 1px 3px rgba(10,22,40,0.04); position:relative; transition:all .25s;}
+.risk-card:hover{transform:translateX(2px); box-shadow:0 4px 14px rgba(10,22,40,0.08);}
+.risk-card.risk-warn{border-left-color:#f59e0b; background:linear-gradient(90deg,#fffbeb 0%,#ffffff 60%);}
+.risk-card.risk-high{border-left-color:#ef4444; background:linear-gradient(90deg,#fef2f2 0%,#ffffff 60%);}
+.risk-card.risk-info{border-left-color:#3b82f6; background:linear-gradient(90deg,#eff6ff 0%,#ffffff 60%);}
+.risk-card-icon{font-size:24px; margin-bottom:6px; line-height:1;}
+.risk-card-title{font-weight:800; font-size:15px; color:#0a1628; margin-bottom:6px;}
+.risk-card-desc{font-size:12.5px; color:#4b5563; line-height:1.65;}
+
+/* ═══════════ ⑫ 徽章（状态 / 档位 / 评级） ═══════════ */
+.status-badge{display:inline-block; padding:3px 11px; border-radius:12px; font-size:11.5px; font-weight:800; margin-right:8px; letter-spacing:.3px;}
+.status-badge.status-resolved{background:linear-gradient(135deg,#d1fae5,#a7f3d0); color:#047857; border:1px solid rgba(4,120,87,0.15);}
+.status-badge.status-pending{background:linear-gradient(135deg,#fef3c7,#fde68a); color:#92400e; border:1px solid rgba(146,64,14,0.15);}
+.status-badge.status-gap{background:linear-gradient(135deg,#fee2e2,#fecaca); color:#991b1b; border:1px solid rgba(153,27,27,0.15);}
+.status-badge.status-info{background:linear-gradient(135deg,#dbeafe,#bfdbfe); color:#1e40af; border:1px solid rgba(30,64,175,0.15);}
+.tier-badge{display:inline-block; padding:3px 12px; border-radius:12px; font-size:11.5px; font-weight:800; letter-spacing:1px; margin-left:8px; vertical-align:middle; white-space:nowrap;}
+.tier-rich{background:#e8f5e9; color:#0d7c3b; border:1.5px solid #0d7c3b;}
+.tier-medium{background:#eaf1fb; color:#1e5fb4; border:1.5px solid #1e5fb4;}
+.tier-lean{background:#fef3e2; color:#a86a12; border:1.5px solid #c8943b;}
+.tier-online{background:#f0eaf7; color:#7c3aed; border:1.5px solid #7c3aed;}
+.rating-badge{display:inline-block; padding:5px 16px; border-radius:999px; font-size:13px; font-weight:700; margin-left:10px; border:1.5px solid; vertical-align:middle; white-space:nowrap;}
+.rating-buy{background:#e8f5e9; color:#0d7c3b; border-color:#0d7c3b;}
+.rating-hold{background:#fef3e2; color:#a86a12; border-color:#c8943b;}
+.rating-sell{background:#fdeaea; color:#b71c1c; border-color:#b71c1c;}
+
+/* 评级量表 gauge（八维 🟢🟡🔴 可视化） */
+.gauge{display:inline-flex; align-items:center; gap:3px; padding:4px 7px; border:1px solid var(--gray-border); border-radius:7px; background:var(--white); vertical-align:middle;}
+.gauge i{display:block; width:8px; height:14px; border-radius:2px; background:var(--gray-light);}
+.gauge i.g{background:linear-gradient(180deg,#4ade80,#16a34a);}
+.gauge i.y{background:linear-gradient(180deg,#fbbf24,#f59e0b);}
+.gauge i.r{background:linear-gradient(180deg,#f87171,#ef4444);}
+.gauge b{font-size:12px; font-weight:700; margin-left:4px;}
+.cap-g{color:#16a34a;} .cap-y{color:#d97706;} .cap-r{color:#dc2626;}
+
+/* ═══════════ ⑬ 结论框（金色渐变）+ 数据来源框 ═══════════ */
+.conclusion-wrap{
+    background:linear-gradient(135deg,#fdf8ee 0%,#f7efd0 100%);
+    border-radius:var(--radius-md); padding:28px; margin:28px 0;
+    border:1px solid rgba(200,148,59,0.25); box-shadow:var(--shadow-sm);
+}
+.conclusion-wrap .ct{font-size:18px; font-weight:800; color:var(--navy); margin-bottom:16px; padding-bottom:12px; border-bottom:2px solid var(--gold);}
+.conclusion-wrap .ctext{font-size:14px; line-height:1.85; color:var(--text-secondary);}
+.conclusion-wrap .ctext strong{color:var(--navy);}
+.source-box{background:var(--off-white); border:1px solid var(--gray-light); border-left:4px solid var(--blue); border-radius:var(--radius-md); padding:14px 18px; margin:16px 0; font-size:13px; color:var(--text-secondary);}
+.source-box .sb-title{font-size:13px; font-weight:800; color:var(--navy); margin-bottom:4px;}
+.source-box a{color:var(--blue); text-decoration:none;}
+.source-box a:hover{text-decoration:underline;}
+
+/* 正文引用角标（克制版——小上标、灰色半透明，不打断数字阅读） */
+a.ref{color:var(--text-muted); text-decoration:none; font-size:.82em; vertical-align:super; opacity:.5; margin:0 1px; line-height:0; font-weight:400;}
+a.ref:hover{opacity:1; color:var(--purple);}
+[data-theme="dark"] a.ref{color:#94a3b8;}
+[data-theme="dark"] a.ref:hover{color:#a5b4fc;}
+
+/* ═══════════ ⑭ SWOT / 维度冲突 / 跟踪列表 ═══════════ */
+.swot-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0;}
+.swot-cell{padding:16px 18px; border-radius:var(--radius-md); font-size:13.5px; line-height:1.7; border:1px solid; box-shadow:var(--shadow-sm);}
+.swot-cell h4{font-size:14.5px; font-weight:800; margin-bottom:7px;}
+.swot-s{background:#e8f5e9; border-color:#bbe5c8;} .swot-s h4{color:#0d7c3b;}
+.swot-w{background:#fdeaea; border-color:#f3c2c2;} .swot-w h4{color:#b71c1c;}
+.swot-o{background:#eaf1fb; border-color:#c4d7ef;} .swot-o h4{color:#1e5fb4;}
+.swot-t{background:#fef3e2; border-color:#ecd9a8;} .swot-t h4{color:#a86a12;}
+.dim-conflict{background:linear-gradient(135deg,#fffbeb,#fef2f2); border:1px solid #f59e0b; border-radius:var(--radius-md); padding:18px 22px; margin:18px 0;}
+.dim-conflict h4{font-size:15px; color:#991b1b; margin-bottom:12px; font-weight:800;}
+.dim-conflict .conflict-row{display:flex; justify-content:space-between; align-items:center; font-size:13.5px; padding:7px 0; gap:12px; flex-wrap:wrap;}
+.dim-conflict .conflict-label{font-weight:700; min-width:86px; color:var(--text);}
+.dim-conflict .conflict-arrow{color:var(--text-secondary); flex:1;}
+.dim-conflict .conflict-interp{margin-top:12px; padding-top:12px; border-top:1px dashed var(--gray-border); font-size:14px; line-height:1.7;}
+.tracking-list{list-style:none; padding:0;}
+.tracking-list li{padding:12px 16px; margin:7px 0; border-radius:var(--radius-sm); border:1px solid var(--gray-light); font-size:14px; line-height:1.6; background:var(--white); box-shadow:var(--shadow-sm); display:flex; flex-wrap:wrap; align-items:baseline; gap:4px;}
+.tracking-list .track-name{font-weight:700; color:var(--navy);}
+.tracking-list .track-now{color:var(--text-secondary); margin:0 6px; font-variant-numeric:tabular-nums;}
+.tracking-list .track-arrow{color:var(--purple); margin:0 4px;}
+.tracking-list .track-signal{color:var(--text); font-size:13.5px;}
+
+/* ═══════════ ⑮ 图表卡片（SVG 离线自包含 C1/C2/C3） ═══════════ */
+.chart-card{background:var(--white); border:1px solid var(--gray-light); border-radius:var(--radius-md); box-shadow:var(--shadow-sm); margin:22px 0; overflow:hidden;}
+.chart-head{padding:12px 18px; font-size:15px; font-weight:700; color:var(--navy); border-bottom:1px solid var(--gray-light); background:var(--off-white);}
+.chart-card svg{display:block; width:100%; height:auto; margin:0 auto;}
+.chart-title{font-size:14.5px; font-weight:700; color:var(--navy); margin-bottom:3px;}
+.chart-note{font-size:11.5px; color:var(--text-muted); margin-bottom:12px;}
+.legend{display:flex; gap:18px; margin-top:10px; font-size:12.5px; color:var(--text-secondary);}
+.legend .swatch{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:5px; vertical-align:-1px;}
+.bar-chart{margin:16px 0;}
+.bar-row{display:flex; align-items:center; gap:10px; margin:7px 0; font-size:13px;}
+.bar-label{width:120px; flex:none; color:var(--text-secondary); text-align:right;}
+.bar-track{flex:1; height:16px; background:#eef1f5; border-radius:999px; overflow:hidden;}
+.bar-fill{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#4f46e5,#635bff);}
+.bar-fill.gold{background:linear-gradient(90deg,#c8943b,#d4a853);}
+.bar-val{width:54px; flex:none; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums;}
+.svg-axis{stroke:var(--gray-border);}
+.svg-grid{stroke:var(--gray-light); fill:none;}
+.svg-data{fill:rgba(99,91,255,0.16); stroke:#635bff; stroke-width:2.5;}
+.svg-dot{fill:#635bff;}
+.svg-dot.weak{fill:#c8943b;}
+.svg-label{fill:var(--text-secondary); font-size:10.5px; font-weight:600;}
+.svg-bar-primary{fill:#635bff;}
+.svg-bar-energy{fill:#c8943b;}
+.svg-bar-1{fill:#635bff;} .svg-bar-2{fill:#0d7c3b;} .svg-bar-3{fill:#b71c1c;}
+.svg-bar-4{fill:#c8943b;} .svg-bar-5{fill:#5b8def;} .svg-bar-6{fill:#2e8b57;}
+.svg-val{fill:var(--text); font-size:10.5px; font-weight:700;}
+.svg-axis-text{fill:var(--text-muted); font-size:10px;}
+
+/* ═══════════ ⑯ 导航（侧栏 / 进度条 / 深色切换） ═══════════ */
+.theme-toggle{position:fixed; top:18px; right:18px; z-index:60; width:42px; height:42px; border-radius:50%; border:1px solid var(--gray-light); background:var(--white); color:var(--navy); cursor:pointer; font-size:18px; line-height:1; box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; transition:all .2s;}
+.theme-toggle:hover{border-color:var(--gold); transform:scale(1.06);}
+.side-nav{position:fixed; top:120px; left:24px; width:200px; z-index:40; background:var(--white); border:1px solid var(--gray-light); border-radius:var(--radius-md); padding:14px; box-shadow:var(--shadow-sm); max-height:72vh; overflow:auto; transition:opacity .3s ease,transform .3s ease,visibility .3s;}
+.side-nav.nav-hidden{opacity:0; pointer-events:none; transform:translateX(-12px); visibility:hidden;}
+.side-nav .sn-title{font-size:12px; font-weight:800; color:var(--navy); letter-spacing:1px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--gray-light); text-transform:uppercase;}
+.side-nav a{display:block; padding:7px 10px; font-size:13px; color:var(--text-secondary); border-radius:var(--radius-sm); border-left:3px solid transparent; transition:all .2s; text-decoration:none; line-height:1.4;}
+.side-nav a.active{background:var(--navy); color:#fff; border-left-color:var(--gold);}
+.side-nav a:hover{color:var(--navy);}
+@media(min-width:1200px){.main-wrap{max-width:1380px; padding:0 40px 0 248px;}}
+.top-progress{position:sticky; top:0; z-index:45; height:4px; width:100%; display:none; background:linear-gradient(90deg,var(--gold) var(--p,0%),var(--gray-light) 0);}
+@media(max-width:1199px){.side-nav{display:none;} .top-progress{display:block;}}
+
+/* ═══════════ ⑰ 深色模式（data-theme="dark"） ═══════════ */
+[data-theme="dark"]{
+    --navy:#0b1220; --navy-mid:#16233a;
+    --white:#0f1722; --off-white:#0c121b;
+    --gray-light:#243042; --gray-border:#33415a;
+    --text:#e6ebf2; --text-secondary:#9aa7b8;
+    --shadow-sm:0 2px 8px rgba(0,0,0,0.3); --shadow-md:0 4px 16px rgba(0,0,0,0.4); --shadow-lg:0 8px 32px rgba(0,0,0,0.5);
+    --risk-bg:#2a1717; --risk-bd:#e05a5a;
+    --opp-bg:#13251a; --opp-bd:#3fae6a;
+    --info-bg:#13203a; --info-bd:#4f8fe0;
+    --chart-1:#5b9bf0; --chart-2:#3fae6a; --chart-3:#e05a5a; --chart-4:#d9ad5c; --chart-5:#7aa6f5; --chart-6:#3fae6a;
+    --tier-online:#a98fd6;
+}
+[data-theme="dark"] body{background:#0c121b;}
+[data-theme="dark"] body::before{opacity:.04;}
+[data-theme="dark"] .exec-summary,
+[data-theme="dark"] .step-card,
+[data-theme="dark"] .toc-card,
+[data-theme="dark"] .side-nav,
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .chart-card,
+[data-theme="dark"] .source-box{background:var(--white); border-color:var(--gray-border);}
+[data-theme="dark"] .step-head{background:linear-gradient(180deg,#111c30 0%,#0f1722 100%);}
+[data-theme="dark"] .kpi-card{background:linear-gradient(135deg,#1a2744 0%,#0a1628 100%);}
+[data-theme="dark"] .kpi-value{color:#fff;}
+[data-theme="dark"] .step-title{color:#fff;}
+[data-theme="dark"] .step-sub{color:#94a3b8;}
+[data-theme="dark"] .step-body h3{color:#fff;}
+[data-theme="dark"] .step-body p{color:#cbd5e1;}
+[data-theme="dark"] .step-body p strong{color:#fff;}
+[data-theme="dark"] .method-card{background:linear-gradient(135deg,#1a2744 0%,#0a1628 100%); border-color:rgba(99,91,255,0.25);}
+[data-theme="dark"] .method-card .mc-row span{color:#cbd5e1;}
+[data-theme="dark"] .human-term-card{background:linear-gradient(90deg,#152238 0%,#0a1628 60%); color:#cbd5e1;}
+[data-theme="dark"] .human-term-card .ht-plain{color:#cbd5e1;}
+[data-theme="dark"] .reverse-note{background:#152238; color:#cbd5e1; border-left-color:#475569;}
+[data-theme="dark"] .reverse-note strong{color:#fff;}
+[data-theme="dark"] .insight{background:#152238; color:#cbd5e1;}
+[data-theme="dark"] .insight-card{background:linear-gradient(135deg,#1a2744 0%,#152238 100%);}
+[data-theme="dark"] .insight-title{color:#fff;}
+[data-theme="dark"] .insight-desc{color:#cbd5e1;}
+[data-theme="dark"] .watch-what li{color:#cbd5e1;}
+[data-theme="dark"] .watch-what li b{color:#fff;}
+[data-theme="dark"] table{background:#0a1628;}
+[data-theme="dark"] table tbody td{color:#e2e8f0; border-bottom-color:rgba(99,91,255,0.10);}
+[data-theme="dark"] table tbody td.num{color:#fff;}
+[data-theme="dark"] table tbody tr:nth-child(even) td{background:#152238;}
+[data-theme="dark"] table tbody tr:hover td{background:rgba(99,91,255,0.10);}
+[data-theme="dark"] .risk-card{background:linear-gradient(90deg,#152238 0%,#0a1628 60%); border-color:rgba(99,91,255,0.18);}
+[data-theme="dark"] .risk-card-title{color:#fff;}
+[data-theme="dark"] .risk-card-desc{color:#cbd5e1;}
+[data-theme="dark"] .conclusion-wrap{background:#1a160c; border-color:var(--risk-bd);}
+[data-theme="dark"] .conclusion-wrap .ct{color:#fff;}
+[data-theme="dark"] .conclusion-wrap .ctext{color:#cbd5e1;}
+[data-theme="dark"] .tracking-list li{background:var(--white); border-color:var(--gray-border);}
+[data-theme="dark"] .tracking-list .track-name{color:#fff;}
+[data-theme="dark"] .swot-s{background:#13251a;} [data-theme="dark"] .swot-w{background:#2a1717;}
+[data-theme="dark"] .swot-o{background:#13203a;} [data-theme="dark"] .swot-t{background:#1d1606;}
+[data-theme="dark"] .dim-conflict{background:linear-gradient(135deg,#1d1606,#2a1717);}
+[data-theme="dark"] .chart-head{background:var(--off-white); color:#fff;}
+
+/* ═══════════ ⑱ 响应式 ═══════════ */
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);} .risk-grid{grid-template-columns:1fr;} .step-title{font-size:24px;} .step-num-watermark{font-size:140px;}}
+@media(max-width:768px){.main-wrap{padding:0 14px;} .hero{padding:32px 16px;} .hero h1{font-size:26px;} .exec-summary{padding:24px 18px;} .step-body{padding:20px 18px;} .step-head{padding:22px 18px;} .kpi-grid{grid-template-columns:1fr 1fr; gap:12px;} .kpi-value{font-size:19px;}}
+@media(max-width:560px){.kpi-grid{grid-template-columns:1fr;} .step-head-text{max-width:100%;} .step-title{font-size:20px;} .step-num-watermark{font-size:100px;} .swot-grid{grid-template-columns:1fr;}}
+
+/* ═══════════ ⑲ 打印 ═══════════ */
+@media print{
+    body{background:var(--white); margin:0; padding:0;}
+    .hero{background:var(--navy) !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .step-card{break-inside:avoid; page-break-inside:avoid; box-shadow:none; border:1px solid #ddd; margin-bottom:20px;}
+    .chart-card{break-inside:avoid; page-break-inside:avoid;}
+    .conclusion-wrap{break-inside:avoid; page-break-inside:avoid;}
+    table{break-inside:avoid; page-break-inside:avoid;}
+    h2,h3{break-after:avoid; page-break-after:avoid;}
+    p,li{orphans:3; widows:3;}
+    .side-nav,.top-progress,.theme-toggle{display:none !important;}
+    :root,[data-theme="dark"]{--white:#fff; --off-white:#fff; --text:#1a1a2e; --text-secondary:#4a5468; --gray-light:#dde0e5; --gray-border:#c4c8ce; --navy:#0a1628; --navy-mid:#152238;}
+    [data-theme="dark"] .step-card,[data-theme="dark"] .kpi-card{background:#fff !important; border-color:#ddd !important;}
+    [data-theme="dark"] .conclusion-wrap{background:#fff !important; border-color:#c4c8ce !important;}
+    [data-theme="dark"] .step-title,[data-theme="dark"] .kpi-value,[data-theme="dark"] .step-body h3,[data-theme="dark"] .step-body p,[data-theme="dark"] .conclusion-wrap .ct{color:#1a1a2e !important;}
+}
+</style>
+<script>try{var t=localStorage.getItem('eightdim-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+</head>
+<body>
+
+<button id="themeToggle" class="theme-toggle" aria-label="切换深色/亮色模式" title="切换深色模式">🌙</button>
+
+<aside class="side-nav" aria-label="报告章节导航">
+<div class="sn-title">报告导航 · 八维</div>
+<a href="#dim1">① 概览</a><a href="#dim2">② 模式</a><a href="#dim3">③ 规模</a><a href="#dim4">④ 护城河</a>
+<a href="#dim5">⑤ 格局</a><a href="#dim6">⑥ 估值</a><a href="#dim7">⑦ 外部</a><a href="#dim8">⑧ 景气</a>
+<a href="#conclusion">综合结论</a><a href="#src-summary">数据来源</a>
+</aside>
+<div class="top-progress" id="topProgress"></div>
+
+<!-- ══════════ Hero 深色场景 ══════════ -->
+<div class="hero"><div class="hero-content">
+<h1>{行业名称} · 八维行业分析报告</h1>
+<div class="badge">{生命周期标签} · {颗粒度}</div>
+<p class="subtitle">产业生命周期驱动 · 多源数据并行采集 · 八维自适应权重 · 案例锚点 {公司名 代码}</p>
+<div class="meta-row">
+<div class="mt"><span class="mt-l">分析日期</span><span class="mt-v">{YYYY-MM-DD}</span></div>
+<div class="mt"><span class="mt-l">生命周期</span><span class="mt-v">{阶段标签} · 渗透率 ~{XX}%</span></div>
+<div class="mt"><span class="mt-l">地域范围</span><span class="mt-v">{中国/全球/特定区域}市场</span></div>
+<div class="mt"><span class="mt-l">综合吸引力</span><span class="mt-v">{高|中|低} · {偏多|中性|偏空}</span></div>
+</div>
+</div></div>
+
+<div class="main-wrap">
+
+<!-- ══════════ 目录卡 ══════════ -->
+<div class="toc-card">
+<div class="toc-title">📑 报告导航 · 点击跳转</div>
+<div class="toc-grid">
+<div class="toc-item" onclick="document.getElementById('dim1').scrollIntoView({behavior:'smooth'})"><span class="toc-num">01</span><div><span class="toc-t">一、行业概览与生命周期</span><span class="toc-d">阶段定位与渗透率判断</span></div></div>
+<div class="toc-item" onclick="document.getElementById('dim2').scrollIntoView({behavior:'smooth'})"><span class="toc-num">02</span><div><span class="toc-t">二、商业模式可行性</span><span class="toc-d">付费意愿与可持续性</span></div></div>
+<div class="toc-item" onclick="document.getElementById('dim3').scrollIntoView({behavior:'smooth'})"><span class="toc-num">03</span><div><span class="toc-t">三、市场规模与空间</span><span class="toc-d">TAM 与增速测算</span></div></div>
+<div class="toc-item" onclick="document.getElementById('dim4').scrollIntoView({behavior:'smooth'})"><span class="toc-num">04</span><div><span class="toc-t">四、护城河与防守性</span><span class="toc-d">壁垒与替代风险</span></div></div>
+<div class="toc-item" onclick="document.getElementById('dim5').scrollIntoView({behavior:'smooth'})"><span class="toc-num">05</span><div><span class="toc-t">五、竞争格局与盈利性</span><span class="toc-d">份额与可比对标</span></div></div>
+<div class="toc-item" onclick="document.getElementById('dim6').scrollIntoView({behavior:'smooth'})"><span class="toc-num">06</span><div><span class="toc-t">六、估值分析</span><span class="toc-d">可比估值对比</span></div></div>
+<div class="toc-item" onclick="document.getElementById('dim7').scrollIntoView({behavior:'smooth'})"><span class="toc-num">07</span><div><span class="toc-t">七、外部驱动力（PEST）</span><span class="toc-d">政策经济技社</span></div></div>
+<div class="toc-item" onclick="document.getElementById('dim8').scrollIntoView({behavior:'smooth'})"><span class="toc-num">08</span><div><span class="toc-t">八、景气度跟踪</span><span class="toc-d">高频指标监测</span></div></div>
+<div class="toc-item" onclick="document.getElementById('conclusion').scrollIntoView({behavior:'smooth'})"><span class="toc-num">09</span><div><span class="toc-t">九、综合结论与投资启示</span><span class="toc-d">信号快照与冲突</span></div></div>
+<div class="toc-item" onclick="document.getElementById('src-summary').scrollIntoView({behavior:'smooth'})"><span class="toc-num">10</span><div><span class="toc-t">数据来源汇总</span><span class="toc-d">可核查链接</span></div></div>
+</div>
+</div>
+
+<!-- ══════════ 执行摘要 ══════════ -->
+<div class="exec-summary">
+<h2>⚡ 执行摘要 <span style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-left:8px;">{行业} · {代码}</span></h2>
+<p>{第一段：行业阶段定位}</p>
+<p>{第二段：景气特征 + 关键数据}</p>
+<p>{第三段：核心矛盾 + 综合倾向}</p>
+</div>
+
+<!--
+  ══════════ 维度卡通用结构（八个维度均照此填充） ══════════
+  · 每个维度 = .step-card（.step-head 数字水印头部 + .step-body）
+  · 维度内顺序：方法卡(.method-card) → 核心结论+评级徽章(.rating-badge) → KPI(.kpi-grid) → 正文
+    → 人话卡(.human-term-card) → 反面假设(.reverse-note) → 洞察(.insight) → 盯什么(.insight-card)
+    → 数据表(.table-wrap) → 图表(.chart-card) → 来源(.source-box)
+  · 评级量表 .gauge：🟢看好=5格g / 🟡中性=3格y / 🔴谨慎=1格r
+  · 五件套强制（P0-10 门禁）：人话卡 / 反面假设 / 盯什么 / 评级徽章 / 档位徽章 / 来源框
+-->
+
+<!-- ══════════ 维度 1：行业概览与生命周期 ══════════ -->
+<div class="step-card" id="dim1">
+<div class="step-head">
+<div class="step-num-watermark">01</div>
+<div class="step-head-text">
+<div class="step-num">DIMENSION 01</div>
+<div class="step-title">一、行业概览与生命周期定位</div>
+<div class="step-sub">OVERVIEW &amp; LIFECYCLE · 渗透率主判 + 增速辅助</div>
+</div>
+</div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span>
+<span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>{一句话，不超过 30 字}</p>
+
+<div class="method-card">
+<span class="mc-icon">📐</span>
+<div class="mc-body">
+<div class="mc-title">方法卡</div>
+<div class="mc-row"><b>回答什么问题</b><span>行业处在幼年/青年/中年/老年哪个阶段？</span></div>
+<div class="mc-row"><b>用什么方法判</b><span>渗透率划分法：渗透率 = 存量用户 ÷ 潜在客户群，渗透率主判、增速辅助</span></div>
+<div class="mc-row"><b>判据是什么</b><span>15%以下导入 / 15%–20% 启动 / 20%–35% 成长 / 35%–60% 成熟 / 60%–70% 存量博弈 / 70%以上衰退</span></div>
+<div class="mc-row"><b>需要哪些数据</b><span>年销量、理论总容量、去年渗透率、增速、竞争格局</span></div>
+</div>
+</div>
+
+<div class="kpi-grid">
+<div class="kpi-card">
+<div class="kpi-label">{指标名}</div>
+<div class="kpi-value">{数值}<span class="kpi-unit">{单位}</span></div>
+<div class="kpi-delta up">↗ +{XX}% vs {同比/环比}</div>
+</div>
+<div class="kpi-card">
+<div class="kpi-label">{指标名}</div>
+<div class="kpi-value">{数值}<span class="kpi-unit">{单位}</span></div>
+<div class="kpi-delta down">↘ -{XX}% vs {同比/环比}</div>
+</div>
+<div class="kpi-card">
+<div class="kpi-label">{指标名}</div>
+<div class="kpi-value">{数值}<span class="kpi-unit">{单位}</span></div>
+<div class="kpi-delta flat">→ 持平</div>
+</div>
+</div>
+
+<p>{分析正文，每段 ≤150 字}</p>
+
+<div class="human-term-card">
+<span class="ht-icon">💬</span>
+<div class="ht-body"><span class="ht-term">{术语}：</span><span class="ht-plain">{大白话一句话解释}。{生活类比，如「就像…」}</span></div>
+</div>
+
+<div class="reverse-note"><strong>也可能是…</strong>{反证逻辑：如果上面的判断错了，更可能是哪种情况？}</div>
+
+<div class="insight"><strong>洞察：</strong>{维度洞察}</div>
+
+<div class="insight-grid">
+<div class="insight-card">
+<div class="insight-icon">📌</div>
+<div class="insight-title">盯什么：{指标一}</div>
+<div class="insight-desc">{当前值 → 触发条件 → 含义}</div>
+</div>
+<div class="insight-card">
+<div class="insight-icon">📌</div>
+<div class="insight-title">盯什么：{指标二}</div>
+<div class="insight-desc">{当前值 → 触发条件 → 含义}</div>
+</div>
+</div>
+
+<div class="source-box"><div class="sb-title">数据来源</div>{来源名·标题·日期} · <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+</div>
+</div>
+
+<!-- ══════════ 维度 2–8 简版占位（均按维度 1 结构填充） ══════════ -->
+<div class="step-card" id="dim2">
+<div class="step-head"><div class="step-num-watermark">02</div><div class="step-head-text"><div class="step-num">DIMENSION 02</div><div class="step-title">二、商业模式可行性</div><div class="step-sub">BUSINESS MODEL · 付费意愿四步判定</div></div></div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>{一句话}</p>
+<div class="method-card"><span class="mc-icon">📐</span><div class="mc-body"><div class="mc-title">方法卡</div><div class="mc-row"><b>回答什么问题</b><span>这门生意怎么赚钱？扩规模后是否更赚？</span></div><div class="mc-row"><b>用什么方法判</b><span>顺流拆解 + 最小运作单位 UE 模型</span></div><div class="mc-row"><b>判据是什么</b><span>UE = 客单价 − 直接成本 − 间接摊销 &gt; 0 才值得扩张</span></div><div class="mc-row"><b>需要哪些数据</b><span>毛利率、净利率、单客成本、周转天数</span></div></div></div>
+<div class="kpi-grid"><!-- 2-3 张 kpi-card --></div>
+<p>{分析正文}</p>
+<div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">{术语}：</span><span class="ht-plain">{大白话+类比}</span></div></div>
+<div class="reverse-note"><strong>也可能是…</strong>{反证}</div>
+<div class="insight"><strong>洞察：</strong>{洞察}</div>
+<div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么</div><div class="insight-desc">{要点}</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>{来源} <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+</div>
+</div>
+
+<div class="step-card" id="dim3">
+<div class="step-head"><div class="step-num-watermark">03</div><div class="step-head-text"><div class="step-num">DIMENSION 03</div><div class="step-title">三、市场规模与空间</div><div class="step-sub">MARKET SIZE &amp; TAM · 两法交叉验证</div></div></div>
+<div class="step-body">
+<span class="tier-badge tier-medium">数据中等</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>{一句话}</p>
+<div class="method-card"><span class="mc-icon">📐</span><div class="mc-body"><div class="mc-title">方法卡</div><div class="mc-row"><b>回答什么问题</b><span>天花板多高？离天花板还差多少？</span></div><div class="mc-row"><b>用什么方法判</b><span>TAM/SAM/SOM 阶段化 + 两法交叉验证</span></div><div class="mc-row"><b>判据是什么</b><span>成熟期看 SOM÷SAM；两法差距&gt;30% 须解释</span></div><div class="mc-row"><b>需要哪些数据</b><span>总人口、客单价、年销量、可比销量合计</span></div></div></div>
+<div class="kpi-grid"><!-- 2-3 张 kpi-card --></div>
+<p>{分析正文}</p>
+<div class="table-wrap"><table><thead><tr><th>口径</th><th>规模</th><th class="num">增速</th><th>来源</th></tr></thead><tbody><tr><td>TAM</td><td>{...}</td><td class="num">{...}</td><td>{...}</td></tr></tbody></table></div>
+<div class="chart-card"><div class="chart-head">C1 · 市场规模双序列（{单位}）</div>
+<svg viewBox="0 0 560 320" role="img" aria-label="市场规模双序列柱状图" style="padding:16px;">
+<line x1="50" y1="20" x2="50" y2="290" class="svg-axis"/><line x1="50" y1="290" x2="540" y2="290" class="svg-axis"/>
+<line x1="50" y1="200" x2="540" y2="200" class="svg-grid"/><line x1="50" y1="110" x2="540" y2="110" class="svg-grid"/><line x1="50" y1="20" x2="540" y2="20" class="svg-grid"/>
+<text x="44" y="294" class="svg-axis-text" text-anchor="end">0</text>
+<text x="44" y="204" class="svg-axis-text" text-anchor="end">{Y_MAX/3}</text>
+<text x="44" y="114" class="svg-axis-text" text-anchor="end">{Y_MAX*2/3}</text>
+<text x="44" y="24" class="svg-axis-text" text-anchor="end">{Y_MAX}</text>
+<rect x="86" y="{yA1}" width="40" height="{hA1}" rx="3" class="svg-bar-primary"/>
+<rect x="130" y="{yB1}" width="40" height="{hB1}" rx="3" class="svg-bar-energy"/>
+<rect x="246" y="{yA2}" width="40" height="{hA2}" rx="3" class="svg-bar-primary"/>
+<rect x="290" y="{yB2}" width="40" height="{hB2}" rx="3" class="svg-bar-energy"/>
+<rect x="406" y="{yA3}" width="40" height="{hA3}" rx="3" class="svg-bar-primary"/>
+<rect x="450" y="{yB3}" width="40" height="{hB3}" rx="3" class="svg-bar-energy"/>
+<text x="106" y="{yA1-6}" class="svg-val" text-anchor="middle">{vA1}</text>
+<text x="150" y="{yB1-6}" class="svg-val" text-anchor="middle">{vB1}</text>
+<text x="266" y="{yA2-6}" class="svg-val" text-anchor="middle">{vA2}</text>
+<text x="310" y="{yB2-6}" class="svg-val" text-anchor="middle">{vB2}</text>
+<text x="426" y="{yA3-6}" class="svg-val" text-anchor="middle">{vA3}</text>
+<text x="470" y="{yB3-6}" class="svg-val" text-anchor="middle">{vB3}</text>
+<text x="106" y="306" class="svg-axis-text" text-anchor="middle">{年1}</text>
+<text x="266" y="306" class="svg-axis-text" text-anchor="middle">{年2}</text>
+<text x="426" y="306" class="svg-axis-text" text-anchor="middle">{年3}</text>
+</svg>
+<div class="legend" style="padding:0 16px 16px;"><span><i class="swatch" style="background:#635bff"></i>{序列A}</span><span><i class="swatch" style="background:#c8943b"></i>{序列B}</span></div>
+</div>
+<div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">{术语}：</span><span class="ht-plain">{大白话+类比}</span></div></div>
+<div class="reverse-note"><strong>也可能是…</strong>{反证}</div>
+<div class="insight"><strong>洞察：</strong>{洞察}</div>
+<div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么</div><div class="insight-desc">{要点}</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>{来源} <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+</div>
+</div>
+
+<div class="step-card" id="dim4">
+<div class="step-head"><div class="step-num-watermark">04</div><div class="step-head-text"><div class="step-num">DIMENSION 04</div><div class="step-title">四、护城河与防守性</div><div class="step-sub">MOAT &amp; DEFENSIBILITY · 5×4 矩阵 + 三问</div></div></div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>{一句话}</p>
+<div class="method-card"><span class="mc-icon">📐</span><div class="mc-body"><div class="mc-title">方法卡</div><div class="mc-row"><b>回答什么问题</b><span>有没有挡住对手的真城墙？</span></div><div class="mc-row"><b>用什么方法判</b><span>5×4 生产要素×生产关系矩阵 + 三问验证</span></div><div class="mc-row"><b>判据是什么</b><span>三问：难复制？可持续？对手无法用钱买断？</span></div><div class="mc-row"><b>需要哪些数据</b><span>专利/研发、市占率趋势、转换成本、资源排他性</span></div></div></div>
+<div class="kpi-grid"><!-- 2-3 张 kpi-card --></div>
+<p>{分析正文}</p>
+<div class="table-wrap"><table><thead><tr><th>生产要素 ＼ 生产关系</th><th>政府</th><th>同行</th><th>供应商</th><th>客户</th></tr></thead><tbody><tr><td>技术</td><td>—</td><td class="highlight">强（专利）</td><td>—</td><td class="highlight">强（黏性）</td></tr></tbody></table></div>
+<div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">{术语}：</span><span class="ht-plain">{大白话+类比}</span></div></div>
+<div class="reverse-note"><strong>也可能是…</strong>{反证}</div>
+<div class="insight"><strong>洞察：</strong>{洞察}</div>
+<div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么</div><div class="insight-desc">{要点}</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>{来源} <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+</div>
+</div>
+
+<div class="step-card" id="dim5">
+<div class="step-head"><div class="step-num-watermark">05</div><div class="step-head-text"><div class="step-num">DIMENSION 05</div><div class="step-title">五、竞争格局与盈利性</div><div class="step-sub">COMPETITION &amp; PROFITABILITY · CRn + 波特五力</div></div></div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>{一句话}</p>
+<div class="method-card"><span class="mc-icon">📐</span><div class="mc-body"><div class="mc-title">方法卡</div><div class="mc-row"><b>回答什么问题</b><span>蛋糕被几家分？龙头稳不稳？</span></div><div class="mc-row"><b>用什么方法判</b><span>CRn 集中度 + 梯队划分 + 波特五力简化</span></div><div class="mc-row"><b>判据是什么</b><span>CR8&lt;40% 竞争型 / 40%–70% 低集中寡占 / ≥70% 极高寡占</span></div><div class="mc-row"><b>需要哪些数据</b><span>TOP10 市占率、同比、龙头净利率 vs 行业</span></div></div></div>
+<div class="kpi-grid"><!-- 2-3 张 kpi-card --></div>
+<p>{分析正文}</p>
+<div class="table-wrap"><table class="compare-table"><thead><tr><th>公司</th><th class="num">份额</th><th class="num">营收(亿)</th><th class="num">净利(亿)</th><th class="num">毛利率</th><th class="num">PE</th></tr></thead><tbody><tr class="ct-best"><td>{锚点}</td><td class="num">{...}</td><td class="num">{...}</td><td class="num">{...}</td><td class="num">{...}</td><td class="num">{...}</td></tr></tbody></table></div>
+<div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">{术语}：</span><span class="ht-plain">{大白话+类比}</span></div></div>
+<div class="reverse-note"><strong>也可能是…</strong>{反证}</div>
+<div class="insight"><strong>洞察：</strong>{洞察}</div>
+<div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么</div><div class="insight-desc">{要点}</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>{来源} <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+</div>
+</div>
+
+<div class="step-card" id="dim6">
+<div class="step-head"><div class="step-num-watermark">06</div><div class="step-head-text"><div class="step-num">DIMENSION 06</div><div class="step-title">六、估值分析</div><div class="step-sub">VALUATION · 相对 + 绝对双视角</div></div></div>
+<div class="step-body">
+<span class="tier-badge tier-rich">数据丰富</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>{一句话}</p>
+<div class="method-card"><span class="mc-icon">📐</span><div class="mc-body"><div class="mc-title">方法卡</div><div class="mc-row"><b>回答什么问题</b><span>现在卖得贵不贵？</span></div><div class="mc-row"><b>用什么方法判</b><span>市值 = 净利润 × PE；PEG、历史分位、股息率</span></div><div class="mc-row"><b>判据是什么</b><span>成熟期看 PE/PB/股息率；相对+绝对双视角</span></div><div class="mc-row"><b>需要哪些数据</b><span>PE/PB、同业中位数、历史分位、净利 CAGR</span></div></div></div>
+<div class="kpi-grid"><!-- 2-3 张 kpi-card --></div>
+<p>{分析正文}</p>
+<div class="chart-card"><div class="chart-head">C2 · 可比公司估值对比（PE）</div>
+<div class="bar-chart" style="padding:16px;">
+<div class="bar-row"><span class="bar-label">{公司A} PE</span><span class="bar-track"><span class="bar-fill" style="width:{wA}%"></span></span><span class="bar-val">{peA}</span></div>
+<div class="bar-row"><span class="bar-label">{锚点} PE</span><span class="bar-track"><span class="bar-fill gold" style="width:{wAnchor}%"></span></span><span class="bar-val">{peAnchor}</span></div>
+<div class="bar-row"><span class="bar-label">{公司B} PE</span><span class="bar-track"><span class="bar-fill" style="width:{wB}%"></span></span><span class="bar-val">{peB}</span></div>
+</div></div>
+<div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">{术语}：</span><span class="ht-plain">{大白话+类比}</span></div></div>
+<div class="reverse-note"><strong>也可能是…</strong>{反证}</div>
+<div class="insight"><strong>洞察：</strong>{洞察}</div>
+<div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么</div><div class="insight-desc">{要点}</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>{来源} <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+</div>
+</div>
+
+<div class="step-card" id="dim7">
+<div class="step-head"><div class="step-num-watermark">07</div><div class="step-head-text"><div class="step-num">DIMENSION 07</div><div class="step-title">七、外部驱动力（PEST）</div><div class="step-sub">EXTERNAL DRIVERS · 五段传导链</div></div></div>
+<div class="step-body">
+<span class="tier-badge tier-medium">数据中等</span><span class="rating-badge rating-hold">中性</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>{一句话}</p>
+<div class="method-card"><span class="mc-icon">📐</span><div class="mc-body"><div class="mc-title">方法卡</div><div class="mc-row"><b>回答什么问题</b><span>行业外的风怎么吹动生意？</span></div><div class="mc-row"><b>用什么方法判</b><span>PEST 五段传导链：事实→传导→对象→量级→时点</span></div><div class="mc-row"><b>判据是什么</b><span>每因素走完五段；区分已落地 vs 预期政策</span></div><div class="mc-row"><b>需要哪些数据</b><span>政策文件、利率/GDP、人口、替代技术</span></div></div></div>
+<h3>P · 政策</h3><p>{五段链}</p>
+<h3>E · 经济</h3><p>{五段链}</p>
+<h3>S · 社会</h3><p>{五段链}</p>
+<h3>T · 技术</h3><p>{五段链}</p>
+<div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">{术语}：</span><span class="ht-plain">{大白话+类比}</span></div></div>
+<div class="reverse-note"><strong>也可能是…</strong>{反证}</div>
+<div class="insight"><strong>洞察：</strong>{洞察}</div>
+<div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么</div><div class="insight-desc">{要点}</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>{来源} <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+</div>
+</div>
+
+<div class="step-card" id="dim8">
+<div class="step-head"><div class="step-num-watermark">08</div><div class="step-head-text"><div class="step-num">DIMENSION 08</div><div class="step-title">八、景气度跟踪</div><div class="step-sub">PROSPERITY TRACKING · 量价库存订单产能</div></div></div>
+<div class="step-body">
+<span class="tier-badge tier-medium">数据中等</span><span class="rating-badge rating-buy">看好</span>
+<p style="margin-top:14px;"><strong>核心结论：</strong>{一句话}</p>
+<div class="method-card"><span class="mc-icon">📐</span><div class="mc-body"><div class="mc-title">方法卡</div><div class="mc-row"><b>回答什么问题</b><span>生意现在热不热？拐点快到了吗？</span></div><div class="mc-row"><b>用什么方法判</b><span>景气指标看板：量/价/库存/订单/产能</span></div><div class="mc-row"><b>判据是什么</b><span>指标连续2期反转=拐点</span></div><div class="mc-row"><b>需要哪些数据</b><span>出货同比、单价环比、存货、订单、产能利用率</span></div></div></div>
+<div class="kpi-grid"><!-- 2-3 张 kpi-card --></div>
+<p>{分析正文}</p>
+<div class="table-wrap"><table><thead><tr><th>维度</th><th>代表指标</th><th>频率</th><th>当前信号</th></tr></thead><tbody><tr><td>量</td><td>{指标}</td><td>月/季</td><td>{信号}</td></tr></tbody></table></div>
+<div class="human-term-card"><span class="ht-icon">💬</span><div class="ht-body"><span class="ht-term">{术语}：</span><span class="ht-plain">{大白话+类比}</span></div></div>
+<div class="reverse-note"><strong>也可能是…</strong>{反证}</div>
+<div class="insight"><strong>洞察：</strong>{洞察}</div>
+<div class="insight-grid"><div class="insight-card"><div class="insight-icon">📌</div><div class="insight-title">盯什么</div><div class="insight-desc">{要点}</div></div></div>
+<div class="source-box"><div class="sb-title">数据来源</div>{来源} <span class="status-badge status-resolved">已验证</span> <a href="#src-summary">🔗 核查来源</a></div>
+</div>
+</div>
+
+<!-- ══════════ 综合结论 ══════════ -->
+<div class="step-card" id="conclusion">
+<div class="step-head"><div class="step-num-watermark">09</div><div class="step-head-text"><div class="step-num">DIMENSION 09</div><div class="step-title">九、综合结论与投资启示</div><div class="step-sub">SYNTHESIS · 信号快照 + 冲突 + 反共识</div></div></div>
+<div class="step-body">
+
+<div class="conclusion-wrap">
+<div class="ct">行业吸引力评级：{高|中|低} <span class="rating-badge rating-buy">{偏多|中性|偏空}</span></div>
+<div class="ctext">{核心理由}</div>
+</div>
+
+<h3>维度信号快照</h3>
+<div class="table-wrap"><table class="signal-table">
+<thead><tr><th>维度</th><th>评级</th><th>核心理由（一句话）</th></tr></thead>
+<tbody>
+<tr><td>一、行业概览</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">{...}</td></tr>
+<tr><td>二、商业模式</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">{...}</td></tr>
+<tr><td>三、市场规模</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">{...}</td></tr>
+<tr><td>四、护城河</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">{...}</td></tr>
+<tr><td>五、竞争格局</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">{...}</td></tr>
+<tr><td>六、估值</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">{...}</td></tr>
+<tr><td>七、外部因素</td><td class="s-neutral"><span class="dot dot-yellow"></span>中性</td><td class="s-reason">{...}</td></tr>
+<tr><td>八、景气度</td><td class="s-bullish"><span class="dot dot-green"></span>看好</td><td class="s-reason">{...}</td></tr>
+</tbody>
+</table></div>
+
+<h3>八维评级雷达</h3>
+<div class="chart-card"><div class="chart-head">C3 · 八大维度综合评级（看好=3 / 中性=2 / 谨慎=1）</div>
+<svg viewBox="0 0 320 320" style="display:block;max-width:420px;margin:6px auto;padding:8px;" role="img" aria-label="八维评级雷达图">
+<polygon points="160,40 244.9,75.2 280,160 244.9,244.8 160,280 75.1,244.8 40,160 75.1,75.2" class="svg-grid" stroke-width="1"/>
+<polygon points="160,80 216.6,103.4 240,160 216.6,216.6 160,240 103.4,216.6 80,160 103.4,103.4" class="svg-grid" stroke-width="1"/>
+<polygon points="160,120 188.3,131.7 200,160 188.3,188.3 160,200 131.7,188.3 120,160 131.7,131.7" class="svg-grid" stroke-width="1"/>
+<line x1="160" y1="160" x2="160" y2="40" class="svg-axis"/><line x1="160" y1="160" x2="244.9" y2="75.2" class="svg-axis"/>
+<line x1="160" y1="160" x2="280" y2="160" class="svg-axis"/><line x1="160" y1="160" x2="244.9" y2="244.8" class="svg-axis"/>
+<line x1="160" y1="160" x2="160" y2="280" class="svg-axis"/><line x1="160" y1="160" x2="75.1" y2="244.8" class="svg-axis"/>
+<line x1="160" y1="160" x2="40" y2="160" class="svg-axis"/><line x1="160" y1="160" x2="75.1" y2="75.2" class="svg-axis"/>
+<polygon points="160,40 244.9,75.2 280,160 244.9,244.8 160,280 75.1,244.8 40,160 75.1,75.2" class="svg-data"/>
+<circle cx="160" cy="40" r="3.5" class="svg-dot"/><circle cx="244.9" cy="75.2" r="3.5" class="svg-dot"/>
+<circle cx="280" cy="160" r="3.5" class="svg-dot"/><circle cx="244.9" cy="244.8" r="3.5" class="svg-dot"/>
+<circle cx="160" cy="280" r="3.5" class="svg-dot"/><circle cx="75.1" cy="244.8" r="3.5" class="svg-dot"/>
+<circle cx="40" cy="160" r="3.5" class="svg-dot weak"/><circle cx="75.1" cy="75.2" r="3.5" class="svg-dot"/>
+<text x="160" y="32" class="svg-axis-text" text-anchor="middle">①概览</text><text x="252" y="70" class="svg-axis-text" text-anchor="middle">②模式</text>
+<text x="288" y="164" class="svg-axis-text" text-anchor="middle">③规模</text><text x="252" y="258" class="svg-axis-text" text-anchor="middle">④护城河</text>
+<text x="160" y="296" class="svg-axis-text" text-anchor="middle">⑤格局</text><text x="68" y="258" class="svg-axis-text" text-anchor="middle">⑥估值</text>
+<text x="32" y="164" class="svg-axis-text" text-anchor="middle">⑦外部</text><text x="68" y="70" class="svg-axis-text" text-anchor="middle">⑧景气</text>
+</svg></div>
+
+<h3>生命周期定位</h3>
+<p>{一句话概括，与 Hero 标签一致}</p>
+
+<h3>关键风险提示</h3>
+<div class="risk-grid">
+<div class="risk-card risk-high"><div class="risk-card-icon">🔴</div><div class="risk-card-title">风险一</div><div class="risk-card-desc">{...}</div></div>
+<div class="risk-card risk-warn"><div class="risk-card-icon">🟠</div><div class="risk-card-title">风险二</div><div class="risk-card-desc">{...}</div></div>
+<div class="risk-card risk-info"><div class="risk-card-icon">🔵</div><div class="risk-card-title">风险三</div><div class="risk-card-desc">{...}</div></div>
+</div>
+
+<h3>SWOT 小结</h3>
+<div class="swot-grid">
+<div class="swot-cell swot-s"><h4>优势 Strengths</h4><p>{...}</p></div>
+<div class="swot-cell swot-w"><h4>劣势 Weaknesses</h4><p>{...}</p></div>
+<div class="swot-cell swot-o"><h4>机会 Opportunities</h4><p>{...}</p></div>
+<div class="swot-cell swot-t"><h4>威胁 Threats</h4><p>{...}</p></div>
+</div>
+
+<div class="dim-conflict">
+<h4>维度冲突检测</h4>
+<div class="conflict-row"><span class="conflict-label">最看多</span><span style="color:#0d7c3b;font-weight:700"><span class="dot dot-green"></span>{维度名}</span><span class="conflict-arrow">— {核心理由}</span></div>
+<div class="conflict-row"><span class="conflict-label">最看空</span><span style="color:#b71c1c;font-weight:700"><span class="dot dot-red"></span>{维度名}</span><span class="conflict-arrow">— {核心理由}</span></div>
+<div class="conflict-interp"><strong>冲突解读：</strong>{行业结构矛盾的核心分析}</div>
+</div>
+
+<h3>反共识检验</h3>
+<div class="reverse-note"><strong>如果上述分析错了，最可能错在哪里？</strong>（≥200 字，≥2 个推翻信号）</div>
+<p><strong>推翻信号一：</strong>{...}</p>
+<p><strong>推翻信号二：</strong>{...}</p>
+
+<h3>OIE 认知迭代待办</h3>
+<ul class="tracking-list">
+<li><span class="track-name">待验证假设一：</span><span class="track-signal">{假设 + 验证路径}</span></li>
+<li><span class="track-name">待验证假设二：</span><span class="track-signal">{假设 + 验证路径}</span></li>
+</ul>
+
+<h3>待跟踪指标</h3>
+<ul class="tracking-list">
+<li><span class="track-name">指标一：{名称}</span><span class="track-now">当前 {数值}</span><span class="track-arrow">→</span><span class="track-signal">触发阈值：{条件} → {含义}</span></li>
+<li><span class="track-name">指标二：{名称}</span><span class="track-now">当前 {数值}</span><span class="track-arrow">→</span><span class="track-signal">触发阈值：{条件} → {含义}</span></li>
+<li><span class="track-name">指标三：{名称}</span><span class="track-now">当前 {数值}</span><span class="track-arrow">→</span><span class="track-signal">触发阈值：{条件} → {含义}</span></li>
+</ul>
+</div>
+</div>
+
+<!-- ══════════ 数据来源汇总 ══════════ -->
+<div class="step-card" id="src-summary">
+<div class="step-head"><div class="step-num-watermark">10</div><div class="step-head-text"><div class="step-num">SOURCES</div><div class="step-title">数据来源汇总</div><div class="step-sub">可核查链接 · 四级颗粒度</div></div></div>
+<div class="step-body">
+<div class="table-wrap"><table>
+<thead><tr><th>维度/用途</th><th>来源名称</th><th>可核查链接</th></tr></thead>
+<tbody>
+<tr><td>{维度}</td><td>{来源名·标题·日期}</td><td><a href="{URL}" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none;">{URL}</a></td></tr>
+</tbody>
+</table></div>
+<p style="font-size:13px;color:var(--text-secondary);">链接策略：权威源给官方披露页；研报/新闻给稳定摘要页；无稳定 URL 则保留「来源名+标题+日期」署名，禁止裸名、禁止编造。</p>
+</div>
+</div>
+
+<!-- ══════════ 免责声明 ══════════ -->
+<div style="text-align:center;padding:30px;color:var(--text-secondary);font-size:13px;border-top:1px solid var(--gray-light);">
+<p><strong style="color:var(--navy);">免责声明</strong></p>
+<p>本报告基于公开信息和 AI 分析自动生成，所有内容仅供参考，<strong>不构成任何投资建议</strong>。</p>
+<p>投资有风险，决策需谨慎。</p>
+<p style="margin-top:8px;color:var(--navy);font-weight:600;">八维行业分析 | 分析日期：{日期} | 作者：松幽</p>
+<p style="font-size:12px;opacity:.6;">公众号「松幽舒苑」 · 视频号「松幽Ai提效」</p>
+</div>
+
+</div><!-- /main-wrap -->
+
+<script>
+/* 入场动效：无 JS 兜底可见 */
+(function(){
+  var btn=document.getElementById('themeToggle');
+  function sync(){btn.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙';}
+  sync();
+  btn.addEventListener('click',function(){
+    var dark=document.documentElement.getAttribute('data-theme')!=='dark';
+    document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+    try{localStorage.setItem('eightdim-theme',dark?'dark':'light');}catch(e){}
+    sync();
+  });
+  var nav=document.querySelector('.side-nav');
+  var anchors=['dim1','dim2','dim3','dim4','dim5','dim6','dim7','dim8','conclusion','src-summary'];
+  if('IntersectionObserver' in window){
+    anchors.forEach(function(id){
+      var s=document.getElementById(id); if(!s)return;
+      new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var links=document.querySelectorAll('.side-nav a');links.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+id);});}});},{rootMargin:'-20% 0px -70% 0px'}).observe(s);
+    });
+  }
+  var prog=document.getElementById('topProgress');
+  if(prog){window.addEventListener('scroll',function(){var h=document.documentElement;var d=(h.scrollHeight-h.clientHeight)||1;var p=Math.max(0,Math.min(100,(h.scrollTop||document.body.scrollTop)/d*100));prog.style.setProperty('--p',p.toFixed(1)+'%');},{passive:true});}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  导航模块 · 可复用片段（从「八维行业分析」skill 抽离，对标「七步财报分析」报告导航）
+  ----------------------------------------------------------------------------
+  包含：目录卡 TOC + 桌面侧栏 + 移动端进度条 + 深色切换，对标宁德时代七步财报 HTML。
+
+  用法（三步，复制即用）：
+    ① 把「【CSS】」整段粘进你的 <style> 末尾（注意在你的打印 @media print 里加
+       .nav-rail,.side-nav,.top-progress,.theme-toggle{display:none!important;}
+       以及 [data-mode="dark"] 强制回落亮色，避免深色打印发暗）。
+    ② 把「【HTML】」节点放进 <body>：
+       - <div class="top-progress" id="topProgress"></div> 放 nav 之后、main 之前
+       - <aside class="side-nav">…</aside> 放 nav 之后
+       - 目录卡 .toc-card 放 Hero 之后、正文之前
+       - <button id="themeToggle" class="theme-toggle"> 放顶部 nav-rail 内（右对齐）
+    ③ 把「【JS】」整段粘进 <script>。
+
+  关键约定：
+    · 各章节 section 必须有 id（锚点）。把下面的 #dim1..#dim8/#conclusion/#src-summary
+      替换成你自己的章节 id 即可，HTML / JS / 侧栏链接三处同步改。
+    · 深色用 <html data-mode="dark|light">，与 data-theme（行业皮肤）正交，禁止混用：
+      深色只覆盖 --bg/--surface/--ink/--border 等明度令牌，保留行业主色；
+      SVG 图表若用 CSS 变量驱动（class 控色），切换深色自动适配，无需 JS 重绘。
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+
+<!-- ══════════ 【CSS】粘进 <style> ══════════ -->
+<style>
+  /* 桌面侧栏（≥1200px 显示，Hero 区自动隐藏） */
+  .side-nav { position: fixed; top: 120px; left: 24px; width: 208px; z-index: 40;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md);
+    padding: 16px 14px; box-shadow: var(--sh-sm); max-height: 74vh; overflow: auto;
+    transition: opacity .3s ease, transform .3s ease, visibility .3s; }
+  .side-nav.nav-hidden { opacity: 0; pointer-events: none; transform: translateX(-12px); visibility: hidden; }
+  .side-nav .sn-title { font-size: 12px; font-weight: 800; color: var(--primary-700); letter-spacing: 1px;
+    margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+  .side-nav a { display: block; padding: 7px 10px; font-size: 13px; color: var(--ink-2);
+    border-radius: var(--r-sm); border-left: 3px solid transparent; transition: all .2s; text-decoration: none; line-height: 1.45; }
+  .side-nav a.active { background: var(--primary); color: #fff; border-left-color: var(--energy-bright); }
+  .side-nav a:hover { color: var(--primary-700); }
+  /* 移动端顶部进度条（<1200px 显示，置于 nav-rail 下方） */
+  .top-progress { position: sticky; top: 41px; z-index: 45; height: 4px; width: 100%; display: none;
+    background: linear-gradient(90deg, var(--primary) var(--p, 0%), var(--border-strong) 0); }
+  @media (min-width: 1200px) { .page { max-width: 1180px; padding-left: 248px; } }
+  @media (max-width: 1199px) { .side-nav { display: none; } .top-progress { display: block; } }
+  /* 目录卡（Hero 后、执行摘要前） */
+  .toc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+    padding: 28px 30px; box-shadow: var(--sh-md); margin: 8px 0 34px; position: relative; z-index: 10; }
+  .toc-title { font-size: 17px; font-weight: 800; color: var(--primary-700); margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid var(--energy); }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 10px; }
+  .toc-item { display: flex; align-items: center; padding: 12px 15px; background: var(--surface-2);
+    border-radius: var(--r-sm); cursor: pointer; transition: all .22s; border-left: 3px solid transparent; }
+  .toc-item:hover { background: var(--primary); color: #fff; border-left-color: var(--energy-bright); transform: translateX(4px); }
+  .toc-num { font-size: 20px; font-weight: 900; color: var(--energy); margin-right: 12px; min-width: 32px; text-align: center; }
+  .toc-item:hover .toc-num { color: #fff; }
+  .toc-l { font-size: 13px; } .toc-l .t { display: block; font-weight: 700; } .toc-l .d { display: block; font-size: 11px; opacity: .6; margin-top: 2px; }
+  /* 深色切换按钮（置于 nav-rail 内、右对齐） */
+  .nav-rail .theme-toggle { margin-left: auto; width: 36px; height: 36px; flex: none; border-radius: 50%;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--primary-700); cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center; box-shadow: var(--sh-xs); transition: all .2s; }
+  .nav-rail .theme-toggle:hover { border-color: var(--primary); transform: scale(1.06); }
+  /* 深色模式 token 覆盖：与 data-theme 行业皮肤正交，只改明度、保留行业主色 */
+  [data-mode="dark"] {
+    --bg: #0e1622; --surface: #15202e; --surface-2: #1b2735;
+    --ink: #e6ebf2; --ink-2: #aab6c6; --ink-3: #7c8aa0;
+    --border: #26303f; --border-strong: #33415a; --sh-rgb: 0,0,0;
+    --primary-50: color-mix(in srgb, var(--primary) 16%, #0e1622);
+  }
+</style>
+
+<!-- ══════════ 【HTML】粘进 <body> ══════════ -->
+<!-- 移动端顶部进度条（放 nav 之后、main 之前） -->
+<div class="top-progress" id="topProgress"></div>
+
+<!-- 桌面侧栏导航（链接锚点替换为你自己的章节 id） -->
+<aside class="side-nav" aria-label="报告章节导航">
+  <div class="sn-title">报告导航</div>
+  <a href="#dim1">① 概览</a>
+  <a href="#dim2">② 模式</a>
+  <a href="#dim3">③ 规模</a>
+  <a href="#dim4">④ 护城河</a>
+  <a href="#dim5">⑤ 格局</a>
+  <a href="#dim6">⑥ 估值</a>
+  <a href="#dim7">⑦ 外部</a>
+  <a href="#dim8">⑧ 景气</a>
+  <a href="#conclusion">综合结论</a>
+  <a href="#src-summary">数据来源</a>
+</aside>
+
+<!-- 目录卡（放 Hero 之后、执行摘要之前，10 项按需增减） -->
+<div class="toc-card">
+  <div class="toc-title">📑 报告导航 · 点击跳转</div>
+  <div class="toc-grid">
+    <div class="toc-item" onclick="document.getElementById('dim1').scrollIntoView({behavior:'smooth'})"><span class="toc-num">01</span><div class="toc-l"><span class="t">一、概览</span><span class="d">说明</span></div></div>
+    <div class="toc-item" onclick="document.getElementById('dim2').scrollIntoView({behavior:'smooth'})"><span class="toc-num">02</span><div class="toc-l"><span class="t">二、模式</span><span class="d">说明</span></div></div>
+    <div class="toc-item" onclick="document.getElementById('dim3').scrollIntoView({behavior:'smooth'})"><span class="toc-num">03</span><div class="toc-l"><span class="t">三、规模</span><span class="d">说明</span></div></div>
+    <div class="toc-item" onclick="document.getElementById('dim4').scrollIntoView({behavior:'smooth'})"><span class="toc-num">04</span><div class="toc-l"><span class="t">四、护城河</span><span class="d">说明</span></div></div>
+    <div class="toc-item" onclick="document.getElementById('dim5').scrollIntoView({behavior:'smooth'})"><span class="toc-num">05</span><div class="toc-l"><span class="t">五、格局</span><span class="d">说明</span></div></div>
+    <div class="toc-item" onclick="document.getElementById('dim6').scrollIntoView({behavior:'smooth'})"><span class="toc-num">06</span><div class="toc-l"><span class="t">六、估值</span><span class="d">说明</span></div></div>
+    <div class="toc-item" onclick="document.getElementById('dim7').scrollIntoView({behavior:'smooth'})"><span class="toc-num">07</span><div class="toc-l"><span class="t">七、外部</span><span class="d">说明</span></div></div>
+    <div class="toc-item" onclick="document.getElementById('dim8').scrollIntoView({behavior:'smooth'})"><span class="toc-num">08</span><div class="toc-l"><span class="t">八、景气</span><span class="d">说明</span></div></div>
+    <div class="toc-item" onclick="document.getElementById('conclusion').scrollIntoView({behavior:'smooth'})"><span class="toc-num">09</span><div class="toc-l"><span class="t">九、综合结论</span><span class="d">说明</span></div></div>
+    <div class="toc-item" onclick="document.getElementById('src-summary').scrollIntoView({behavior:'smooth'})"><span class="toc-num">10</span><div class="toc-l"><span class="t">数据来源</span><span class="d">说明</span></div></div>
+  </div>
+</div>
+
+<!-- 深色切换按钮（放进顶部 nav-rail 的 nav-inner 内，作为最后一个子元素） -->
+<button id="themeToggle" class="theme-toggle" aria-label="切换深色/亮色模式" title="切换深色模式">🌙</button>
+
+<!-- ══════════ 【JS】粘进 <script> ══════════ -->
+<script>
+  /* 导航模块：侧栏滚动高亮 + 移动端顶部进度条 + Hero 区智能隐藏侧栏 + 深色切换 */
+  (function () {
+    var navLinks = Array.prototype.slice.call(document.querySelectorAll('.side-nav a'));
+    if (navLinks.length) {
+      var setActive = function (id) {
+        navLinks.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
+      };
+      if ('IntersectionObserver' in window) {
+        var obs = new IntersectionObserver(function (es) {
+          es.forEach(function (e) { if (e.isIntersecting) setActive(e.target.id); });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+        document.querySelectorAll('#dim1,#dim2,#dim3,#dim4,#dim5,#dim6,#dim7,#dim8,#conclusion,#src-summary')
+          .forEach(function (s) { obs.observe(s); });
+      }
+    }
+    var prog = document.getElementById('topProgress');
+    if (prog) {
+      var onScroll = function () {
+        var h = document.documentElement;
+        var denom = (h.scrollHeight - h.clientHeight) || 1;
+        var p = Math.max(0, Math.min(100, (h.scrollTop || document.body.scrollTop) / denom * 100));
+        prog.style.setProperty('--p', p.toFixed(1) + '%');
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      onScroll();
+    }
+    var nav = document.querySelector('.side-nav'), hero = document.querySelector('.hero');
+    if (nav && hero) {
+      if (hero.getBoundingClientRect().bottom > 0) nav.classList.add('nav-hidden');
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (es) {
+          es.forEach(function (e) { nav.classList.toggle('nav-hidden', e.isIntersecting); });
+        }, { threshold: 0, rootMargin: '-72px 0px 0px 0px' }).observe(hero);
+      }
+    }
+    var btn = document.getElementById('themeToggle');
+    if (btn) {
+      var html = document.documentElement;
+      try { var saved = localStorage.getItem('eightdim-theme'); if (saved) html.setAttribute('data-mode', saved); } catch (e) {}
+      var sync = function () { btn.textContent = html.getAttribute('data-mode') === 'dark' ? '☀️' : '🌙'; };
+      sync();
+      btn.addEventListener('click', function () {
+        var dark = html.getAttribute('data-mode') !== 'dark';
+        html.setAttribute('data-mode', dark ? 'dark' : 'light');
+        try { localStorage.setItem('eightdim-theme', dark ? 'dark' : 'light'); } catch (e) {}
+        sync();
+      });
+    }
+  })();
+</script>

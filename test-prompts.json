@@ -1,0 +1,80 @@
+[
+  {
+    "id": 1,
+    "type": "should_trigger",
+    "prompt": "分析新能源汽车行业",
+    "expected": "触发八大维度全量分析，先判断生命周期阶段（成长期→成熟早期），再按权重分配维度深度，输出结构化报告"
+  },
+  {
+    "id": 2,
+    "type": "should_trigger",
+    "prompt": "分析一下宁德时代所在行业",
+    "expected": "公司入口：先用 westock-data 查宁德时代所属申万行业分类，确认行业为'动力电池'，以宁德为案例锚点，颗粒度对齐到'动力电池'而非泛'新能源'"
+  },
+  {
+    "id": 3,
+    "type": "should_trigger",
+    "prompt": "光伏行业护城河怎么样？",
+    "expected": "走完整八维流程：Phase 0 确认颗粒度→Phase 0.5 立假设→判生命周期→按权重表分配深度，维度4（护城河）高权重展开，最终输出完整 HTML 报告"
+  },
+  {
+    "id": 4,
+    "type": "should_trigger",
+    "prompt": "帮我研究下预制菜这个赛道有没有机会",
+    "expected": "触发；Phase 0 明确'预制菜'颗粒度（vs 餐饮/速冻食品），Phase 0.5 建立'需求真伪'假设（重点验证付费意愿），走全维度"
+  },
+  {
+    "id": 5,
+    "type": "should_trigger",
+    "prompt": "AI 算力行业现在处于什么生命周期阶段？",
+    "expected": "触发；维度1（行业概览与生命周期）高权重，输出<details>渗透率计算过程，给出阶段判定与依据"
+  },
+  {
+    "id": 6,
+    "type": "should_not_trigger",
+    "prompt": "宁德时代今天股价跌了多少？",
+    "expected": "个股行情查询，不应触发行业分析；应走 westock 行情/报价通道，而非八维框架"
+  },
+  {
+    "id": 7,
+    "type": "should_not_trigger",
+    "prompt": "帮我看看今天新能源板块有什么新闻",
+    "expected": "新闻/资讯汇总，不应触发；八维是深度框架分析而非动态播报"
+  },
+  {
+    "id": 8,
+    "type": "should_not_trigger",
+    "prompt": "推荐一只值得买的半导体股票",
+    "expected": "荐股请求，违反投资禁区，不应触发；应拒绝并说明不构成建议"
+  },
+  {
+    "id": 9,
+    "type": "should_not_trigger",
+    "prompt": "光伏板块 K 线走势怎么样？",
+    "expected": "技术分析（K线），属分析禁区，不应触发；八维不做 K线/均线/MACD"
+  },
+  {
+    "id": 10,
+    "type": "edge_case",
+    "prompt": "分析一下全球 SaaS 行业",
+    "expected": "非A股/全球行业：以 WebSearch/WebFetch 为主，westock-data 仅参考；标注'⚠️ 非A股行业，数据以公开信息为主'"
+  },
+  {
+    "id": 11,
+    "type": "edge_case",
+    "prompt": "了解一下氢能",
+    "expected": "颗粒度模糊：Phase 0 必须向用户确认是指'氢能整车/制氢/储运/燃料电池'，不预设口径直接分析"
+  },
+  {
+    "id": 12,
+    "type": "edge_case",
+    "prompt": "分析一个完全没人听过的冷门行业：深海采矿",
+    "expected": "数据可能严重不足：走 Fallback，能采维度出快照，不能采维度标'⚠️ 数据不足'，最终仍可输出八维框架+局限性说明"
+  },
+  {
+    "id": 13,
+    "type": "edge_case",
+    "prompt": "分析白酒行业",
+    "expected": "成熟期典型：维度3（护城河）与维度4（盈利性）高权重展开，重点评估品牌壁垒与利润分配格局"
+  }
+]
