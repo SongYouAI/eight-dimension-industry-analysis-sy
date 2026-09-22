@@ -3,7 +3,7 @@ name: eight-dimension-industry-analysis
 slug: eight-dimension-industry-analysis-sy
 displayName: 八维行业分析
 display_name: 八维行业分析
-version: 2.0.0
+version: 2.1.0
 description: 当用户需要快速了解或深度分析一个行业（或某家公司所在的行业）时，使用本
   skill。输入行业名或公司名，自动产出覆盖产业生命周期、商业模式、市场规模、护城河、竞争格局、估值、外部因素、景气度八个维度的完整 HTML
   分析报告（默认 HTML；PDF / Markdown 按需）。触发词：八维行业分析、行业分析、分析XX行业、分析XX公司所在行业、八维分析、行业深度研究。
@@ -27,7 +27,7 @@ agent_created: true
 输入一家公司名或一个行业名，自动产出覆盖**产业生命周期、商业模式、市场规模、护城河、竞争格局、估值、外部因素、景气度**八大维度的完整 HTML 分析报告（默认 HTML，PDF/MD 按需）。数据驱动、并行采集、按生命周期阶段自适应分配维度权重、可视化输出。
 
 > 方法论源自肖璟《如何快速了解一个行业》（维度释义与章节映射见 [references/framework-detail.md](references/framework-detail.md)，数据源配置见 [references/data-sources.md](references/data-sources.md)）。
-> **判据锚点（唯一依据）**：八维度的阈值/公式/分类矩阵一律以 [references/book-criteria.md](references/book-criteria.md) 为准；采集字段以 [references/data-requirements.md](references/data-requirements.md) 为准；发布门禁以 [references/quality-gate.md](references/quality-gate.md) + [references/check_report.py](references/check_report.py) 为准；输出格式与链接颗粒度见 [references/output-spec.md](references/output-spec.md)；小白化表述见 [references/plain-language.md](references/plain-language.md)。
+> **判据锚点（唯一依据）**：八维度的阈值/公式/分类矩阵一律以 [references/book-criteria.md](references/book-criteria.md) 为准；采集字段以 [references/data-requirements.md](references/data-requirements.md) 为准；发布门禁以 [references/quality-gate.md](references/quality-gate.md) + [references/check_report.py](references/check_report.py)（返工定位器 [references/locate_uncovered.py](references/locate_uncovered.py)）为准；输出格式与链接颗粒度见 [references/output-spec.md](references/output-spec.md)；小白化表述见 [references/plain-language.md](references/plain-language.md)。
 > 报告 HTML 骨架与完整 CSS 见 [assets/template.html](assets/template.html)，生成时复制并按维度填充。
 
 ---
@@ -565,6 +565,9 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 > 报告组装完成、输出前，**必须跑机械门禁**。门禁不过，报告不得输出。这是把「规则可执行」落到流程上的关键一步（元原则：凡重要规则必须能被程序检查）。
 
 1. 运行 `references/check_report.py <报告.html>`（Python 标准库，无需安装依赖）。
+   - 若卡在 **P0-4 关键数字链接覆盖率**（脚本只报百分比、不报「哪几个数字漏了」），**先跑 `references/locate_uncovered.py <报告.html>` 定位**：它复用 `check_report` 的同一套口径常量，逐条列出未覆盖数字及其上下文、并按章节聚合，避免盲改。
+   - 补链杠杆点：门禁按 **near=120 字符窗口 + 整段 `<a>…</a>` 锚点** 判定，一个链接**既能覆盖其后、也能覆盖其前 120 字内**的数字 —— 所以「长句句末插 1 个」远优于「每个数字插 1 个」。KPI 卡把 ref 放进 `.kpi-label`、柱状图放进 `.bar-label`，方法卡的阈值串（如渗透率分档、CR8 分档）串末插 1 个即可覆盖全串。
+   - 注意：`<style>`/`<svg>`/`<table>`/`<script>` 内的数字不计入分母；`style=`/`href=`/`src=` 属性值内的数字被自动排除。
 2. **P0 任一失败 → 阻断发布**：返工对应维度（方法卡/推导/5×4/链接覆盖/生命周期阈值/可比公司表/估值双视角），改完重跑直至 P0 全过。
 3. **P1 失败 → 发布前必改**：PEST 五段链、景气指标看板、规模两法交叉。
 4. 门禁规则与校验逻辑见 [references/quality-gate.md](references/quality-gate.md)；CI 环境加 `--strict` 让 P1 也阻断。
