@@ -11,9 +11,12 @@ check_report.py 只告诉你「覆盖率 19% < 90%」，不告诉你「哪 120 �
     python3 locate_uncovered.py <报告.html>
     python3 locate_uncovered.py <报告.html> --ctx 120    # 上下文宽度（默认 90）
     python3 locate_uncovered.py <报告.html> --sections   # 只输出按章节聚合
+    python3 locate_uncovered.py -h                       # 查看完整帮助
 
+退出码: 0 = 已达标 / 正常输出；2 = 参数或文件错误
 依赖: 仅标准库 + 同目录 check_report.py
 """
+import argparse
 import io
 import os
 import re
@@ -65,17 +68,41 @@ def which_section(pos, spans):
     return "?"
 
 
-def main():
-    if len(sys.argv) < 2:
-        print(__doc__)
-        sys.exit(2)
-    path = sys.argv[1]
-    ctx = 90
-    if "--ctx" in sys.argv:
-        ctx = int(sys.argv[sys.argv.index("--ctx") + 1])
-    only_sections = "--sections" in sys.argv
+def parse_args(argv=None):
+    """参数解析（argparse：自带 -h/--help、类型校验与规范退出码）。"""
+    ap = argparse.ArgumentParser(
+        prog="locate_uncovered.py",
+        description="八维报告返工定位器：列出 P0-4 门禁判定为「未覆盖」的关键数字。"
+                    "复用 check_report.py 的同一套口径常量，因此判定结果与门禁完全一致。",
+        epilog="提示：数字落在 style/href/src 属性值内会被自动排除；"
+               "SVG 与 <table> 内的数字不计入分母（无需为其补链）。"
+               "补链杠杆点：门禁按 near=120 字符窗口 + 整段 <a> 锚点判定，"
+               "长句句末插 1 个链接即可覆盖其前 120 字内的数字。",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    ap.add_argument("report", metavar="报告.html", help="八维分析报告 HTML 文件路径")
+    ap.add_argument("--ctx", type=int, default=90, metavar="N",
+                    help="未覆盖数字的上下文显示宽度，默认 90 字符")
+    ap.add_argument("--sections", action="store_true",
+                    help="只输出按章节聚合的统计视图（不逐条列出）")
+    return ap.parse_args(argv)
 
-    text = io.open(path, encoding="utf-8").read()
+
+def main(argv=None):
+    args = parse_args(argv)
+    path = args.report
+    ctx = max(0, args.ctx)
+    only_sections = args.sections
+
+    if not os.path.isfile(path):
+        print(f"❌ 文件不存在：{path}", file=sys.stderr)
+        sys.exit(2)
+
+    try:
+        text = io.open(path, encoding="utf-8").read()
+    except (OSError, UnicodeDecodeError) as e:
+        print(f"❌ 无法读取文件：{path}\n   {e}", file=sys.stderr)
+        sys.exit(2)
     raw = cr.strip_noise(cr.extract_body(text))
     anchors = cr.link_anchors(raw)
     spans_attr = [(m.start(), m.end()) for m in
