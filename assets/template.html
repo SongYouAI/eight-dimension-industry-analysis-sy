@@ -3,7 +3,7 @@
   ══════════════════════════════════════════════════════════════════════
   八维行业分析报告 · 模板 v2.0（对齐七步财报分析报告版式）
   设计系统：深空蓝 #0a1628 + Stripe 紫 #635bff + 琥珀金 #c8943b
-  用法：复制本文件，替换 {占位符}，填充八维内容即可。禁止手改 CSS 变量。
+  用法：复制本文件，替换 {占位符}，填充八维内容即可。优先复用模板 CSS 变量；确需覆盖时集中写在 <head> 末尾并注明原因。
   数据图表：C1 市场规模双序列 / C2 可比 PE 对比 / C3 八维评级雷达（SVG 离线自包含）
   ══════════════════════════════════════════════════════════════════════
 -->
@@ -72,7 +72,7 @@ body::before{
 .hero h1{font-size:42px; font-weight:800; letter-spacing:1px; margin-bottom:16px; color:#f0e6d0; text-shadow:0 2px 12px rgba(200,148,59,0.25);}
 .hero .badge{display:inline-block; background:rgba(200,148,59,0.15); border:1.5px solid rgba(200,148,59,0.4); color:#e0c17d; padding:7px 22px; border-radius:20px; font-size:14px; font-weight:700; letter-spacing:2px; margin-bottom:22px; backdrop-filter:blur(4px);}
 .hero .subtitle{font-size:16px; opacity:.85; max-width:650px; line-height:1.6;}
-.hero .meta-row{display:flex; gap:35px; margin-top:35px; flex-wrap:wrap;}
+.hero .meta-row{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:22px; margin-top:35px;}
 .hero .mt{display:flex; flex-direction:column;}
 .hero .mt-l{font-size:10px; text-transform:uppercase; letter-spacing:2px; opacity:.5; color:#8a9bbf;}
 .hero .mt-v{font-size:14px; margin-top:6px; opacity:.95; color:#e8e8e8; font-weight:600;}
@@ -118,7 +118,7 @@ body::before{
 .step-card{background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); margin-bottom:44px; overflow:hidden; border:1px solid var(--gray-light);}
 .step-head{position:relative; padding:28px 34px 22px; margin:0 0 8px; border-bottom:1px solid rgba(99,91,255,0.10); overflow:hidden; background:linear-gradient(180deg,#fbfbff 0%,#ffffff 100%);}
 .step-head::before{content:''; position:absolute; top:0; left:0; height:2px; width:64px; background:linear-gradient(90deg,#635bff,#c8943b);}
-.step-num-watermark{position:absolute; top:-20px; right:-6px; font-size:180px; font-weight:900; color:rgba(99,91,255,0.05); line-height:1; letter-spacing:-10px; pointer-events:none; user-select:none; font-feature-settings:"tnum";}
+.step-num-watermark{position:absolute; top:-20px; right:16px; font-size:180px; font-weight:900; color:rgba(99,91,255,0.05); line-height:1; letter-spacing:-4px; pointer-events:none; user-select:none; font-feature-settings:"tnum";}
 .step-head-text{position:relative; z-index:2; max-width:82%;}
 .step-num{font-size:12px; font-weight:800; color:#635bff; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px;}
 .step-title{font-size:28px; font-weight:800; color:#0a1628; line-height:1.2; letter-spacing:-1px; margin-bottom:6px;}
@@ -390,7 +390,7 @@ a.ref:hover{opacity:1; color:var(--purple);}
 [data-theme="dark"] .chart-head{background:var(--off-white); color:#fff;}
 
 /* ═══════════ ⑱ 响应式 ═══════════ */
-@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);} .risk-grid{grid-template-columns:1fr;} .step-title{font-size:24px;} .step-num-watermark{font-size:140px;}}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);} .risk-grid{grid-template-columns:1fr;} .step-title{font-size:24px;} .step-num-watermark{font-size:140px;} .hero .meta-row{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:768px){.main-wrap{padding:0 14px;} .hero{padding:32px 16px;} .hero h1{font-size:26px;} .exec-summary{padding:24px 18px;} .step-body{padding:20px 18px;} .step-head{padding:22px 18px;} .kpi-grid{grid-template-columns:1fr 1fr; gap:12px;} .kpi-value{font-size:19px;}}
 @media(max-width:560px){.kpi-grid{grid-template-columns:1fr;} .step-head-text{max-width:100%;} .step-title{font-size:20px;} .step-num-watermark{font-size:100px;} .swot-grid{grid-template-columns:1fr;}}
 
@@ -827,6 +827,10 @@ a.ref:hover{opacity:1; color:var(--purple);}
     sync();
   });
   var nav=document.querySelector('.side-nav');
+  var heroEl=document.querySelector('.hero');
+  if(heroEl && nav && 'IntersectionObserver' in window){
+    new IntersectionObserver(function(es){es.forEach(function(e){nav.classList.toggle('nav-hidden', e.isIntersecting);});},{threshold:0.12}).observe(heroEl);
+  }
   var anchors=['dim1','dim2','dim3','dim4','dim5','dim6','dim7','dim8','conclusion','src-summary'];
   if('IntersectionObserver' in window){
     anchors.forEach(function(id){

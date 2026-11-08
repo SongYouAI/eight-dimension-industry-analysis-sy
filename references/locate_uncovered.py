@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-八维报告 · 返工定位器（P0-4 关键数字链接覆盖率诊断）
+八维报告 · 返工定位器（P0-4 链接邻近率诊断）
 ====================================================
 check_report.py 只告诉你「覆盖率 19% < 90%」，不告诉你「哪 120 个数字漏了」。
 没有定位信息就只能盲改。本脚本复用 check_report 的**同一套口径常量**，
@@ -72,7 +72,7 @@ def parse_args(argv=None):
     """参数解析（argparse：自带 -h/--help、类型校验与规范退出码）。"""
     ap = argparse.ArgumentParser(
         prog="locate_uncovered.py",
-        description="八维报告返工定位器：列出 P0-4 门禁判定为「未覆盖」的关键数字。"
+        description="八维报告返工定位器：列出 P0-4 链接邻近率门禁判定为「未覆盖」的关键数字。"
                     "复用 check_report.py 的同一套口径常量，因此判定结果与门禁完全一致。",
         epilog="提示：数字落在 style/href/src 属性值内会被自动排除；"
                "SVG 与 <table> 内的数字不计入分母（无需为其补链）。"
@@ -123,10 +123,10 @@ def main(argv=None):
     gap = max(0, len(uncovered) - allowed_miss)  # 至少还需补链的数字数
 
     print("=" * 78)
-    print("八维报告 · P0-4 关键数字链接覆盖率诊断")
+    print("八维报告 · P0-4 链接邻近率诊断")
     print("=" * 78)
     print(f"  文件            : {os.path.basename(path)}")
-    print(f"  当前覆盖率      : {kcov:.1%}  （已覆盖 {kcov_n}/{ktot}）")
+    print(f"  当前链接邻近率  : {kcov:.1%}  （{kcov_n}/{ktot} 个关键数字邻近有链接）")
     print(f"  独立来源域名    : {nsrc} 个（P0 要求 ≥10）")
     print(f"  未覆盖数字      : {len(uncovered)} 个（通过线最多可留 {allowed_miss} 个）")
     print(f"  至少还需补链    : {gap} 个" + ("　✅ 已达标" if gap == 0 else ""))

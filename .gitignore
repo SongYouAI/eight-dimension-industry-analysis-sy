@@ -9,3 +9,8 @@ __pycache__/
 # 编辑器
 .vscode/
 .idea/
+
+# 视觉验收产物（capture.py 默认输出 ./shots）
+shots/
+*_capture.png
+_dim*_only.html

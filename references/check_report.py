@@ -65,6 +65,27 @@ def chapter_has(text, anchors, required, window=4500):
     return False
 
 
+def section_by_anchor(text, start_id, end_id):
+    """按 section id 截取原始 HTML 片段；缺起始锚点返回空串。"""
+    i = text.find('id="%s"' % start_id)
+    if i < 0:
+        return ""
+    j = text.find('id="%s"' % end_id, i)
+    return text[i:j] if j > i else text[i:]
+
+
+def lifecycle_section(text):
+    """P0-6 只在维度一（生命周期）章节内查旧阈值串。
+
+    quality-gate.md 的伪代码写的就是 re.search(..., lifecycle)；旧实现误用全文
+    plain，导致维度三「两法差距 >30% 必须解释」这类正常百分比表述被误判。
+    返回原始 HTML 片段（不 strip_tags）：strip_tags 会把裸 ` <5% ` 当标签吞掉，
+    使 P0-6 永远检不出 ` <5% `；调用方用 html.unescape 兼容 ` &lt;5% ` 写法。
+    找不到 dim1 锚点时返回空串（锚点缺失由 P0-9 阻断）。
+    """
+    return section_by_anchor(text, "dim1", "dim2")
+
+
 def count_method_cards(text):
     # 方法卡：升级后每维度置顶「方法卡」标识（📐方法卡 或 方法卡 四行结构）
     return len(re.findall(r"方法卡", text))
@@ -253,7 +274,7 @@ def main():
         print("用法: python3 check_report.py <报告.html> [--strict]")
         sys.exit(2)
     path = sys.argv[1]
-    strict = "--strict" in sys.argv
+    strict = "--no-strict" not in sys.argv   # 默认严格；--no-strict 可退回「P1 仅提示」
     text = load(path)
     plain = strip_tags(text)
 
@@ -274,13 +295,18 @@ def main():
     else:
         notes.append(f"P0-2 推导过程 = {n_deriv} ✅")
 
+    if not has_formula_recompute(text):
+        fails_p0.append("P0-3 缺少可复算公式块（公式词 ≥4 + <details> 计算折叠）")
+    else:
+        notes.append("P0-3 可复算公式块 + 生命周期计算折叠齐全 ✅")
+
     urls = collect_hrefs(text)
     # 关键数字口径（排除年份/序数等非数据声明） + 独立来源数硬要求
     kcov, kcovered, ktotal, nsrc = compute_key_coverage(text)
     if kcov < 0.9:
-        fails_p0.append(f"P0-4 关键数字链接覆盖率 {kcov:.0%} < 90%（覆盖 {kcovered}/{ktotal}）")
+        fails_p0.append(f"P0-4 链接邻近率 {kcov:.1%} < 90%（{kcovered}/{ktotal} 个关键数字邻近有链接）")
     else:
-        notes.append(f"P0-4 关键数字链接覆盖率 {kcov:.0%} ✅（覆盖 {kcovered}/{ktotal}）")
+        notes.append(f"P0-4 链接邻近率 {kcov:.1%} ✅（{kcovered}/{ktotal} 个关键数字邻近有链接）")
     if nsrc < 10:
         fails_p0.append(f"P0-4 独立来源域名仅 {nsrc} 个 < 10（疑似单一来源复用）")
     else:
@@ -296,10 +322,13 @@ def main():
     else:
         notes.append("P0-5 护城河 5×4 矩阵 + 三问验证 ✅")
 
-    if re.search(r"<5%|5-30%|>30%", plain):
-        fails_p0.append("P0-6 生命周期阈值出现错误串（<5%/5-30%/>30%）")
+    lc = lifecycle_section(text)
+    if not lc:
+        notes.append("P0-6 维度一章节缺失，跳过阈值校验（锚点缺失由 P0-9 阻断）")
+    elif re.search(r"<\s*5%|5\s*-\s*30%|>\s*30%", html_lib.unescape(lc)):
+        fails_p0.append("P0-6 生命周期章节出现旧阈值错误串（<5% / 5-30% / >30%）")
     else:
-        notes.append("P0-6 生命周期阈值无错误串 ✅")
+        notes.append("P0-6 生命周期章节阈值无错误串（章节级校验） ✅")
 
     if not has_comparable_table(text):
         fails_p0.append("P0-7 竞争格局章无可比公司份额表（≥3 家）")
@@ -319,7 +348,7 @@ def main():
     if not nav_p0:
         notes.append("P0-9 章节锚点 10/10 完整 ✅")
     if not nav_p1:
-        notes.append("P1-3 导航模块(侧栏/目录卡/深色切换)完整 ✅")
+        notes.append("P1-5 导航模块(侧栏/目录卡/深色切换)完整 ✅")
 
     # ---- P0-10 内容五件套（v2.1 新增） ----
     five_missing = check_five_pieces(text)
@@ -335,15 +364,69 @@ def main():
         notes.append("P1-1 PEST 五段链走全 ✅")
 
     if not has_prosperity_board(text):
-        fails_p1.append("P1-2 景气指标看板不完整（量/价/库存/订单/产能）")
+        fails_p1.append("P1-2 景气指标看板不完整（维度八须有含五维 + 跟踪频率的表格）")
+    else:
+        notes.append("P1-2 景气指标看板(五维+频率+表格)完整 ✅")
+
+    if not has_two_method_cross(text):
+        fails_p1.append("P1-3 市场规模未做「自上而下 × 自下而上」两法交叉")
+    else:
+        notes.append("P1-3 规模两法交叉齐全 ✅")
+
+    if not has_structure(text):
+        fails_p1.append("P1-4 结构不完整（八维卡片 / 反共识检验 / 推翻信号 / HTML 闭合）")
+    else:
+        notes.append("P1-4 结构完整可解析 ✅")
+
+    if not has_as_of_timestamp(text):
+        fails_p1.append("P1-6 报告头未声明数据截止时点（日期 + 时分，如 2026-11-08 22:00）")
+    else:
+        notes.append("P1-6 数据截止时点已声明 ✅")
 
     return fails_p0, fails_p1, notes
 
 
+def has_formula_recompute(text):
+    """P0-3：报告须含可复算公式块 + 生命周期计算 <details> 折叠块。"""
+    body = extract_body(text)
+    plain = strip_tags(body)
+    words = ["渗透率", "UE", "CAGR", "PEG", "CCC", "TAM", "CR8", "SAM", "SOM"]
+    hits = sum(1 for w in words if w in plain)
+    return hits >= 4 and "<details" in body and any(op in plain for op in ("=", "÷", "×"))
+
+
+def has_two_method_cross(text):
+    """P1-3：维度三须同时给出自上而下与自下而上两法测算。"""
+    seg = section_by_anchor(text, "dim3", "dim4")
+    return bool(seg) and "自上而下" in seg and "自下而上" in seg
+
+
+def has_structure(text):
+    """P1-4：八维卡片齐全 + 综合结论含反共识与推翻信号 + HTML 基本闭合。"""
+    seg = section_by_anchor(text, "conclusion", "src-summary")
+    ok_conclusion = "反共识" in seg and "推翻信号" in seg
+    ok_html = all(t in text for t in ("<html", "</html>", "<body", "</body>"))
+    return count_class_use(text, "step-card") >= 8 and ok_conclusion and ok_html
+
+
+def has_as_of_timestamp(text):
+    """P1-6：报告头须声明数据截止时点（日期 + 时分）。"""
+    i = text.find('id="dim1"')
+    hero = text[:i] if i > 0 else text[:8000]
+    return bool(re.search(r"20\d{2}-\d{2}-\d{2}\s+\d{2}:\d{2}", hero)) and \
+           any(w in hero for w in ("截至", "截止", "数据时点"))
+
+
 def has_prosperity_board(text):
-    dims = ["量", "价", "库存", "订单", "产能"]
-    cnt = sum(1 for d in dims if d in text)
-    return cnt >= 4
+    """P1-2：维度八须有含五维 + 跟踪频率的表格化景气看板。
+
+    旧实现只数全文出现「量/价/库存/订单/产能」≥4 个字，任何报告都能通过。
+    """
+    seg = section_by_anchor(text, "dim8", "conclusion")
+    if not seg:
+        return False
+    dims = sum(1 for d in ["量", "价", "库存", "订单", "产能"] if d in seg)
+    return dims >= 4 and "<table" in seg and "频率" in seg
 
 
 if __name__ == "__main__":
@@ -367,6 +450,6 @@ if __name__ == "__main__":
     print("=" * 56)
     if p0:
         sys.exit(1)
-    if p1 and "--strict" in sys.argv:
+    if p1 and "--no-strict" not in sys.argv:
         sys.exit(1)
     sys.exit(0)

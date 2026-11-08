@@ -22,9 +22,9 @@
 | P0-1 | 八章方法卡齐全 | 统计 `.spec` 或方法卡块数 = 8，且每块含「方法卡」标识 |
 | P0-2 | 八章推导过程齐全 | 统计推导块数 = 8，且默认展开 |
 | P0-3 | 关键数字有公式来源 | 渗透率/CR8/UE/PE/PEG 等核心数可由报告内公式复算；脚本提取公式块校验 |
-| P0-4 | 链接覆盖率 ≥ 90% 且非纯域名 | 带 href 来源角标数 ÷ 正文数字出现次数 ≥ 0.9；正则 `^https?://[^/]+/?$` 命中即不合格 |
+| P0-4 | 链接邻近率 ≥ 90% 且非纯域名 | 关键数字落在 near=120 字符窗口 + 整段 `<a>…</a>` 锚点内即计覆盖，覆盖率 ≥ 0.9；正则 `^https?://[^/]+/?$` 命中即不合格。**仅代表链接密度，不代表链接可核查**：用 `verify_links.py` 验活 + 按 output-spec.md 人工抽查 |
 | P0-5 | 护城河用 5×4 矩阵 | 护城河章须出现 5×4 矩阵与「三问验证」关键词 |
-| P0-6 | 生命周期阈值用正确表 | 阈值须为书原版（15/20/35/60/70+），不得出现「<5% / 5-30% / >30%」错误串 |
+| P0-6 | 生命周期阈值用正确表 | 阈值须用本 Skill 判定表（15/20/35/60/70+，工程化切分，非书中原档）；**仅维度一章节**不得出现「<5% / 5-30% / >30%」旧阈值串（其它章节的百分比表述不受限） |
 | P0-7 | 可比公司数据表存在 | 竞争格局章含 ≥3 家可比公司的份额/盈利对照表 |
 | P0-8 | 估值双视角 | 同时给「相对（同业分位）+ 绝对（历史分位）」结论，且排除低估值陷阱 |
 
@@ -36,8 +36,10 @@
 |---|------|------------|
 | P1-1 | PEST 走完五段链 | 每个外部因素含 事实→传导→对象→量级→时点 五段 |
 | P1-2 | 景气指标看板完整 | 含量/价/库存/订单/产能五维与跟踪频率 |
-| P1-3 | 规模测算含两法交叉 | 市场规模须自上而下 × 自下而上，差距 >30% 已解释 |
-| P1-4 | 结构完整可解析 | HTML 可被解析，八维卡片齐全，综合结论含反共识检验 |
+| P1-3 | 规模测算含两法交叉 | 市场规模须自上而下 × 自下而上，差距超过 30% 已解释 |
+| P1-4 | 结构完整可解析 | HTML 可被解析，八维卡片齐全，综合结论含反共识检验与推翻信号 |
+| P1-5 | 导航模块完整 | 侧栏 / 目录卡 / 深色切换齐全（章节锚点另属 P0-9） |
+| P1-6 | 数据截止时点已声明 | 报告头含「截至 YYYY-MM-DD HH:MM」；行情/估值数据须标口径 |
 
 ---
 
@@ -55,19 +57,16 @@
 
 `check_report.py` 读取生成的 HTML 报告，逐条执行 P0/P1 校验，任一 P0 失败则退出码非 0（CI/手动阻断均可接入）。脚本逻辑见文件内注释，关键检查：
 
-```python
-specs = find_all('.spec')                     # P0-1: 应 = 8
-assert len(specs) == 8 and all(has_method_card(s) for s in specs)
-assert len(find_all('.推导')) == 8           # P0-2
-nums = count_numbers(body); hrefs = count_href(body)
-assert hrefs / nums >= 0.9                    # P0-4 覆盖率
-assert not re.search(r'https?://[^/]+/?$', all_hrefs)  # P0-4 非纯域名
-assert '5×4' in moat and '三问' in moat      # P0-5
-assert not re.search(r'<5%|5-30%|>30%', lifecycle)      # P0-6
-assert 可比公司表 exists and rows >= 3        # P0-7
-assert 估值双视角 and 排除陷阱                # P0-8 / P1
-assert 五段链 in all(PEST因素)                # P1-1
-```
+| 规则 | 实际实现函数 |
+|------|-------------|
+| P0-1 / P0-2 | `count_method_cards()` / `count_derivation()` |
+| P0-3 | `has_formula_recompute()` |
+| P0-4 | `compute_key_coverage()` + `pure_domain_urls()`；返工定位 `locate_uncovered.py`；链接验活 `verify_links.py` |
+| P0-5 / P0-6 | `chapter_has()` / `lifecycle_section()`（仅维度一，且用 `html.unescape` 兼容 `&lt;5%`） |
+| P0-7 / P0-8 | `has_comparable_table()` / `chapter_has()` |
+| P0-9 / P0-10 | `check_nav()` / `check_five_pieces()` |
+| P1-1 ~ P1-6 | `chapter_has()` / `has_prosperity_board()` / `has_two_method_cross()` / `has_structure()` / `check_nav()` / `has_as_of_timestamp()` |
+| 视觉验收 | `scripts/capture.py`（Chrome headless 裁剪页，锚点不滚动） |
 
 ---
 

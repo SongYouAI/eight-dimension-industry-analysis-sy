@@ -1,6 +1,6 @@
 # 行业分析数据源配置
 
-> 最后更新：2026-06-04
+> 最后更新：2026-11-08
 
 ## 数据源清单
 
@@ -11,6 +11,10 @@
 | 3 | `WebSearch` + `WebFetch` | 公开信息检索 | 行业报告、政策文件、产业链 | ★★ 定性 |
 | 4 | `wechat-article-search` | 微信深度文章 | 行业深度研究、专家观点 | ★ 点缀 |
 | 5 | `competitive-analysis` | 竞争分析框架 | 波特五力、SWOT、对标分析 | 按需加载 |
+| 6 | `domain_search` | 行业/公司综合语义检索 | 行业格局、政策、可比公司、交叉验证 | ★★ 补充 |
+| 7 | `mcp__westock-mcp`（connector） | 结构化金融数据（MCP 通道） | 同 westock-data，CLI 不可用时启用 | ★★★ 核心 |
+
+> 2026-11-08 实测通道：`westock-mcp` connector（腾讯自选股）+ `domain_search` + `WebSearch`。`westock-data` CLI 与 `neodata-financial-search` 在该环境中不可用，按「授权与探活」流程降级，不得静默假定可用。
 
 ## 调用策略
 
@@ -20,6 +24,13 @@
    - ⚠️ **环境路由（运行时注）**：若当前环境 `westock-data` **CLI 不可用**，改用 `mcp__westock-mcp`（腾讯自选股 MCP，工具名以 `data_` 前缀）；`neodata-financial-search` 走其 `scripts/query.py` + 凭证（12h 时效，tempToken 优先）。具体调用见对应 skill。运行时细节不写进 SKILL.md 正文，避免与环境耦合。
 2. **再调用 `neodata-financial-search`**（语义搜索）：补充行业级指标和动态
 3. **最后 `WebSearch` + `wechat-article-search`**（定性信息）：政策、趋势、深度观点
+
+### 授权与探活（Phase 0 必做）
+
+1. 检测 `westock-data` CLI 是否可用；不可用则查 `westock-mcp` connector 状态。
+2. 状态 `auth-required` / `disconnected` → 用 `list_installed_plugins` 取精确 `pluginName`，再 `reconnect_plugin` 重连；重连后重试原调用一次，仍失败则停止重试并说明阻塞点。
+3. 仅在用户明确同意降级、或重连失败时，切 `domain_search` + `WebSearch` 兜底，报告标注「⚠️ 结构化数据缺失」。
+4. 不要把 5xx / 超时 / 业务权限错误当成凭证过期；重连只针对认证失败或用户明确要求。
 
 ### 调用效率
 
