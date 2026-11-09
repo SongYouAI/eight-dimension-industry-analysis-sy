@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-八维行业报告 · 数据驱动生成器（v2.2）
-=====================================
-把「来源池 → 角标绑定 → 八维章节骨架 → 模板 CSS/JS 复用 → 三图 → 机械门禁」
-固化成一条链路。下次出报告只改 example_data.json，不重写生成器。
+八维行业报告 · 数据驱动生成器（v3.0 · HYDRO PAPER 默认皮肤）
+================================================================
+把「来源池 → 片段结构校验 → 角标绑定 → 八维章节骨架 → v3 视觉皮肤
+→ Hero 自动生成 → 三图 → 装饰符号清理 → 机械门禁」固化成一条链路。
+下次出报告只改数据 JSON，**不需要再写任何 CSS / Hero HTML / 后处理注入脚本**。
 
 用法:
     python3 render_report.py --data example_data.json --out 报告.html
     python3 render_report.py --data x.json --out y.html --no-gate
-    python3 render_report.py --selftest-charts
+    python3 render_report.py --data x.json --out y.html --legacy-skin   # 仅用于对照旧版
+    python3 render_report.py --selftest-charts      # 三图渲染自检
+    python3 render_report.py --selftest-helpers     # 构造器/校验器自检
 
-数据文件字段（见 example_data.json）:
-    meta             行业名 / 日期 / 数据截至 / 生命周期 / 地域 等
-    sources          {key: {url, title}}  来源池（URL 必须带路径，非纯域名）
-    dims             8 个维度，字段见 render_dim()
-    top_html         Hero + 导航 + 目录卡 + 执行摘要（已渲染片段）
-    conclusion_html  综合结论 step-card（含 id="conclusion"）
-    sources_html     数据来源汇总 step-card（含 id="src-summary"）
-    charts           {c1, c2, c3} 图表数据，供 render_c1/c2/c3 使用
+v3.0 三条硬规则（对应 2026-11-09 两次返工）:
+    1. 所有 top_html / conclusion_html / sources_html / dims[].extra 片段在拼接前
+       逐段跑 html_helpers.validate_fragment()，标签栈不平衡直接拒绝出稿。
+    2. 默认注入 assets/hydro-skin.css 并自动把旧 Hero 升级成 v3 签名结构，
+       禁止回落到深空蓝 Hero；门禁 P0-12 会再查一次。
+    3. 入场动效只允许 transform，不允许 opacity:0 静态初始态（P0-13）。
 
+数据文件新增可选字段:
+    hero             v3 Hero 配置（缺省时由 meta 自动生成，见 default_hero_cfg）
 依赖: 仅标准库；门禁复用 references/check_report.py
 """
 import argparse
@@ -33,7 +36,18 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TPL = os.path.join(ROOT, "assets", "template.html")
+SKIN = os.path.join(ROOT, "assets", "hydro-skin.css")
 GATE = os.path.join(ROOT, "references", "check_report.py")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import html_helpers as hh  # noqa: E402
+
+# 旧三色 → v3 单色 + 石灰色。数据文件里即使沿用旧 hex 也自动适配，
+# 不再需要人工改 JSON（门禁 P1-7 仍会提示残留）。
+LEGACY_COLOR_MAP = {
+    "#635bff": "#2a4bd7", "#4f46e5": "#2a4bd7",
+    "#c8943b": "#a8a293", "#d4a853": "#a8a293",
+    "#0a1628": "#12181c",
+}
 
 # C2 超轴断轴标记：斜纹 + 「超轴 ×N」，避免把 154 倍 PE 画成 100% 满格误导读者。
 # 集中覆盖在 <head> 末尾，遵守「优先复用模板 CSS、覆盖须集中并注明原因」。
@@ -193,7 +207,8 @@ def render_c1(c, sources):
                     % (round(yy + 4, 1), tick))
 
     legend = "".join('<span><i class="swatch" style="background:%s"></i>%s</span>'
-                     % (s["color"], s["name"]) for s in series)
+                     % (LEGACY_COLOR_MAP.get(s["color"].lower(), s["color"]), s["name"])
+                     for s in series)
     return ('<div class="chart-card"><div class="chart-head">%s %s</div>'
             '<svg viewBox="0 0 560 320" role="img" aria-label="%s" style="padding:16px;">'
             '%s%s</svg><div class="legend" style="padding:0 16px 16px;">%s</div></div>'
@@ -249,21 +264,104 @@ def fix_axis_break(s):
     return "".join(out)
 
 
-def build(data):
+# ── v3 视觉与防错 ───────────────────────────────────────────────────────
+def skin_block():
+    """默认皮肤作为 <head> 最后一段 <style>，压过模板内置 CSS 与 AXIS_BREAK_CSS。"""
+    css = open(SKIN, encoding="utf-8").read()
+    return ('\n<style id="hydro-skin" data-design="HYDRO PAPER v3.0">\n'
+            + css.strip() + '\n</style>\n')
+
+
+def default_hero_cfg(data):
+    """数据文件没写 hero 时，用 meta 自动推导 v3 Hero（禁止回落到旧深空蓝）。"""
+    meta = data.get("meta", {})
+    region = meta.get("region", "中国市场")
+    company = meta.get("company", "")
+    as_of = meta.get("as_of") or (meta.get("date", "2026-01-01") + " 00:00")
+    badge = " · ".join(x for x in [meta.get("lifecycle", ""),
+                                  ("案例锚点 " + company) if company else ""] if x)
+    return {
+        "note_no": "08",
+        "as_of": as_of,
+        "overline": "INDUSTRY ANALYSIS / " + region,
+        "title_lines": [meta.get("industry", ""), "八维行业分析报告"],
+        "badge": badge,
+        "subtitle": "产业生命周期驱动 · 八维自适应权重 · 本报告以行业为分析主体、"
+                    "公司为案例锚点，不构成投资建议。",
+        "subtitle_src": "",
+        "meta": [
+            {"label": "数据截至", "value": meta.get("date", "") or as_of[:10]},
+            {"label": "生命周期", "value": meta.get("lifecycle", "")},
+            {"label": "地域范围", "value": region},
+            {"label": "综合吸引力", "value": meta.get("attractiveness", "见综合结论")},
+        ],
+    }
+
+
+def upgrade_hero(top, hero_html):
+    """把旧版 Hero 整段换成 v3 签名结构；旧 Hero 的右边界取 .main-wrap 起点。"""
+    m = re.search(r'<(?:div|header)\b[^>]*class="hero"', top)
+    if not m:
+        return hero_html + "\n" + top
+    mw = re.search(r'<div class="main-wrap"', top[m.start():])
+    end = m.start() + mw.start() if mw else len(top)
+    return top[:m.start()] + hero_html + "\n" + top[end:]
+
+
+def validate_data_fragments(data):
+    """渲染前逐片段查标签栈。`.main-wrap` 是唯一允许跨片段的容器。"""
+    errs = []
+    for name in ("top_html", "conclusion_html", "sources_html"):
+        errs += hh.validate_fragment(data.get(name, ""), name, allow_cross_class="main-wrap")
+    for i, d in enumerate(data.get("dims", []), 1):
+        errs += hh.validate_fragment(d.get("extra", ""),
+                                     "dims[%d].extra" % i, allow_cross_class="main-wrap")
+        for j, p in enumerate(d.get("paras", [])):
+            errs += hh.validate_fragment(p, "dims[%d].paras[%d]" % (i, j))
+    return errs
+
+
+def build(data, legacy_skin=False, keep_emoji=False):
+    # ① 结构门禁前置：任何一个片段标签不平衡，直接拒绝出稿
+    errs = validate_data_fragments(data)
+    if errs:
+        raise ValueError("HTML 片段标签不平衡（%d 处），已拒绝出稿：\n  - %s"
+                         % (len(errs), "\n  - ".join(errs[:12])))
+
     tpl = open(TPL, encoding="utf-8").read()
-    head = tpl[:tpl.index("</head>") + len("</head>")]
+    # 用 rfind 取最后一个 head 结束标签：模板注释里若出现同名字符串，
+    # index() 会把 head 截断在注释中途，丢掉 <html> 与整段 CSS（P1-4 曾拦下此事故）。
+    h_end = tpl.rfind("</head>")
+    if h_end < 0:
+        raise ValueError("template.html 缺少 head 结束标签")
+    head = tpl[:h_end + len("</head>")]
     head = head.replace("{行业名称}", data["meta"]["industry"])
-    head = head.replace("</head>", AXIS_BREAK_CSS + "</head>")
+    if "<html" not in head:
+        raise ValueError("head 切片不含 <html> 标签，模板结构可能已损坏")
+    # ② 默认注入 v3 皮肤；AXIS_BREAK_CSS 在前，皮肤在后取得最高优先级
+    inject = AXIS_BREAK_CSS if legacy_skin else AXIS_BREAK_CSS + skin_block()
+    head = head.replace("</head>", inject + "</head>")
     m = re.search(r"(<script>\s*/\* 入场动效.*?)</body>", tpl, re.S)
     tail = m.group(1) if m else ""
 
     sources = data["sources"]
-    parts = [data.get("top_html", "")]
+    top = data.get("top_html", "")
+    # ③ Hero 自动生成 / 自动升级：数据文件不再需要手写 Hero HTML
+    if not legacy_skin:
+        cfg = data.get("hero") or default_hero_cfg(data)
+        top = upgrade_hero(top, hh.HERO(cfg, lambda k: ref(sources, k) if k else ""))
+
+    parts = [top]
     for d in data["dims"]:
         parts.append(auto_link(render_dim(d, sources), sources, d["src"]))
     parts.append(data.get("conclusion_html", ""))
     parts.append(data.get("sources_html", ""))
     body = fix_axis_break("\n".join(parts))
+    # 旧三色硬编码兜底：即便数据文件里仍写 #635bff / #c8943b，也统一换成
+    # v3 的钴蓝 + 石灰色，避免「文字换了皮肤、图表还是紫金」的半吊子状态。
+    if not legacy_skin:
+        for old_c, new_c in LEGACY_COLOR_MAP.items():
+            body = body.replace(old_c, new_c).replace(old_c.upper(), new_c)
     # 数据驱动的补链：raw HTML 片段（非 <p> 段落）里的关键数字由数据文件声明锚点，
     # 避免把「某个行业的某句话」硬编码进生成器。同一数字可能在多处出现，
     # 默认替换全部匹配；需要只补一处时把 after 写足以上下文即可。
@@ -273,7 +371,16 @@ def build(data):
         if anchor in body:
             body = body.replace(anchor, anchor + " " + ref(sources, key)) if n == 0 \
                    else body.replace(anchor, anchor + " " + ref(sources, key), n)
-    return head + "\n<body>\n" + body + "\n" + tail + "\n</body>\n</html>\n"
+    doc = head + "\n<body>\n" + body + "\n" + tail + "\n</body>\n</html>\n"
+    # ④ 装饰符号清理：只动 HTML 正文，跳过 script/style/注释（防「锚点插进 JS」重演）
+    if not keep_emoji:
+        doc, _ = hh.clean_decorative_symbols(doc)
+    # ⑤ 全文再查一次，防止片段拼接后互相影响
+    doc_errs = hh.validate_document(doc)
+    if doc_errs:
+        raise ValueError("拼接后全文标签不平衡，已拒绝出稿：\n  - %s"
+                         % "\n  - ".join(doc_errs[:8]))
+    return doc
 
 
 def selftest_charts():
@@ -305,25 +412,38 @@ def selftest_charts():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="八维行业报告 · 数据驱动生成器")
+    ap = argparse.ArgumentParser(description="八维行业报告 · 数据驱动生成器 v3.0")
     ap.add_argument("--data", help="数据 JSON 路径")
     ap.add_argument("--out", help="输出 HTML 路径")
     ap.add_argument("--no-gate", action="store_true", help="生成后不自动跑机械门禁")
+    ap.add_argument("--legacy-skin", action="store_true",
+                    help="仅供对照：不注入 v3 皮肤、不升级 Hero（门禁会阻断）")
+    ap.add_argument("--keep-emoji", action="store_true", help="保留装饰 emoji，不做符号清理")
     ap.add_argument("--selftest-charts", action="store_true", help="自检三图渲染函数")
+    ap.add_argument("--selftest-helpers", action="store_true", help="自检构造器/结构校验器")
     args = ap.parse_args()
     if args.selftest_charts:
         return selftest_charts()
+    if args.selftest_helpers:
+        return hh.selftest()
     if not args.data or not args.out:
         ap.error("需要 --data 与 --out")
     with open(args.data, encoding="utf-8") as f:
         data = json.load(f)
-    html = build(data)
+    try:
+        out = build(data, legacy_skin=args.legacy_skin, keep_emoji=args.keep_emoji)
+    except ValueError as e:
+        print("🔴 渲染中止（结构校验未通过）:\n" + str(e), file=sys.stderr)
+        return 2
     with open(args.out, "w", encoding="utf-8") as f:
-        f.write(html)
-    print("已生成: %s | 字符数: %d" % (args.out, len(html)))
+        f.write(out)
+    print("已生成: %s | 字符数: %d | 皮肤: %s"
+          % (args.out, len(out), "legacy(对照)" if args.legacy_skin else "HYDRO PAPER v3.0"))
     if not args.no_gate:
         r = subprocess.run([sys.executable, GATE, args.out], capture_output=True, text=True)
         print(r.stdout.rstrip())
+        if r.stderr.strip():
+            print(r.stderr.rstrip(), file=sys.stderr)
         print("门禁退出码:", r.returncode)
         return r.returncode
     return 0

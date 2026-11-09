@@ -29,7 +29,8 @@
 - **强质量门禁**：`check_report.py` 机械执行 P0/P1 门禁，P0 不过报告不得输出（可程序检查，非口头建议）
 - **数据零幻觉**：每条数据强制记录**六元组**（数值/口径/来源URL/页面标题/发布日期/抓取日期），链接邻近率 ≥90% 才放行；另跑 `verify_links.py` 验活 + 按四级颗粒度人工抽查
 - **小白可读**：每维度强制「人话卡」（术语→大白话→生活类比）+ 三层阅读结构（30秒摘要层 / 10分钟分析层 / 随时来源层）
-- **高质感输出**：Analytics Blue 三色金融风（深空蓝 + Stripe 紫 + 琥珀金），深色 Hero + 数字水印 step-head + 紫金渐变色条，离线可开、可打印 PDF
+- **获奖级视觉（v3 默认）**：「水文纸本 / HYDRO PAPER」暖纸底 + 墨色 + 单一钴蓝强调，宋体大标题 + 等高线流域签名图 + 描边空心数字水印；生成器自动注入皮肤、自动升级 Hero、明暗双主题与打印样式齐全，离线可开
+- **防复发机械防线**：渲染前逐片段查标签闭合（不平衡直接拒稿）、渲染后全文复检、门禁 P0-11~P0-14 锁死结构与视觉、严格闭合构造器 `RISK/SWOT/CONFLICT`，告别「卡片互相嵌套 / 首屏文字消失 / 回落旧模板」
 
 ---
 
@@ -204,11 +205,11 @@
 Phase 0    确认分析目标（行业颗粒度 + 地域范围 + 案例锚点公司）🔴 CHECKPOINT
 Phase 0.5  假设前置与专家访谈准备（3-5 条研究假设 + 专家四件套）【防偏差核心】
 Phase 1    多源数据采集（A/B/C/D/E 五组并行，4-5 轮完成）🔴 CHECKPOINT
-Phase 1.5  视觉主题（统一 Analytics Blue 金融风，自动执行）
+Phase 1.5  规格先行（DESIGN.md）+ v3 HYDRO PAPER 默认皮肤（不可跳过）
 Phase 2    八维度并行深度分析（每维度按强制输出模板，含五件套）
 Phase 3    综合结论（信号快照 + 维度冲突 + 反共识检验 + OIE 迭代待办）
-Phase 3.5  质量门禁（check_report.py 默认严格 + verify_links.py 验活 + capture.py 视觉验收）
-Phase 4    报告组装与图表实例化（C1/C2/C3 三图强制）
+Phase 4    render_report.py 一步组装：片段校验 → 皮肤注入 → Hero 升级 → C1/C2/C3 → 自动门禁
+Phase 4.5  交付验收（check_report.py --strict / verify_links.py / node --check / 十章截图 + 明暗首屏）
 ```
 
 ### Phase 0.5 防偏差机制（本 skill 特色）
@@ -286,23 +287,26 @@ Phase 4    报告组装与图表实例化（C1/C2/C3 三图强制）
 | **P1** | 发布前必改 | P1-1 PEST 五段链 / P1-2 景气指标看板（五维+频率+表格）/ P1-3 规模两法交叉 / P1-4 结构完整可解析 / P1-5 导航模块 / P1-6 数据截止时点 |
 | **P2** | 优化项 | 小白翻译+章末一句话 / 打印样式 / 来源汇总表 |
 
-> **元原则**：凡是重要规则，必须能被程序检查；不能被检查的规则等于建议。门禁硬卡在 Phase 3（输出前），不是写完再自检。
+> **元原则**：凡是重要规则，必须能被程序检查；不能被检查的规则等于建议。v3 门禁**硬卡两道**：渲染前逐片段查标签闭合（不平衡拒稿）+ 渲染后 `check_report.py` 全量校验，不是写完再自检。
 
 ---
 
-## 🎨 视觉设计（Analytics Blue 三色金融风 v2.0）
+## 🎨 视觉设计（水文纸本 / HYDRO PAPER v3.0）
 
-**视觉签名**：深空蓝 `#0a1628` + Stripe 紫 `#635bff` + 琥珀金 `#c8943b` 三色体系 · 浅色主体 + 深色 Hero · 数字水印 step-head · 紫金渐变色条贯穿全篇。
+> 完整规格见 [`references/hydro-design-spec.md`](references/hydro-design-spec.md)；样式落点 [`assets/hydro-skin.css`](assets/hydro-skin.css)，由 `render_report.py` 自动注入 `<head>` 末尾。旧版 `visual-design-system.md` 已废弃。
 
-**核心组件**（全部内置 `assets/template.html`，生成时复制填充即可；优先复用模板 CSS，确需覆盖时集中写在 `<head>` 末尾并注明原因）：
-- 深色 Hero（三段深空蓝渐变 + 金色底边 + 紫金曲线纹理）
-- 右上角 🌙/☀️ 深色切换（localStorage 持久化）
-- 目录卡（毛玻璃）+ 桌面侧栏导航 + 移动端进度条
-- 每维度卡：数字水印 step-head（180px 半透明大数字）+ 大标题 + 紫金顶条
-- 方法卡（紫蓝渐变底 + 左紫金条）、KPI 卡（紫金渐变顶条）、人话卡（浅紫底）、反面假设（灰底）、风险卡（三色左条）、结论框（金色渐变）
-- 徽章体系：评级 `rating-buy/hold/sell`（看好=绿/中性=金/谨慎=红）、可信度档位 `tier-rich/medium/lean/online`、来源状态 `status-badge`
+**视觉签名**：暖纸底 `#f3f0e8` + 墨色 `#12181c` + **唯一强调色钴蓝 `#2a4bd7`** · 64px 宋体大标题 · 720×520 等高线流域图 + 96px 网格 · 132px 描边空心数字水印 · 白面 + 1px 发丝线 + 全站单级阴影。
 
-**中国惯例**：行情数据涨红跌绿（涨=`#d63384` 红 / 跌=`#16a34a` 绿）；评级语义看好=绿、谨慎=红（国际惯例）。二者不冲突——一个是行情方向，一个是态度判断。
+**核心组件**（结构沿用 `template.html`，视觉全部由 `hydro-skin.css` 重绘）：
+- Hero：masthead / overline / 宋体标题 / badge / 副标题 / 4 列元信息 / hero-foot 注记 + 等高线 SVG（注记不在 SVG 内）
+- 右上角深色切换（localStorage 持久化）+ 2px 阅读进度条 + 细线侧栏导航
+- 每维度卡：描边空心数字 + 发丝线分隔 + 2px 强调短线
+- 方法卡 / KPI 卡 / 人话卡 / 反面假设 / 三列等高风险卡（2px 严重度顶线）/ 结论框统一白面语言，无渐变、无 emoji 图标
+- 徽章体系保持 `rating-buy/hold/sell` / `tier-rich/medium/lean/online` / `status-badge`，改为描边胶囊
+
+**明暗与打印**：`data-theme` 仅管明暗，11 个 `--p-*` token 反相（暗色 paper `#0e1215`、accent `#8fa6ff`），不新增色；打印强制回落亮色并隐藏侧栏/装饰。
+
+**中国惯例**：行情数据涨红跌绿（涨=`#c0442c` / 跌=`#12684a`）；红绿只承担涨跌与评级语义，不作强调色。
 
 **排版规则**：并列信息项必须分行（禁止顿号挤一行）、表格强制 `.table-wrap` 容器、单段 ≤120 字、Hero 副标题不截断。
 
@@ -318,7 +322,8 @@ eight-dimension-industry-analysis-sy/
 ├── README.md                # 本文件（使用说明）
 ├── _meta.json               # skill 元数据（版本/归属）
 ├── assets/
-│   ├── template.html        # 完整 HTML 骨架 + CSS（生成时复制填充）
+│   ├── template.html        # HTML 基底骨架（只读，视觉由下者覆盖）
+│   ├── hydro-skin.css       # ★ v3 默认皮肤，生成器自动注入 <head> 末尾
 │   └── nav-module.html      # 导航组件模块（侧栏/进度条/目录卡）
 ├── references/
 │   ├── book-criteria.md     # ★ 判据锚点：八维阈值/公式/分类矩阵（唯一依据）
@@ -327,13 +332,16 @@ eight-dimension-industry-analysis-sy/
 │   ├── data-sources.md      # 数据源配置与调用示例
 │   ├── output-spec.md       # 输出格式与链接颗粒度规范
 │   ├── plain-language.md    # 小白化规范（人话卡/术语首现注释库/类比）
-│   ├── quality-gate.md      # 质量门禁规则（P0/P1/P2）
-│   ├── check_report.py      # 机械门禁脚本（Python 标准库，零依赖）
+│   ├── quality-gate.md      # 质量门禁规则（P0-1~P0-14 / P1 / P2）
+│   ├── check_report.py      # 机械门禁脚本（含 P0-11~14 防复发校验）
 │   ├── locate_uncovered.py  # P0-4 未覆盖数字返工定位器
 │   ├── verify_links.py      # 来源链接 HEAD 验活（只提示，不阻断）
-│   └── visual-design-system.md # 视觉设计系统（三色令牌/组件/图表契约）
+│   ├── check_js.py          # 内联 JS 语法验收（先剥离注释再交给 node --check）
+│   ├── hydro-design-spec.md # ★ v3 视觉规格（唯一权威：hex/px + 禁项 + token）
+│   └── visual-design-system.md # ⚠️ 已废弃（v2 三色存档，禁止取色）
 ├── scripts/
-│   ├── render_report.py     # 数据驱动报告生成器（骨架/角标/三图/门禁一条链路）
+│   ├── render_report.py     # ★ 生成器 v3：片段校验/皮肤/Hero/三图/自动门禁一条链路
+│   ├── html_helpers.py      # ★ 严格闭合构造器 + 标签栈校验 + HERO() 签名结构
 │   ├── example_data.json    # 示例数据（字段结构范本，内容取自真实报告）
 │   └── capture.py           # 分段视觉验收截图（Chrome headless 裁剪页）
 ├── test-prompts.json        # 测试用例（触发/诱饵/边界）
@@ -385,6 +393,7 @@ cp -r eight-dimension-industry-analysis-sy ~/.workbuddy/skills/
 | v1.0 | - | 初版八维框架 |
 | v2.0 | 2026-07-31 | SKILL.md 瘦身（骨架抽至 `assets/template.html`）；新增 Phase 0.5 假设前置+专家访谈、维2 付费意愿判定、维5 产业地图/颠覆者、维1 一级市场资本动向、综合结论 OIE 迭代待办、反共识检验；修复死资源引用、工具命名一致性、description 触发式；扩充测试用例 |
 | v2.2.0 | 2026-11-08 | 修 P0-6 全文误判与 `<5%` 漏检（改章节级 + `html.unescape`）；修模板侧栏遮挡/水印裁切/Hero 四列拥挤；补齐 P0-3、P1-2/3/4/6 门禁，导航改 P1-5 消歧；`--strict` 默认；新增 `render_report.py` / `capture.py` / `verify_links.py`；新增 Phase 0 数据源探活、数据截止时点规范、链接邻近率更名。发布前复检另修 5 项：C1 刻度/组距改由数据计算、来源 URL 做 HTML 转义、raw 片段补链 `link_patches`（示例报告 100%）、`capture.py` 跨平台探测 Chrome + `as_uri()` 编码路径、`verify_links.py` 实体解码 + 并发探活 |
+| **v3.0.0** | **2026-11-09** | **视觉整体换代的固化版**：把获奖级「水文纸本 / HYDRO PAPER」沉淀为默认皮肤 `assets/hydro-skin.css` + 规格 `references/hydro-design-spec.md`，生成器自动注入皮肤、自动生成/升级 Hero、自动映射旧三色、自动清理装饰 emoji（跳过 script/style），**取消外部注入脚本**。新增 `scripts/html_helpers.py`：严格闭合构造器 `RISK/SWOT/CONFLICT/D/HERO` + 标签栈校验；渲染前逐片段校验不平衡即拒稿（退出码 2）。门禁新增 **P0-11 标签栈平衡 / P0-12 皮肤在位 / P0-13 动效与 script 安全 / P0-14 占位符 / P1-7 旧三色**，并写入「历史事故与防复发规则」复盘。SKILL.md 加入「规格先行（DESIGN.md）」硬门槛与 Phase 4.5 六项验收；示例报告用新链路重生成 |
 
 ---
 

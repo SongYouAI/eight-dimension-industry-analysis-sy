@@ -27,6 +27,12 @@
 | P0-6 | 生命周期阈值用正确表 | 阈值须用本 Skill 判定表（15/20/35/60/70+，工程化切分，非书中原档）；**仅维度一章节**不得出现「<5% / 5-30% / >30%」旧阈值串（其它章节的百分比表述不受限） |
 | P0-7 | 可比公司数据表存在 | 竞争格局章含 ≥3 家可比公司的份额/盈利对照表 |
 | P0-8 | 估值双视角 | 同时给「相对（同业分位）+ 绝对（历史分位）」结论，且排除低估值陷阱 |
+| P0-9 | 章节锚点齐全 | `id="dim1"~"dim8" / conclusion / src-summary` 共 10 个，导航契约不可破 |
+| P0-10 | 内容五件套 | 每维度含人话卡 / 反面假设 / 盯什么 + 评级 / 档位 / 来源框徽章，结论框在位 |
+| **P0-11** | **全文标签栈平衡** | `html_helpers.validate_document()`：div 开闭计数相等 + 块级容器栈无悬空。**渲染前另有一道逐片段校验**（`render_report.validate_data_fragments()`），不平衡直接拒绝出稿 |
+| **P0-12** | **v3 默认皮肤在位** | 存在 `id="hydro-skin"` 或 `--p-paper` token；Hero 含 `.hero-masthead / .hero-art / .hero-foot / .hero-content`；暗色 token `--p-paper:#0e1215` 存在；无旧 `<div class="hero">` 残留 |
+| **P0-13** | **入场动效安全** | `@keyframes hydroRise/hydroArt/reveal` 内不得出现 `opacity`（只允许 transform）；`.reveal` 无静态 `opacity:0`；`<script>` 内不得混入 `<a class="ref">` |
+| **P0-14** | **无占位符残留** | body 内不得出现 `{R(` / `{{C1}}` / `{{C2}}` / `{{C3}}` / `{行业名称}` / `{日期}` / `TODO` |
 
 ---
 
@@ -40,6 +46,7 @@
 | P1-4 | 结构完整可解析 | HTML 可被解析，八维卡片齐全，综合结论含反共识检验与推翻信号 |
 | P1-5 | 导航模块完整 | 侧栏 / 目录卡 / 深色切换齐全（章节锚点另属 P0-9） |
 | P1-6 | 数据截止时点已声明 | 报告头含「截至 YYYY-MM-DD HH:MM」；行情/估值数据须标口径 |
+| **P1-7** | 无旧三色 / 无 UNSOURCED | body 内 `#635bff / #c8943b / #0a1628 / #4f46e5` 残留提示（生成器已自动映射 C1 图例，其余改用 `--p-*` token）；`[UNSOURCED]` 需补来源或改降级署名 |
 
 ---
 
@@ -66,10 +73,20 @@
 | P0-7 / P0-8 | `has_comparable_table()` / `chapter_has()` |
 | P0-9 / P0-10 | `check_nav()` / `check_five_pieces()` |
 | P1-1 ~ P1-6 | `chapter_has()` / `has_prosperity_board()` / `has_two_method_cross()` / `has_structure()` / `check_nav()` / `has_as_of_timestamp()` |
-| 视觉验收 | `scripts/capture.py`（Chrome headless 裁剪页，锚点不滚动） |
+| **P0-11 ~ P0-14 / P1-7** | `check_structure_balance()` / `check_visual_skin()` / `check_motion_safety()` / `check_placeholders()`（复用 `scripts/html_helpers.py`） |
+| 视觉验收 | `scripts/capture.py`（Chrome headless 裁剪页，锚点不滚动）+ 明暗双主题首屏截图 |
+| 链接验活 | `verify_links.py`（唯一链接数 / 可达 / 失效数） |
+| JS 语法 | `references/check_js.py`（先剥离 HTML 注释再提取内联脚本，再跑 `node --check`；不要手写提取正则） |
 
 ---
 
-## 执行时点
+## 执行时点（v3 双卡）
 
-门禁硬卡在 **Phase 3（输出前）**，不是写完再自检。流程：Phase 1 采集 → Phase 2 逐章分析 → **Phase 3 跑 check_report.py** → P0 全过再输出 HTML。
+门禁**硬卡两道**，不是写完再自检：
+
+1. **渲染前**（第一道）：`render_report.validate_data_fragments()` 逐片段查标签栈，不平衡 → 退出码 2，**不产出文件**。构造器 `html_helpers.RISK/SWOT/CONFLICT/D` 从源头保证闭合。
+2. **渲染后**（第二道）：`render_report.py` 默认自动调 `check_report.py`（可用 `--no-gate` 显式关闭，但交付前必须补跑 `--strict`）。
+
+流程：Phase 0~2 采集与分析 → Phase 3 结论 → **Phase 4 `render_report.py --data --out`（内含双卡）** → Phase 4.5 视觉/链接/JS 验收 → 交付。
+
+> ⚠️ **不要绕过门禁去手工修 HTML**：历史上所有排版事故都发生在「直接编辑成品 HTML」或「手写大段片段」时。要改内容就改数据 JSON，重新走生成器。

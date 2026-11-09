@@ -1,6 +1,9 @@
-# 八维行业分析报告 · 视觉设计系统 v2.0
+# ⚠️ 已废弃 · 视觉设计系统 v2.0（仅存档，禁止作为取色依据）
 
-> 本文件是报告 HTML 视觉的**唯一权威规范**。v2.0 起**放弃八皮肤行业自适应**，整体对齐「七步财报分析报告」的版式与质感。生成报告时复制 [`assets/template.html`](../assets/template.html) 填充 `{占位符}` 即可，所有组件与 token 已内置，无需重写 CSS。
+> **🚫 本文件自 v3.0（2026-11-09）起作废。** 深空蓝 + Stripe 紫 + 琥珀金三色体系已被用户判定为 low，v3 换成「水文纸本 / HYDRO PAPER」暖纸底 + 单一钴蓝强调。
+> **唯一权威规范**现为 [hydro-design-spec.md](hydro-design-spec.md)，样式落点 [`assets/hydro-skin.css`](../assets/hydro-skin.css)，由 `scripts/render_report.py` 自动注入。
+> 门禁 **P0-12** 会检查 v3 皮肤是否在位；**P1-7** 会提示本文所述的旧三色 hex 残留。保留本文只为历史对照与组件结构说明，**不要照抄这里的 hex / 渐变 / 尺寸**。
+> 原 v2 说明（存档）：v2.0 起放弃八皮肤行业自适应，整体对齐「七步财报分析报告」的版式与质感；生成报告时复制 `assets/template.html` 填充占位符，组件与 token 内置，无需重写 CSS。
 >
 > **视觉签名**：深空蓝 + Stripe 紫 + 琥珀金 三色体系 · 浅色主体 + 深色 Hero · 数字水印 step-head · 紫金渐变色条贯穿全篇。
 

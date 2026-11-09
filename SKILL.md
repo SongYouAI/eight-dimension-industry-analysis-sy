@@ -3,10 +3,11 @@ name: eight-dimension-industry-analysis
 slug: eight-dimension-industry-analysis-sy
 displayName: 八维行业分析
 display_name: 八维行业分析
-version: 2.2.0
+version: 3.0.0
 description: 当用户需要快速了解或深度分析一个行业（或某家公司所在的行业）时，使用本
   skill。输入行业名或公司名，自动产出覆盖产业生命周期、商业模式、市场规模、护城河、竞争格局、估值、外部因素、景气度八个维度的完整 HTML
-  分析报告（默认 HTML；PDF / Markdown 按需）。触发词：八维行业分析、行业分析、分析XX行业、分析XX公司所在行业、八维分析、行业深度研究。
+  分析报告（默认 HTML；PDF / Markdown 按需）。v3 起默认输出「水文纸本 / HYDRO PAPER」编辑式获奖级版式，生成器自动注入皮肤、自动升级 Hero、自动查标签闭合，禁止手写大段 HTML。
+  触发词：八维行业分析、行业分析、分析XX行业、分析XX公司所在行业、八维分析、行业深度研究。
 author: 松幽
 tags:
   - 行业研究
@@ -28,7 +29,9 @@ agent_created: true
 
 > 方法论源自肖璟《如何快速了解一个行业》（维度释义与章节映射见 [references/framework-detail.md](references/framework-detail.md)，数据源配置见 [references/data-sources.md](references/data-sources.md)）。
 > **判据锚点（唯一依据）**：八维度的阈值/公式/分类矩阵一律以 [references/book-criteria.md](references/book-criteria.md) 为准；采集字段以 [references/data-requirements.md](references/data-requirements.md) 为准；发布门禁以 [references/quality-gate.md](references/quality-gate.md) + [references/check_report.py](references/check_report.py)（返工定位器 [references/locate_uncovered.py](references/locate_uncovered.py)）为准；输出格式与链接颗粒度见 [references/output-spec.md](references/output-spec.md)；小白化表述见 [references/plain-language.md](references/plain-language.md)。
-> 报告 HTML 骨架与完整 CSS 见 [assets/template.html](assets/template.html)，生成时复制并按维度填充。
+> **视觉规格（v3 默认，唯一依据）**：[references/hydro-design-spec.md](references/hydro-design-spec.md)（含具体 hex/px token、禁项清单、CSS 变量落地）。样式落点 [assets/hydro-skin.css](assets/hydro-skin.css)，Hero 签名结构在 [scripts/html_helpers.py](scripts/html_helpers.py) 的 `HERO()`。旧版 [references/visual-design-system.md](references/visual-design-system.md) 已废弃。
+> **防错**：[scripts/html_helpers.py](scripts/html_helpers.py) 提供严格闭合构造器与标签栈校验；[references/quality-gate.md](references/quality-gate.md) 的 P0-11~P0-14 为机械防线；历史事故复盘见本文末尾「历史事故与防复发规则」。
+> 报告 HTML 基底骨架见 [assets/template.html](assets/template.html)（**只读基底，不要在里面改视觉**；生成器会复制其 head 并自动覆盖 v3 皮肤）。
 
 ---
 
@@ -231,13 +234,31 @@ Skill: neodata-financial-search
 
 ---
 
-### Phase 1.5: 视觉主题（统一 Analytics Blue 金融风，自动执行）
+### Phase 1.5: 规格先行 + v3 默认皮肤（自动执行，不可跳过）
 
-> v2.0 起**放弃「八皮肤行业自适应」**，整体对齐七步财报分析报告的「深空蓝 + Stripe 紫 + 琥珀金」三色体系，浅色主体 + 深色 Hero。所有行业共用一套视觉语言，保证专业度与可对比性。
+> v3.0 起默认「**水文纸本 / HYDRO PAPER**」编辑式视觉，取代 v2 的「深空蓝 + Stripe 紫 + 琥珀金」。所有行业共用一套视觉语言；旧三色已被用户判定为 low，**禁止回落**。
 
-1. **复制模板**：`assets/template.html` → 报告文件（默认 `data-theme="light"`，深色切换按钮自动处理暗色）。
-2. **不选行业皮肤**：不再设 `data-theme` 行业值；`data-theme` 仅用于明暗切换（light/dark）。
-3. **填充内容时遵守排版硬规则**：并列项分行、Hero 无截断、表格包容器、数字水印 step-head 齐全。
+**A. 规格先行（硬门槛，先于任何 HTML / CSS 代码）**
+
+1. 写任何 HTML 报告前**必须先产出 `DESIGN.md`**，由用户级 skill `design-md-first` 驱动：值必须具体到 hex/px（禁形容词）、必含禁项清单、CSS 变量必须落地为 token、至少 1 个签名元素、≥30 行。
+2. v3 默认规格已是 [references/hydro-design-spec.md](references/hydro-design-spec.md)。沿用默认皮肤时，把该文件复制成本次工作区 `DESIGN.md` 并在头部注明「沿用 v3 默认规格 + 本次定制项」即可，**不得跳过规格环节**。
+3. 只在需要换风格时重画 token；换风格必须同时改 `assets/hydro-skin.css` 并跑回归（样例 + 一份真实报告 + 明暗双主题截图）。
+
+**B. 生成器自动完成（禁止手工做）**
+
+1. `render_report.py` 自动把 `assets/hydro-skin.css` 作为 `<head>` 最后一段 `<style id="hydro-skin">` 注入 —— **不要再写 `apply_skin.py` 之类的后处理注入脚本**，`assets/template.html` 保持只读基底。
+2. 自动把旧 Hero 升级成 v3 签名结构（masthead / overline / 宋体大标题 / 4 列元信息 / 等高线流域图 / hero-foot 注记）；数据文件只给 `hero` 字段，**不写 Hero HTML**。
+3. 自动把旧三色 hex 映射为钴蓝 `#2a4bd7` + 石灰色 `#a8a293`，自动清理装饰 emoji（跳过 `<script>` / `<style>` / 注释）。
+4. `data-theme` 仅用于明暗切换（light/dark）；暗色走同一套 11 个 `--p-*` token 反相，不新增色。
+
+**C. 禁项清单（P0-12 / P0-13 / P1-7 机械兜底）**
+
+- 禁止 Hero 深空蓝渐变、金色描边标题、紫金渐变卡、波浪线压字、180px 实心水印
+- 禁止第二种强调色；红/绿只承担评级与 A 股涨跌语义（涨红跌绿）
+- 禁止 `opacity:0` 入场初始态（只允许 transform）、禁止 2px 以上粗线与渐变描边
+- 禁止在 SVG 装饰图内写 `<text>` 注记（会被截图 slice 裁切并压住 masthead），注记一律放 `.hero-foot`
+- 禁止手写未闭合 `<div>`：含子结构的卡片必须用 `html_helpers.RISK / SWOT / CONFLICT`，纯文本卡才用 `D()`（它会拒绝结构化 inner）
+- 禁止直接编辑成品 HTML 修排版：改数据 JSON → 重新走生成器
 
 ---
 
@@ -612,11 +633,18 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 
 ---
 
-### Phase 4: 报告组装与图表实例化（强制，防图表回归）
+### Phase 4: 报告组装与图表实例化（v3 一步链路，强制）
 
-> **推荐路径（v2.2）**：`python3 scripts/render_report.py --data <数据.json> --out <报告.html>`。生成器复用 `assets/template.html` 的 CSS/JS、自动绑定来源角标并补链保证 P0-4、由数值算三图坐标、生成后自动跑门禁。数据文件结构见 `scripts/example_data.json`。手工拼装也复用同一生成器，不重写骨架。
+> **唯一交付路径（v3.0）**：
+> `python3 scripts/render_report.py --data <数据.json> --out <报告.html>`
+>
+> 生成器一次完成：片段标签栈校验 → 来源角标绑定与补链（P0-4）→ 八维章节骨架 → **注入 v3 皮肤** → **自动升级 Hero** → 旧色映射 → 装饰符号清理 → 三图坐标计算 → 全文结构复检 → **自动跑门禁**。数据文件结构见 `scripts/example_data.json`，新增可选 `hero` 字段（缺省时由 `meta` 自动生成）。
+>
+> 🔴 **禁止**：手写 `<div class="hero">`、复制 template.html 再手工填、写后处理注入脚本、直接编辑成品 HTML、用 `--no-gate` 出稿后不补门禁。这些正是两次返工的共同根因。
+>
+> 三道防线：① 渲染前 `validate_data_fragments()` 逐片段查闭合，不平衡退出码 2 且**不产出文件**；② 渲染后 `validate_document()` 全文复检；③ 交付前 `check_report.py --strict`（生成器默认已跑一次）。
 
-复制 [assets/template.html](assets/template.html) 为母版（默认 `data-theme="light"`，统一三色金融风），填充八维内容，**最后实例化三张数据图表**——三图坐标由 `render_c1/c2/c3` 按数值计算，**禁止硬编码 `<rect>` 坐标或从零造图**（这正是历史 v1→重做 图表全丢的根因）。
+三图坐标由 `render_c1/c2/c3` 按数值计算，**禁止硬编码 `<rect>` 坐标或从零造图**（这正是历史 v1→重做 图表全丢的根因）。
 
 | 图表 | 组件位置（template 内） | 实例化动作 | 取数口径 |
 |------|------------------------|-----------|---------|
@@ -626,8 +654,23 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 
 **铁律**：
 - 三图数据必须与正文 KPI / 表格 / 信号表**完全一致**，禁止图表与文字口径冲突
-- 图表配色一律用 template 内 class（`svg-bar-primary` / `svg-bar-energy` / `svg-data` / `bar-fill` 等），**禁止写死 hex**（统一三色金融风，主色 Stripe 紫 `#635bff` + 琥珀金 `#c8943b`）
+- 图表配色一律用 `hydro-skin.css` 内的 class（`svg-bar-primary` / `svg-bar-energy` / `svg-data` / `bar-fill` 等），**禁止写死 hex**（v3：主序列钴蓝 `#2a4bd7` + 次序列石灰色 `#a8a293`；数据文件里残留旧 `#635bff` / `#c8943b` 由生成器自动映射）
 - C1 / C2 / C3 缺一不可，否则视为交付不完整（见下方自检清单图表门禁）
+
+---
+
+### Phase 4.5: 交付前机械 + 视觉验收（强制，缺一不可）
+
+| # | 检查 | 命令 / 判据 |
+|---|------|------------|
+| 1 | 严格门禁 | `python3 references/check_report.py <报告.html> --strict` → 退出码 0，P0-11~P0-14 全绿 |
+| 2 | 链接验活 | `python3 references/verify_links.py <报告.html>` → 0 失效；返回 500 的第三方 PDF 必须换成稳定摘要页 |
+| 3 | JS 语法 | `python3 references/check_js.py <报告.html>` → 退出码 0（**必须走脚本**：手写正则会把 HTML 注释里的 script 起始标签字面量当成脚本，误报 SyntaxError） |
+| 4 | 十章截图 | `python3 scripts/capture.py <报告.html> --all --outdir shots/` → 逐章目检，重点看风险卡三列等宽、来源表满宽、水印数字完整 |
+| 5 | 明暗双主题首屏 | Chrome headless 1440×900 各拍一张（暗色把 `data-theme="light"` 改 `dark`），确认无文字消失、无浅色残留块、装饰不压字 |
+| 6 | 占位符/旧色 | 门禁 P0-14 / P1-7 已覆盖；另人工确认 `{R(` / `{{C1}}` / `UNSOURCED` 为 0 |
+
+> 验收截图留在工作区 `shots/`，不要交付截图，只交付 HTML。
 
 ---
 
@@ -658,26 +701,24 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 *八维行业分析 | 分析日期：{日期}*
 ```
 
-### HTML 视觉主题：Analytics Blue 科技金融风 v2.0（对齐七步财报分析报告）
+### HTML 视觉主题：水文纸本 / HYDRO PAPER v3.0（默认，获奖级编辑式）
 
-> **核心原则：统一一套「深空蓝 + Stripe 紫 + 琥珀金」三色视觉语言，所有行业共用。** 完整设计规范见 [references/visual-design-system.md](references/visual-design-system.md)，模板骨架见 [assets/template.html](assets/template.html)。
+> **唯一依据**：[references/hydro-design-spec.md](references/hydro-design-spec.md)（hex/px 全量化 + 禁项清单 + token 落地）。样式落点 [assets/hydro-skin.css](assets/hydro-skin.css)，由生成器自动注入。旧版 Analytics Blue 规范见 [references/visual-design-system.md](references/visual-design-system.md)，**已废弃，不得作为取色依据**。
 
-**视觉签名（学习自七步财报分析报告）**：
-- **三色体系**：深空蓝 `#0a1628`（主背景/标题）+ Stripe 紫 `#635bff`（强调/渐变色条）+ 琥珀金 `#c8943b`（评级/分隔线/结论框）
-- **浅色主体 + 深色 Hero**：正文浅灰白底，Hero 深空蓝渐变 + 金色底边
-- **紫金渐变色条**贯穿 KPI 卡顶部、章节标题、方法卡左边条、数据表高亮
-- **数字水印 step-head**：每个维度卡头部有巨大的半透明数字水印 + 大标题
+**视觉签名**：
+- **单色强调**：暖纸底 `#f3f0e8` + 墨色 `#12181c` + 唯一强调色钴蓝 `#2a4bd7`；红 `#c0442c` / 绿 `#12684a` 只承担评级与 A 股涨跌语义
+- **字体层级**：64px 宋体 600 大标题 `letter-spacing:-.025em`；正文无衬线 14.5px / 行高 1.9；英文小标签 mono + `letter-spacing:.18em`
+- **签名元素**：右侧 720×520 等高线流域图（9 条 1px 曲线 + 1 条 2px 主河道 + 3 个站点圆点）叠加 96px 网格；章节头 132px **描边空心数字**（透明填充 + 1px 描边）
+- **卡片语言**：白面 + 1px 发丝线 + 全站唯一 1 级阴影 `0 1px 2px rgba(18,24,28,.035)`；风险卡三列等高、2px 严重度顶线 + 序号 + 严重度标签，无 emoji 图标
 
-**生成流程**：
-1. 复制 `assets/template.html`（默认 `data-theme="light"`），填充 `{占位符}`；优先复用模板 CSS，确需覆盖时把覆盖规则集中写在 `<head>` 末尾并注明原因
-2. `data-theme` 仅用于明暗切换（light/dark），**不再有行业皮肤**
-3. 每维度用 `.step-card`（`.step-head` 数字水印 + `.step-body`）
+**生成流程（全自动，别手工做）**：
+1. `render_report.py` 复制 `assets/template.html` 的 head → 在 `</head>` 前注入 `assets/hydro-skin.css`（`id="hydro-skin"`，压过模板内置 CSS）
+2. `html_helpers.HERO()` 生成 v3 Hero；数据文件给 `hero` 字段或由 `meta` 自动推导
+3. 每维度仍用 `.step-card`（`.step-head` 描边数字 + `.step-body`），`data-theme` 仅管明暗
 
-**默认视觉架构**：深色 Hero（深空蓝渐变 + 金色底边 + 紫金曲线纹理）、右上角 `.theme-toggle` 深色切换、`.toc-card` 毛玻璃目录卡、`.side-nav` 左侧粘性侧栏、`.step-card` 维度卡（`.step-head` 数字水印 + `.step-title` 大标题）、`.method-card` 紫蓝方法卡、`.kpi-card` 紫金渐变条 KPI、`.data-table` 深空蓝表头数据表、`.risk-card` 风险卡、`.insight-card` 盯什么卡、`.conclusion-wrap` 金色结论框、SWOT / 维度冲突 / 反共识 / 跟踪列表 / 免责声明。
+**默认视觉架构**：暖纸网格 Hero + masthead / overline / 4 列元信息 / hero-foot 注记、右上角 `.theme-toggle`、`.toc-card` 目录卡、`.side-nav` 左侧细线侧栏、2px `.top-progress`、`.method-card` 发丝线方法卡、`.kpi-card` 顶线 KPI、发丝线数据表、`.risk-grid` 三列风险卡、`.insight-card` 盯什么卡、`.conclusion-wrap` 结论框、SWOT / 维度冲突 / 反共识 / 跟踪列表 / 免责声明。暗色模式靠 11 个 `--p-*` token 反相，不新增色；打印样式强制回落亮色并隐藏装饰。
 
-> **内容五件套（P0-10 门禁强制，每维度必备）**：人话卡 `.human-term-card`、反面假设 `.reverse-note`、盯什么 `.insight-card` + 徽章体系——可信度档位 `.tier-badge`（rich/medium/lean/online）、评级 `.rating-badge`（buy/hold/sell）、状态 `.status-badge`（resolved/pending/gap/info）、数据来源框 `.source-box`。全部组件与 token 已内置 template.html，复制即用。
-
-> **完整 CSS 变量令牌系统、组件库、响应式与打印样式已内置于 [assets/template.html](assets/template.html)**，生成时直接复制并按 `{占位符}` 填充，无需重写样式。
+> **内容五件套（P0-10 门禁强制，每维度必备）**：人话卡 `.human-term-card`、反面假设 `.reverse-note`、盯什么 `.insight-card` + 徽章体系——可信度档位 `.tier-badge`（rich/medium/lean/online）、评级 `.rating-badge`（buy/hold/sell）、状态 `.status-badge`（resolved/pending/gap/info）、数据来源框 `.source-box`。组件结构与 v2 相同，视觉由 `hydro-skin.css` 统一重绘。
 
 ### 导航模块（桌面侧栏 + 移动进度条 + 目录卡 + 深色切换）
 
@@ -690,7 +731,7 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 
 **锚点约定（必须严格遵守，导航与各 step-card 的 `id` 一一对应）**：`#dim1`–`#dim8`、`#conclusion`、`#src-summary`。
 
-> ⚠️ **`data-theme` 只管明暗（light/dark），不再承载行业皮肤**：深色模式通过 `[data-theme="dark"]` 覆盖明度 token（背景/文字/边框），保留三色强调；SVG 图表用 CSS 变量驱动，切换深色自动适配，无需 JS 重绘。
+> ⚠️ **`data-theme` 只管明暗（light/dark）**：深色模式通过 `[data-theme="dark"]` 反相 11 个 `--p-*` token（背景/文字/边框/强调），**不新增颜色**；SVG 图表用 CSS 变量驱动，切换深色自动适配，无需 JS 重绘。P0-12 会校验 `--p-paper:#0e1215` 存在。
 
 **打印（PDF）**：侧栏、进度条、切换按钮全部 `display:none`；`[data-theme="dark"]` 强制回落亮色 token，避免深色打印发暗/发白。
 
@@ -707,23 +748,25 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 
 | # | 图表 | 位置 | 类型 | 数据来源 |
 |---|------|------|------|---------|
-| C1 | **全球锂电出货：动力+储能双序列柱状图** | 维度三·市场规模（TAM/SAM/SOM 之后） | SVG 柱状图 + 配套数据表 `.calc-table` | EVTank/CNESA 年度出货 |
+| C1 | **市场规模双序列柱状图**（两法交叉 / 分市场对照） | 维度三·市场规模（TAM/SAM/SOM 之后） | SVG 柱状图 + 配套数据表 `.calc-table` | 与维度三正文同源 |
 | C2 | **可比公司 PE 估值对比** | 维度六·估值（可比公司段落后） | HTML `.bar-chart` 横向条形（宁德用 `.gold` 高亮） | 实时行情/一致预期 |
 | C3 | **八维评级雷达** | 综合结论（信号快照表之后） | SVG 雷达图（8 轴，评分 3/2/1 映射半径） | 八维信号表评级 |
 
-- 图表样式组件（`.chart-card` / `.bar-chart` / `.svg-*` 类）已内置 `assets/template.html`，直接套用，**禁止手绘 inline style 配色**（统一用 `--purple` / `--gold` 三色 token）
+- 图表样式组件（`.chart-card` / `.bar-chart` / `.svg-*` 类）由 `assets/hydro-skin.css` 统一着色，直接套用，**禁止手绘 inline style 配色**（统一用 `--p-accent` / `--p-*` token）
 - SVG 图表须带 `role="img"` + `aria-label`；坐标轴/网格用 `.svg-axis` / `.svg-grid` 类
 - 数值须与正文 KPI/表格一致，禁止图表与文字口径冲突
 
-**动效分级规范（替代旧版"禁止一切动画"）**
+**动效分级规范（v3 收紧，P0-13 机械校验）**
 
 | 级别 | 允许 | 禁止 |
 |------|------|------|
-| ✅ 白名单 | hover 上浮/变色(0.18s)、IntersectionObserver 入场淡入、Hero 呼吸点(全页仅1处)、平滑滚动 | — |
+| ✅ 白名单 | hover 上浮/变色(0.18–0.2s)、Hero 元素**纯 transform** 入场（`translateY(14px)`→0，`cubic-bezier(.2,.7,.2,1)`，6 段延迟 .05/.14/.22/.34/.42/.52s）、平滑滚动 | — |
 | ⚠️ 需审批 | 页面级过渡动画、数据可视化动态图表 | — |
-| 🚫 禁止 | 全屏闪烁/弹窗广告效果、自动播放视频/音频、干扰阅读的连续动画 | — |
+| 🚫 禁止 | **`opacity:0` 作为任何元素的静态初始态 / 入场关键帧**（截图工具在 t=0 抓帧、禁用动效、JS 失效时会让首屏整块文字消失）、`animation-fill-mode:both` + opacity 组合、全屏闪烁/弹窗、自动播放视频/音频、连续干扰动画 | — |
 
-**阴影分级**（替代旧版"≤0.06"一刀切）：xs(0.06) / sm(0.06) / md(0.09) / lg(0.14主题色) / glow(双层主题色)。
+> 所有入场动效包在 `@media (prefers-reduced-motion:no-preference)` 内；**无 JS 也可见**，禁止把可见性交给脚本。历史坑：Opacity 入场 + `both` 曾导致暗色首屏文字全部消失。
+
+**阴影分级（v3）**：全站仅 1 级 `--p-shadow: 0 1px 2px rgba(18,24,28,.035)`，暗色模式为 `none`；禁止多层主题色 glow。
 
 ### 篇幅控制原则
 - 按生命周期权重表，高权重维度篇幅是低权重维度的 2-3 倍【工程规则】；书里只有定性权重差异，未给篇幅倍数
@@ -802,6 +845,29 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 
 ---
 
+## 🧯 历史事故与防复发规则（v3 必读）
+
+> 这一节是「为什么有这些门禁」的复盘。**每次生成报告前先扫一遍**，不要等到用户截图指出来。
+
+| # | 事故 | 根因 | 现在的防线 | 自检 |
+|---|------|------|-----------|------|
+| 1 | **章节互相嵌套**：三张风险卡漏写 `</div>`，浏览器把「数据来源汇总」整章吞进第三张卡，表格挤成窄栏、水印「10」被裁成「0」 | 手写数据片段时用 `D()` 只闭合一层 div，内部子标签未闭合；当时门禁只数 `<html>/<body>` 存在 | `html_helpers.RISK/SWOT/CONFLICT` 严格闭合 + `D()` 拒绝结构化 inner；渲染前 `validate_data_fragments()` 退出码 2 拒稿；渲染后 `validate_document()`；门禁 **P0-11** | `python3 scripts/html_helpers.py` 自检全 OK |
+| 2 | **沿用旧深空蓝 Hero 被判 low** | 直接抄 `template.html` 默认 token，设计规格没有独立评审；v2 规格里写了旧三色 | v3 默认皮肤 `hydro-skin.css` 由生成器自动注入；Hero 由 `HERO()` 自动生成；旧三色自动映射；门禁 **P0-12**（缺皮肤/缺签名元素/残留旧 Hero 直接阻断）+ **P1-7** | 报告含 `id="hydro-skin"`、body 旧三色为 0 |
+| 3 | **暗色首屏文字整块消失** | 入场关键帧 `opacity:0→1` + `animation-fill-mode:both`，截图工具在 t=0 抓帧 / 禁用动效时可见性为 0 | 入场改为**纯 transform**；门禁 **P0-13** 扫描 `@keyframes` 内 opacity 与 `.reveal{opacity:0}` | 禁用动效 + 延长虚拟时间两种截图都可读 |
+| 4 | **SVG 注记压住 masthead / 元信息** | 在 `.hero-art` 里写了 `<text>` 注记，`slice` 截图裁切后位置漂移 | 注记一律放 `.hero-foot`；`HERO()` 生成的 SVG 只含线条与圆点，无 `<text>` | 首屏截图无文字重叠 |
+| 5 | **图表全丢 / 图表与正文口径冲突** | 「全新重做」时没走生成器，硬编码 `<rect>` 坐标 | 三图由 `render_c1/c2/c3` 按数值算坐标，C1/C2/C3 缺一不可 | `--selftest-charts` 5 项全 OK |
+| 6 | **`<script>` 崩溃导致内容不显示** | 覆盖率补链脚本把 `<a class="ref">` 插进 JS 代码 | `auto_link()` 只扫 `<p>`；`clean_decorative_symbols()` 跳过 script/style/注释；门禁 **P0-13** 检查 script 内角标 | `node --check` 通过 |
+| 7 | **第三方 PDF 链接返回 500** | 来源池没验活就出稿 | `verify_links.py` 验活，失效源换成稳定摘要页；无链接项走 L4 降级署名 | 0 失效 |
+| 8 | **整段 CSS 与 `<html>` 丢失 / 皮肤检查被绕过 / JS 误报** | 模板注释里写了「head 结束标签」「script 起始标签」「样式 id 属性」三类**字面量**：`index()` 截断 head、JS 提取正则把注释当代码、P0-12 把注释里的样式 id 当成「皮肤已注入」 | 生成器改 `rfind()` 取最后一个 head 结束标签 + 切片后强制校验 `<html>`；`check_js.py` 与 `check_visual_skin()` **先剥离 HTML 注释**再判定；模板注释禁用这三类字面量 | 报告含 `<html>`、`id="hydro-skin"` 必须是真实 `<style>` 标签；`--legacy-skin` 会被 P0-12 明确阻断；`check_js.py` 退出码 0 |
+
+### 三条执行铁律
+
+1. **规格先行**：先 `DESIGN.md`（或复制 `references/hydro-design-spec.md`），再写数据 JSON，最后跑生成器。顺序不能反。
+2. **只改数据 JSON**：任何排版问题都回到片段构造器 / 数据字段修，重新生成；**不直接编辑成品 HTML**、不写后处理注入脚本。
+3. **门禁不是可选项**：`render_report.py` 默认自动跑门禁；`--no-gate` / `--legacy-skin` 只用于对照诊断，产出物不得交付。
+
+---
+
 ## 交付前自检清单（P0-4）
 
 > ⚠️ **本清单是人工兜底，不替代机械门禁。** 输出前必须先跑 [references/check_report.py](references/check_report.py)（规则见 [references/quality-gate.md](references/quality-gate.md)）。以下「门禁机械项」须与脚本结果一致。
@@ -815,14 +881,22 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 - [ ] **景气指标看板**：含量/价/库存/订单/产能五维与跟踪频率（P1-2）
 - [ ] **链接邻近率 ≥90% 且非纯域名**：带 href 来源角标 ÷ 正文数字 ≥ 0.9；无纯域名首页链接（P0-4）；并用 `verify_links.py` 验活、按四级颗粒度人工抽查
 - [ ] **生命周期阈值正确**：仅用 15/20/35/60/70+ 表（工程化切分，报告中不得写成书中原档）；维度一章节无旧阈值错误串 `<5% / 5-30% / >30%`（P0-6 只在维度一校验）
+- [ ] **P0-9 / P0-10**：10 个章节锚点齐全；内容五件套（人话卡 / 反面假设 / 盯什么 / 徽章 / 来源框）每维度在位
+- [ ] **P0-11 标签栈平衡**：全文 `<div>`/`</div>` 计数相等、无悬空容器；渲染前逐片段校验已通过（生成器退出码 0）
+- [ ] **P0-12 v3 皮肤在位**：`id="hydro-skin"` + Hero 四签名元素 + 暗色 token 齐全，无旧深空蓝 Hero 残留
+- [ ] **P0-13 动效安全**：入场关键帧无 opacity、`.reveal` 无 `opacity:0`、`<script>` 内无来源角标
+- [ ] **P0-14 / P1-7**：无占位符、无 `UNSOURCED`、body 内无旧三色 hex
+- [ ] **Phase 4.5 六项验收**：严格门禁 / 链接验活 0 失效 / `node --check` / 十章截图 / 明暗双主题首屏 / 占位符复查
 
 **视觉与结构项**
 - [ ] **首现括注**：专业术语/英文缩写在正文中首次出现时紧跟大白话括注（例：「UE（单位经济，卖一个能赚多少）」），方法卡/推导/来源区可省略。术语表见 [references/plain-language.md](references/plain-language.md) 术语首现注释库
 - [ ] **五件套齐全（v2.0 强制）**：每维度含 人话卡 `.human-term-card` / 反面假设 `.reverse-note` / 盯什么 `.insight-card` 三组件；评级用 `.rating-badge`（无裸 emoji 评级）、可信度用 `.tier-badge`（无「置信度 X」纯文字）、来源用 `.source-box` + `.status-badge`（无内联 .source 行）
-- [ ] **版式对齐七步财报**：每维度用 `.step-card`（`.step-head` 数字水印 + `.step-title` 大标题）；数据表深空蓝渐变表头 + 金色底边；紫金渐变色条贯穿 KPI/章节标题
-- [ ] **结论框金色质感**：综合结论 `.conclusion-wrap` 金色渐变底 + 左金边，评级徽章内嵌
-- [ ] **图表序列色**：多序列图表（C1 等）用 `.svg-bar-1~6` 序列色区分，主色为 Stripe 紫 `#635bff` + 琥珀金 `#c8943b`
-- [ ] **统一金融风**：`data-theme` 仅 light/dark 明暗切换（无行业皮肤），全报告三色体系（深空蓝+Stripe紫+琥珀金）一致
+- [ ] **v3 版式**：暖纸底 `#f3f0e8` + 96px 网格、宋体 64px 大标题、132px 描边空心数字水印、发丝线卡片；每维度仍用 `.step-card`（`.step-head` + `.step-body`）
+- [ ] **单色强调**：全站仅 `--p-accent` `#2a4bd7` 一种强调色；红/绿只在评级与涨红跌绿语义出现；无紫金渐变、无金色描边
+- [ ] **Hero 签名完整**：masthead / overline / 标题 / badge / 副标题 / 4 列元信息 / hero-foot / 等高线 SVG 齐全；SVG 内无 `<text>` 注记；装饰图与文字区不重叠
+- [ ] **风险卡三列等宽**：`.risk-grid` 三列并列、卡内四层 div 全闭合，来源汇总表恢复满宽、水印「10」完整
+- [ ] **图表序列色**：多序列图表用 `.svg-bar-primary` / `.svg-bar-energy`，主序列钴蓝 `#2a4bd7` + 次序列石灰色 `#a8a293`，图例与柱色一致
+- [ ] **明暗与打印**：`data-theme` 仅 light/dark；暗色无浅色残留块 / 无文字消失；打印回落亮色并隐藏侧栏与装饰
 - [ ] **数据图表齐全（防回归）**：C1 市场规模双序列柱状图 + 配套数据表、C2 PE 估值对比条形图、C3 八维评级雷达图，三张均在位且数值与正文一致
 - [ ] **图表样式规范**：图表用 `.chart-card`/`.bar-chart`/`.svg-*` 类，配色用设计 token（无 inline 硬色），SVG 带 `role="img"`+`aria-label`
 - [ ] **并列项分行**：产业链/供需端/护城河多项/竞争格局多方/反共识多条推论等，每项独占 `<p>`，无挤一行超长文本
@@ -870,6 +944,11 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 - **结构化输出**：每维度按强制模板完整呈现
 - **反共识检验 + OIE 迭代**：综合结论必含，防确认偏差、指下一步
 - **交叉验证**：关键数据至少 2 独立来源，否则 `[待验证]`
+- **规格先行**：先 `DESIGN.md` 再写代码；沿用 v3 默认规格也要落地一次文件
+- **生成器唯一**：`render_report.py --data --out` 是唯一出稿路径，不手工拼 HTML、不写后处理注入脚本
+- **结构零悬空**：只改数据 JSON，片段用严格闭合构造器；门禁 P0-11 未过不得交付
+- **视觉不回落**：v3 皮肤 / Hero 签名 / 单色强调由 P0-12 锁定，旧三色只出现在「禁止」清单里
+- **可打印与可离线**：无外部字体/CDN，明暗双主题与打印样式随报告一起交付
 
 ---
 
@@ -877,6 +956,13 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 
 | 工具 | 用途 |
 |------|------|
+| `scripts/render_report.py` | **v3 唯一出稿器**：片段校验 / 皮肤注入 / Hero 升级 / 三图 / 自动门禁 |
+| `scripts/html_helpers.py` | 严格闭合构造器 + 标签栈校验 + `HERO()` 签名结构（写数据 JSON 时 import 它） |
+| `assets/hydro-skin.css` | v3 默认皮肤，换风格只改这里 |
+| `references/hydro-design-spec.md` | v3 视觉规格（规格先行时复制到工作区 DESIGN.md） |
+| `references/check_report.py` | P0-1~P0-14 机械门禁 |
+| `references/verify_links.py` / `scripts/capture.py` | 链接验活 / 十章视觉截图 |
+| `design-md-first`（用户级 skill） | 驱动 `DESIGN.md` 规格模板，Phase 1.5 必调 |
 | `westock-data` | 行业板块分类、成份股、个股财报、机构研报、一致预期（A股/港股核心） |
 | `neodata-financial-search` | 行业级金融数据搜索（总量、估值、景气度） |
 | `WebSearch` / `WebFetch` | 公开行业报告、政策文件、产业链信息（或经 `web-access` skill 封装） |

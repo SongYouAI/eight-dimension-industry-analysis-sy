@@ -5,6 +5,16 @@
 
 ---
 
+## 零、视觉与结构契约（v3 强制）
+
+1. **单文件 HTML 自带 v3 皮肤**：`<head>` 末尾必须有 `<style id="hydro-skin">`（由 `render_report.py` 注入 `assets/hydro-skin.css`），不得依赖外部 CSS/字体/CDN。视觉规格见 [hydro-design-spec.md](hydro-design-spec.md)。
+2. **Hero 由生成器产出**：含 `.hero-masthead / .hero-art / .hero-content / .hero-foot`；数据文件只给 `hero` 字段（缺省由 `meta` 推导），禁止手写 `<div class="hero">`。
+3. **结构闭合**：所有片段必须经 `scripts/html_helpers.py` 的严格闭合构造器生成；渲染前 `validate_data_fragments()`、渲染后 `validate_document()` 双检；门禁 P0-11 兜底。
+4. **动效与脚本**：入场只改 transform；`<script>` 内不得有来源角标；交付前 `node --check` 通过。
+5. **明暗与打印**：`data-theme` 仅 light/dark，暗色 token 反相；打印回落亮色、隐藏导航与装饰。
+
+---
+
 ## 一、输出决策表（默认 HTML，按需扩展）
 
 | 用户说 | 产出 | 说明 |

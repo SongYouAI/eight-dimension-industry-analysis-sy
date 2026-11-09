@@ -1,20 +1,32 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-八维行业分析报告 · 质量门禁机械校验脚本
+八维行业分析报告 · 质量门禁机械校验脚本（v3.0）
 ================================================
 读取生成的 HTML 报告，逐条执行 quality-gate.md 的 P0 / P1 校验。
 任一 P0 失败 → 退出码 1（阻断发布）；全部 P0 通过 → 退出码 0。
 
 用法:
     python3 check_report.py <报告.html> [--strict]
-    --strict : P1 失败也视为非零退出（CI 用）
+    --strict : P1 失败也视为非零退出（默认已严格，--no-strict 才放宽）
 
-依赖: 仅标准库（re / sys / html）。
+v3.0 新增 P0-11 ~ P0-14（对应 2026-11-09 两次返工，防复发）:
+    P0-11 全文标签栈平衡（未闭合 div 会吞噬后续章节）
+    P0-12 默认皮肤 + v3 Hero 签名元素在位（禁止回落深空蓝）
+    P0-13 入场动效不得含 opacity:0 初始态 / 角标不得插进 <script>
+    P0-14 占位符残留
+    P1-7  body 内旧三色 hex 残留提示
+
+依赖: 仅标准库（re / sys / html / os）+ 同仓 scripts/html_helpers.py
 """
+import os
 import re
 import sys
 import html as html_lib
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+import html_helpers as hh  # noqa: E402
 
 
 def load(path):
@@ -269,6 +281,81 @@ def check_five_pieces(text):
     return missing
 
 
+# ── v3.0 防复发门禁 ─────────────────────────────────────────────────────
+def check_structure_balance(text):
+    """P0-11：全文块级标签栈 + div 计数。
+
+    2026-11-09 事故：三张风险卡各漏一个 </div>，浏览器把「数据来源汇总」
+    整章吞进第三张卡，水印 10 被裁成 0。模板 CSS 无错，错在片段结构。
+    另查 head 切分完整性：模板注释里出现 head 结束标签字面量会截断 <html>/CSS。
+    """
+    problems = hh.validate_document(text)
+    if "<html" not in text:
+        problems.append("<html> 起始标签缺失（head 切片被截断，整段 CSS 可能已丢）")
+    return problems
+
+
+def check_visual_skin(text):
+    """P0-12：默认皮肤与 v3 Hero 签名结构必须在位，禁止回落到旧深空蓝。
+
+    必须先剥离 HTML 注释：模板注释里若出现样式 id / head 结束标签等字面量，
+    会把「没注入皮肤」误判成「已注入」（2026-11-09 实测踩过）。
+    """
+    t = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    problems = []
+    if not re.search(r'<style[^>]*id=["\']hydro-skin["\']', t, re.I) and "--p-paper:" not in t:
+        problems.append("P0-12 未注入 v3 默认皮肤（assets/hydro-skin.css / --p-paper token）")
+    for token, label in [("hero-masthead", "Hero 报头"), ("hero-art", "等高线签名图"),
+                         ("hero-foot", "Hero 脚注区"), ("hero-content", "Hero 内容区")]:
+        if token not in t:
+            problems.append("P0-12 缺少 %s (.%s)" % (label, token))
+    if '<div class="hero"><div class="hero-content">' in t:
+        problems.append("P0-12 残留 v1 深空蓝 Hero 结构")
+    if not re.search(r"--p-paper\s*:\s*#0e1215", t, re.I):
+        problems.append("P0-12 缺少暗色模式 token 反相（--p-paper:#0e1215）")
+    return problems
+
+
+def check_motion_safety(text):
+    """P0-13：入场动效只能用 transform；来源角标绝不能落进 <script>。
+
+    两次历史坑：① `opacity:0→1` + `animation-fill-mode:both` 在截图工具 t=0
+    抓帧 / JS 失效时让首屏整块文字消失；② 补链脚本把 <a class="ref"> 插进
+    JS 字符串，导致整个 <script> 崩溃、兜底逻辑不执行。
+    """
+    problems = []
+    styles = "\n".join(re.findall(r"<style\b.*?</style>", text, re.S | re.I))
+    for kf in ("hydroRise", "hydroArt", "fadeIn", "reveal", "riseIn"):
+        m = re.search(r"@keyframes\s+%s\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}" % kf,
+                      styles, re.S | re.I)
+        if m and re.search(r"opacity\s*:", m.group(1)):
+            problems.append("P0-13 入场关键帧 @keyframes %s 含 opacity，"
+                            "截图/无 JS 时会隐藏内容；只允许 transform" % kf)
+    if re.search(r"\.reveal\s*\{[^}]*opacity\s*:\s*0", styles, re.I):
+        problems.append("P0-13 .reveal 存在静态 opacity:0 初始态（无 JS 兜底会永久隐藏）")
+    for s in re.findall(r"<script\b.*?</script>", text, re.S | re.I):
+        if 'class="ref"' in s or "class='ref'" in s:
+            problems.append("P0-13 <script> 内混入来源角标，会破坏 JS 语法")
+    return problems
+
+
+def check_placeholders(text):
+    """P0-14 / P1-7：占位符与旧三色残留。"""
+    body = extract_body(text)
+    p0, p1 = [], []
+    for tok in ("{R(", "{{C1}}", "{{C2}}", "{{C3}}", "{行业名称}", "{日期}", "TODO"):
+        if tok in body:
+            p0.append("P0-14 残留占位符 %s" % tok)
+    if "UNSOURCED" in body:
+        p1.append("P1-7 正文残留 [UNSOURCED] 标记，需补来源或改写为降级署名")
+    old = {c: body.count(c) for c in ("#635bff", "#c8943b", "#0a1628", "#4f46e5")
+           if c in body}
+    if old:
+        p1.append("P1-7 body 内残留旧三色 hex：%s（生成器已自动映射 C1 图例，"
+                  "其余请改用 --p-* token）" % old)
+    return p0, p1
+
+
 def main():
     if len(sys.argv) < 2:
         print("用法: python3 check_report.py <报告.html> [--strict]")
@@ -356,6 +443,33 @@ def main():
         fails_p0.append("P0-10 内容五件套不齐: " + "; ".join(five_missing))
     else:
         notes.append("P0-10 内容五件套(人话卡/反面假设/盯什么/评级/档位/来源框)+金色结论框 齐全 ✅")
+
+    # ---- P0-11 ~ P0-14：v3 防复发门禁 ----
+    bal = check_structure_balance(text)
+    if bal:
+        fails_p0.append("P0-11 全文标签栈不平衡（%d 处）：%s"
+                        % (len(bal), " | ".join(bal[:4])))
+    else:
+        notes.append("P0-11 全文标签栈平衡（div 计数 + 块级容器闭合） ✅")
+
+    skin = check_visual_skin(text)
+    if skin:
+        fails_p0.extend(skin)
+    else:
+        notes.append("P0-12 v3 默认皮肤 + Hero 签名结构 + 暗色 token 齐全 ✅")
+
+    motion = check_motion_safety(text)
+    if motion:
+        fails_p0.extend(motion)
+    else:
+        notes.append("P0-13 入场动效纯 transform / script 内无角标 ✅")
+
+    ph_p0, ph_p1 = check_placeholders(text)
+    if ph_p0:
+        fails_p0.extend(ph_p0)
+    else:
+        notes.append("P0-14 无占位符残留 ✅")
+    fails_p1.extend(ph_p1)
 
     # ---- P1 ----
     if not chapter_has(text, ["外部因素", "PEST", "政策"], ["事实", "传导", "对象", "量级", "时点"]):
