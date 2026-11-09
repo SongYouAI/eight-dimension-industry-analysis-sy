@@ -1,0 +1,15 @@
+{
+  "_readme": "作者溯源位。v3.2.0 起所有报告强制输出本块，数据 JSON 不能关闭或覆盖。二维码图片与本文件同目录；qr_*_url 是图床直链，仅作备用，报告内一律内嵌 base64。",
+  "kicker": "原创出品 · 欢迎溯源",
+  "title": "松幽 · 八维行业分析法",
+  "wechat": "松幽舒苑",
+  "video": "松幽AI",
+  "note": "本报告可自由转发，请保留本页出处。",
+  "hint": "点击二维码查看大图",
+  "method": "八维行业分析法 · 松幽",
+  "qr_wechat": "qr-wechat.png",
+  "qr_video": "qr-video.png",
+  "qr_wechat_url": "https://newphotobed.oss-cn-shanghai.aliyuncs.com/img/clipboard-2026-11-09T01-11-54-874Z-176d8d08.png",
+  "qr_video_url": "https://newphotobed.oss-cn-shanghai.aliyuncs.com/img/clipboard-2026-11-09T01-11-54-875Z-737f8264.png",
+  "retired_names": ["松幽Ai提效"]
+}

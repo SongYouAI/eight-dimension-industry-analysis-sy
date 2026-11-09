@@ -30,7 +30,7 @@
 - **数据零幻觉**：每条数据强制记录**六元组**（数值/口径/来源URL/页面标题/发布日期/抓取日期），链接邻近率 ≥90% 才放行；另跑 `verify_links.py` 验活 + 按四级颗粒度人工抽查
 - **小白可读**：每维度强制「人话卡」（术语→大白话→生活类比）+ 三层阅读结构（30秒摘要层 / 10分钟分析层 / 随时来源层）
 - **获奖级视觉（v3 默认）**：「水文纸本 / HYDRO PAPER」暖纸底 + 墨色 + 单一钴蓝强调，宋体大标题 + 等高线流域签名图 + 描边空心数字水印；生成器自动注入皮肤、自动升级 Hero、明暗双主题与打印样式齐全，离线可开
-- **防复发机械防线**：渲染前逐片段查标签闭合（不平衡直接拒稿）、渲染后全文复检、门禁 P0-11~P0-14 锁死结构与视觉、严格闭合构造器 `RISK/SWOT/CONFLICT`，告别「卡片互相嵌套 / 首屏文字消失 / 回落旧模板」
+- **防复发机械防线**：渲染前逐片段查标签闭合（不平衡直接拒稿）、渲染后全文复检、门禁 P0-11~P0-16 锁死结构与视觉、严格闭合构造器 `RISK/SWOT/CONFLICT`，告别「卡片互相嵌套 / 首屏文字消失 / 回落旧模板」
 
 ---
 
@@ -49,7 +49,7 @@
 **环境**：Python 3.8+（**仅标准库**）；`node` 可选（JS 语法验收）；Chrome/Chromium 可选（截图验收）。整个 skill 目录保持原结构即可，无安装步骤、无 API Key、无绝对路径依赖。
 
 ```bash
-# 0) 拿到 skill / 每次改版后：一键回归自检（31 项，含坏输入与故意破坏拦截）
+# 0) 拿到 skill / 每次改版后：一键回归自检（38 项，含坏输入与故意破坏拦截）
 python3 scripts/selftest_all.py
 
 # 1) 复制示例数据范本，改成你的行业内容（唯一需要手写的文件）
@@ -71,29 +71,22 @@ python3 scripts/capture.py 报告.html --all --outdir shots/
 
 > 常见误区：只填 `charts` 却在片段里写死旧 SVG 坐标，改数据时图不会跟着变。请用占位符。
 
-**页脚署名与品牌块（可选）**：生成器默认在页脚输出一行方法论署名 `分析框架：八维行业分析法 · 松幽`。这是框架出处，不是导流位。要完全关闭，在数据 JSON 写 `"branding": {"attribution": false}`。
+**页脚紧凑溯源条（强制，v3.2.2）**：每份报告页脚固定输出方法论署名、公众号「松幽舒苑」、视频号「松幽AI」和两张二维码。报告会被多级转发，页脚是接收者找回原始出处的唯一锚点，也是 MIT 许可「保留出处」的落地形式。
 
-自己对外发布报告时，可加完整品牌块：
+- **定位是版权条，不是内容卡片**：单行灰色署名（kicker 与标题同行）、两行渠道、单行底部说明，整块收窄到 560px。实测页脚高度 **479.7px → 221.8px（−54%）**，信息一条不少，视觉权重让给正文。
+- **版式**：公众号 / 视频号各占一行，左侧渠道介绍、紧跟一枚 **52px 小二维码**（窄屏 48px），二维码不再拉到行末（左移约 500px）。两码**不并排**、**不加图注**。点击小码弹出 420px 大图，ESC 或点遮罩关闭；放大复用同一份 base64，报告体积不翻倍。
+- **没有关闭开关**。数据 JSON 写 `branding.attribution: false` / `branding.enabled: false` / 自定义 `wechat` / `video` 一律忽略；门禁 **P0-16** 复核单行署名 / 单行说明 / 两行渠道 / 两个渠道名 / 两张内嵌二维码 / 放大层与脚本在位，小码宽度 ≤60px，且无 `<figcaption>`；删掉任一项或把码改回大尺寸即拒稿。
+- 品牌文案与二维码集中在 [`assets/brand.json`](assets/brand.json)，图片是 `assets/qr-wechat.png` / `assets/qr-video.png`。`brand.json` 里的 `qr_*_url` 是图床直链，供文章、卡片等在线场景复用。要换成自己的品牌，改这一个文件即可。
+- 二维码**内嵌 base64 data URI**，不外链。报告是离线单文件 HTML，外链图片在离线打开和打印时会失效。
+- 数据 JSON 的 `branding` 只认一个可选字段 `url`（延伸阅读链接），缺省不渲染：
 
 ```json
-"branding": {
-  "attribution": true,
-  "enabled": true,
-  "title": "品牌名",
-  "wechat": "公众号名",
-  "video": "视频号名",
-  "url": "https://example.com/post"
-}
+"branding": { "url": "https://example.com/post" }
 ```
 
-`url` 可选，缺省不渲染。规则：
+- 品牌块固定放在页脚免责声明之后，不进 Hero、不进正文。投资分析内容里的导流 CTA 会削弱免责声明的独立性。打印时页脚保留、放大层隐藏，二维码白底与字色强制回落。
 
-- 导流信息**只写在数据 JSON**。不要在 `scripts/example_data.json`、`assets/`、`scripts/`、CSS 里写死公众号 / 视频号 / 二维码。别人复制范本生成的报告会带上你的导流信息。
-- 品牌块固定放在页脚免责声明之后，不进 Hero、不进正文。投资分析内容里的导流 CTA 会削弱免责声明的独立性。
-- 二维码须内嵌 base64 data URI。报告是离线单文件 HTML，外链图片在离线打开和打印时会失效。
-- 打印时页脚保留，品牌块与署名字色强制回落墨色。
-
-**分享打包**：整个目录保持原结构复制即可，无绝对路径依赖、无密钥、无安装步骤；`.git/`、`__pycache__/`、`shots/` 都是缓存或产物（已列在 `.gitignore`），可安全删除。收件方跑一次 `python3 scripts/selftest_all.py` 即可确认环境可用。
+**分享打包**：整个目录保持原结构复制即可，无绝对路径依赖、无密钥、无安装步骤；`assets/qr-*.png` 是强制品牌块的资源，不要漏带。`.git/`、`__pycache__/`、`shots/` 都是缓存或产物（已列在 `.gitignore`），可安全删除。收件方跑一次 `python3 scripts/selftest_all.py` 即可确认环境可用。
 
 ---
 
@@ -377,6 +370,9 @@ eight-dimension-industry-analysis-sy/
 ├── assets/
 │   ├── template.html        # HTML 基底骨架（只读，视觉由下者覆盖）
 │   ├── hydro-skin.css       # ★ v3 默认皮肤，生成器自动注入 <head> 末尾
+│   ├── brand.json           # ★ 强制品牌溯源块文案 + 二维码文件名 / 图床直链
+│   ├── qr-wechat.png        # 公众号二维码（内嵌进报告）
+│   ├── qr-video.png         # 视频号二维码（内嵌进报告）
 │   └── nav-module.html      # 导航组件模块（侧栏/进度条/目录卡）
 ├── references/
 │   ├── book-criteria.md     # ★ 判据锚点：八维阈值/公式/分类矩阵（唯一依据）
@@ -385,8 +381,8 @@ eight-dimension-industry-analysis-sy/
 │   ├── data-sources.md      # 数据源配置与调用示例
 │   ├── output-spec.md       # 输出格式与链接颗粒度规范
 │   ├── plain-language.md    # 小白化规范（人话卡/术语首现注释库/类比）
-│   ├── quality-gate.md      # 质量门禁规则（P0-1~P0-15 / P1 / P2）
-│   ├── check_report.py      # 机械门禁脚本（含 P0-11~15 防复发校验）
+│   ├── quality-gate.md      # 质量门禁规则（P0-1~P0-16 / P1 / P2）
+│   ├── check_report.py      # 机械门禁脚本（含 P0-11~16 防复发校验）
 │   ├── locate_uncovered.py  # P0-4 未覆盖数字返工定位器
 │   ├── verify_links.py      # 来源链接 HEAD 验活（只提示，不阻断）
 │   ├── check_js.py          # 内联 JS 语法验收（先剥离注释再交给 node --check）
@@ -397,7 +393,7 @@ eight-dimension-industry-analysis-sy/
 │   ├── html_helpers.py      # ★ 严格闭合构造器 + 标签栈校验 + HERO() 签名结构
 │   ├── example_data.json    # 示例数据（字段结构范本，内容取自真实报告）
 │   ├── capture.py           # 分段视觉验收截图（Chrome headless 裁剪页）
-│   └── selftest_all.py      # ★ 一键回归自检（31 项，分享/改版前必跑）
+│   └── selftest_all.py      # ★ 一键回归自检（38 项，分享/改版前必跑）
 ├── test-prompts.json        # 测试用例（触发/诱饵/边界）
 └── 示例_八维分析报告.html     # 示例报告（演示用途）
 ```
@@ -449,6 +445,9 @@ cp -r eight-dimension-industry-analysis-sy ~/.workbuddy/skills/
 | v2.2.0 | 2026-11-08 | 修 P0-6 全文误判与 `<5%` 漏检（改章节级 + `html.unescape`）；修模板侧栏遮挡/水印裁切/Hero 四列拥挤；补齐 P0-3、P1-2/3/4/6 门禁，导航改 P1-5 消歧；`--strict` 默认；新增 `render_report.py` / `capture.py` / `verify_links.py`；新增 Phase 0 数据源探活、数据截止时点规范、链接邻近率更名。发布前复检另修 5 项：C1 刻度/组距改由数据计算、来源 URL 做 HTML 转义、raw 片段补链 `link_patches`（示例报告 100%）、`capture.py` 跨平台探测 Chrome + `as_uri()` 编码路径、`verify_links.py` 实体解码 + 并发探活 |
 | **v3.0.0** | **2026-11-09** | **视觉整体换代的固化版**：把获奖级「水文纸本 / HYDRO PAPER」沉淀为默认皮肤 `assets/hydro-skin.css` + 规格 `references/hydro-design-spec.md`，生成器自动注入皮肤、自动生成/升级 Hero、自动映射旧三色、自动清理装饰 emoji（跳过 script/style），**取消外部注入脚本**。新增 `scripts/html_helpers.py`：严格闭合构造器 `RISK/SWOT/CONFLICT/D/HERO` + 标签栈校验；渲染前逐片段校验不平衡即拒稿（退出码 2）。门禁新增 **P0-11 标签栈平衡 / P0-12 皮肤在位 / P0-13 动效与 script 安全 / P0-14 占位符 / P1-7 旧三色**，并写入「历史事故与防复发规则」复盘。SKILL.md 加入「规格先行（DESIGN.md）」硬门槛与 Phase 4.5 六项验收；示例报告用新链路重生成 |
 | **v3.1.0** | **2026-11-09** | **可选页脚署名与品牌块**：生成器默认输出一行方法论署名（`branding.attribution`，可关）；`branding.enabled` 打开才渲染公众号 / 视频号 / 链接，导流信息只存数据 JSON。清理 `template.html` body 与 `example_data.json` 里遗留的硬编码品牌页脚（含错挂的来源链接）；新增 `.report-footer` 样式（亮 / 暗 / 响应式 / 打印）；`selftest_all.py` 扩到 31 项，新增「公共模板不夹带导流信息」检查 |
+| **v3.2.0** | **2026-11-09** | **强制品牌溯源块**：视频号更名「松幽AI」；新增 `assets/brand.json` + 公众号/视频号双二维码（图床直链同步记录），生成器页脚强制输出署名、品牌名、双二维码（内嵌 base64，离线 / 打印不丢图），取消 `branding.attribution` / `branding.enabled` 开关；新增门禁 **P0-16**（品牌块、两个渠道名、两张内嵌二维码、旧名残留）；`check_placeholders()` 剔除 base64 避免 P0-14 误报；`selftest_all.py` 扩到 33 项，新增「关不掉」「删块被拦」「外链被拦」用例 |
+| **v3.2.1** | **2026-11-09** | **页脚二维码改两行小码**：应用户反馈，双码不再并排、去掉码下图注，改成「左渠道介绍 + 右 88px 小码」两行（窄屏 78px）；新增点击放大层 `qrLightbox`（复用同一 base64，ESC / 点遮罩关闭，离线可用）；P0-16 扩到「两行渠道 / 无 figcaption / 放大层与脚本在位」；`selftest_all.py` 扩到 35 项，新增「删放大层」「加回图注」两项破坏用例 |
+| **v3.2.2** | **2026-11-09** | **页脚压成紧凑溯源条**：应用户反馈「页脚占版面太高」，把四段式内容卡降级为版权条：kicker 与标题合并为一行灰色小署名、小码 88px → 52px 且紧跟介绍文字（不再 space-between 拉到行末）、底部两行说明合并为一行、整块 760px → 560px、上下留白 26/60px → 14/22px；实测页脚 479.7px → 221.8px（−54%）。P0-16 扩到「单行署名 / 单行说明 / 小码 ≤60px」；`selftest_all.py` 扩到 38 项，新增「拆单行署名」「小码放大回 88px」「HEAD 404 / GET 200 不误报」三项；**分享前全量审计**：修正 `SKILL.md` frontmatter 版本（3.1.0 → 3.2.2）、门禁编号与自检项数，修复 `verify_links.py` 对 yofc.com 的 HEAD 误报（HEAD 404 / GET 200） |
 | **v3.0.1** | **2026-11-09** | **分享前审计与防复发补强**（无视觉变化）：修复 `charts` 死字段——`render_c1/c2/c3` 从未被调用、三图靠手写 SVG、门禁也不查三图；新增 `inject_charts()` 三路落位 + `validate_charts()` + **P0-15 三图门禁**。修复坏 JSON / 缺字段 / 文件不存在直接抛 traceback（改中文提示 + 退出码 2）；`upgrade_hero()` 改按标签栈精确配对，不再吞掉 Hero 与 main-wrap 之间的内容；head 注入改切片只插一次；`capture.py` 同步 `rfind` 并放宽 step-card 匹配；P0-12 收紧为必须存在 `<style id="hydro-skin">`（原 token 二选一可被绕过）；P0-14 改为全文查占位符；`validate_fragment` 收紧跨片段闭合预算。新增 `scripts/selftest_all.py` 一键回归（27 项）、README 快速开始与最小字段清单、事故复盘第 9/10 条。**通用性修复**：Hero 标题旁的 `NO. 08` 原硬编码在公共 CSS 与默认配置里（别的行业也会显示 08），改由 `hero.note_no` / `meta.note_no` 驱动 `h1[data-note]` + CSS `attr()`；显式 `hero` 缺字段时由默认配置合并补齐；缺 `date/as_of` 不再编造 `2026-01-01 00:00`，改为拒稿并提示按 P1-6 给时点 |
 
 ---
@@ -458,14 +457,14 @@ cp -r eight-dimension-industry-analysis-sy ~/.workbuddy/skills/
 **作者**：松幽（SongYouAI）
 
 - 📱 公众号：**松幽舒苑**
-- 🎬 视频号：**松幽Ai提效**
+- 🎬 视频号：**松幽AI**
 
 **方法论参考**：肖璟《如何快速了解一个行业》（仅借鉴分析框架，未复制原文）。
 
 **License**：MIT — 可自由使用、修改、分发，保留出处即可。
 
 ```
-Copyright (c) 2026 松幽（公众号:松幽舒苑 | 视频号:松幽Ai提效）
+Copyright (c) 2026 松幽（公众号:松幽舒苑 | 视频号:松幽AI）
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

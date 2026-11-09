@@ -3,10 +3,10 @@ name: eight-dimension-industry-analysis
 slug: eight-dimension-industry-analysis-sy
 displayName: 八维行业分析
 display_name: 八维行业分析
-version: 3.1.0
+version: 3.2.2
 description: 当用户需要快速了解或深度分析一个行业（或某家公司所在的行业）时，使用本
   skill。输入行业名或公司名，自动产出覆盖产业生命周期、商业模式、市场规模、护城河、竞争格局、估值、外部因素、景气度八个维度的完整 HTML
-  分析报告（默认 HTML；PDF / Markdown 按需）。v3 起默认输出「水文纸本 / HYDRO PAPER」编辑式获奖级版式，生成器自动注入皮肤、自动升级 Hero、自动查标签闭合，禁止手写大段 HTML。
+  分析报告（默认 HTML；PDF / Markdown 按需）。v3 起默认输出「水文纸本 / HYDRO PAPER」编辑式获奖级版式，生成器自动注入皮肤、自动升级 Hero、自动查标签闭合，禁止手写大段 HTML。页脚固定输出紧凑作者溯源块（公众号 / 视频号 + 双二维码，点击可放大），报告可自由转发但保留出处。
   触发词：八维行业分析、行业分析、分析XX行业、分析XX公司所在行业、八维分析、行业深度研究。
 author: 松幽
 tags:
@@ -30,7 +30,7 @@ agent_created: true
 > 方法论源自肖璟《如何快速了解一个行业》（维度释义与章节映射见 [references/framework-detail.md](references/framework-detail.md)，数据源配置见 [references/data-sources.md](references/data-sources.md)）。
 > **判据锚点（唯一依据）**：八维度的阈值/公式/分类矩阵一律以 [references/book-criteria.md](references/book-criteria.md) 为准；采集字段以 [references/data-requirements.md](references/data-requirements.md) 为准；发布门禁以 [references/quality-gate.md](references/quality-gate.md) + [references/check_report.py](references/check_report.py)（返工定位器 [references/locate_uncovered.py](references/locate_uncovered.py)）为准；输出格式与链接颗粒度见 [references/output-spec.md](references/output-spec.md)；小白化表述见 [references/plain-language.md](references/plain-language.md)。
 > **视觉规格（v3 默认，唯一依据）**：[references/hydro-design-spec.md](references/hydro-design-spec.md)（含具体 hex/px token、禁项清单、CSS 变量落地）。样式落点 [assets/hydro-skin.css](assets/hydro-skin.css)，Hero 签名结构在 [scripts/html_helpers.py](scripts/html_helpers.py) 的 `HERO()`。旧版 [references/visual-design-system.md](references/visual-design-system.md) 已废弃。
-> **防错**：[scripts/html_helpers.py](scripts/html_helpers.py) 提供严格闭合构造器与标签栈校验；[references/quality-gate.md](references/quality-gate.md) 的 P0-11~P0-14 为机械防线；历史事故复盘见本文末尾「历史事故与防复发规则」。
+> **防错**：[scripts/html_helpers.py](scripts/html_helpers.py) 提供严格闭合构造器与标签栈校验；[references/quality-gate.md](references/quality-gate.md) 的 P0-11~P0-16 为机械防线；历史事故复盘见本文末尾「历史事故与防复发规则」。
 > 报告 HTML 基底骨架见 [assets/template.html](assets/template.html)（**只读基底，不要在里面改视觉**；生成器会复制其 head 并自动覆盖 v3 皮肤）。
 
 ---
@@ -638,11 +638,11 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 > **唯一交付路径（v3.0）**：
 > `python3 scripts/render_report.py --data <数据.json> --out <报告.html>`
 >
-> 生成器一次完成：必填字段 / `charts` 结构校验 → 片段标签栈校验 → 来源角标绑定与补链（P0-4）→ 八维章节骨架 → **注入 v3 皮肤** → **自动升级 Hero** → **三图注入（charts）** → 旧色映射 → 装饰符号清理 → 全文结构复检 → **自动跑门禁**。数据文件结构见 `scripts/example_data.json`，可选 `hero` 字段（缺省时由 `meta` 自动生成；显式 `hero` 只覆盖写了的字段，其余由默认配置补全）。`hero.note_no` / `meta.note_no` 控制首屏「RESEARCH NOTE · NO. xx」与标题旁编号，缺省 `01`，**不要把它硬编码进 CSS**。页脚默认只有一行方法论署名（`branding.attribution`，可关）；`branding.enabled` 才渲染品牌块，公众号 / 视频号 / 链接只写在数据 JSON，**禁止写进模板、CSS 或生成器**，否则别人生成的报告会替你导流。
+> 生成器一次完成：必填字段 / `charts` 结构校验 → 片段标签栈校验 → 来源角标绑定与补链（P0-4）→ 八维章节骨架 → **注入 v3 皮肤** → **自动升级 Hero** → **三图注入（charts）** → 旧色映射 → 装饰符号清理 → 全文结构复检 → **自动跑门禁**。数据文件结构见 `scripts/example_data.json`，可选 `hero` 字段（缺省时由 `meta` 自动生成；显式 `hero` 只覆盖写了的字段，其余由默认配置补全）。`hero.note_no` / `meta.note_no` 控制首屏「RESEARCH NOTE · NO. xx」与标题旁编号，缺省 `01`，**不要把它硬编码进 CSS**。页脚**强制输出紧凑溯源条**（单行署名 + 两行渠道 + 单行说明，双 52px 小码紧跟介绍文字，配置见 `assets/brand.json`），**不可关闭**；整块宽 560px、高约 222px（旧版 480px），点击小码放大；二维码内嵌 base64，门禁 **P0-16** 复核结构与尺寸（小码 ≤60px）。品牌常量只存 `assets/brand.json`，禁止再写进模板、CSS、生成器或数据 JSON。
 >
 > 🔴 **禁止**：手写 `<div class="hero">`、复制 template.html 再手工填、写后处理注入脚本、直接编辑成品 HTML、用 `--no-gate` 出稿后不补门禁。这些正是两次返工的共同根因。
 >
-> 四道防线：① 输入校验 `validate_required_fields()` / `validate_charts()`，坏数据退出码 2 且**不产出文件**；② 渲染前 `validate_data_fragments()` 逐片段查闭合；③ 渲染后 `validate_document()` 全文复检；④ 交付前 `check_report.py --strict`（生成器默认已跑一次，含 **P0-15 三图**）。
+> 四道防线：① 输入校验 `validate_required_fields()` / `validate_charts()`，坏数据退出码 2 且**不产出文件**；② 渲染前 `validate_data_fragments()` 逐片段查闭合；③ 渲染后 `validate_document()` 全文复检；④ 交付前 `check_report.py --strict`（生成器默认已跑一次，含 **P0-15 三图 / P0-16 品牌溯源块**）。
 
 **三图唯一数据源是数据 JSON 的 `charts` 字段**，由 `render_c1/c2/c3` 按数值算坐标，`inject_charts()` 负责落位。**禁止硬编码 `<rect>` 坐标或从零造图**（历史 v1→重做 图表全丢的根因）。
 
@@ -672,7 +672,7 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 
 | # | 检查 | 命令 / 判据 |
 |---|------|------------|
-| 1 | 严格门禁 | `python3 references/check_report.py <报告.html> --strict` → 退出码 0，P0-1~P0-15 全绿（默认已严格；`--no-strict` 才放宽 P1） |
+| 1 | 严格门禁 | `python3 references/check_report.py <报告.html> --strict` → 退出码 0，P0-1~P0-16 全绿（默认已严格；`--no-strict` 才放宽 P1） |
 | 2 | 链接验活 | `python3 references/verify_links.py <报告.html>` → 0 失效；返回 500 的第三方 PDF 必须换成稳定摘要页 |
 | 3 | JS 语法 | `python3 references/check_js.py <报告.html>` → 退出码 0（**必须走脚本**：手写正则会把 HTML 注释里的 script 起始标签字面量当成脚本，误报 SyntaxError） |
 | 4 | 十章截图 | `python3 scripts/capture.py <报告.html> --all --outdir shots/` → 逐章目检，重点看风险卡三列等宽、来源表满宽、水印数字完整 |
@@ -725,7 +725,7 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 2. `html_helpers.HERO()` 生成 v3 Hero；数据文件给 `hero` 字段或由 `meta` 自动推导
 3. 每维度仍用 `.step-card`（`.step-head` 描边数字 + `.step-body`），`data-theme` 仅管明暗
 
-**默认视觉架构**：暖纸网格 Hero + masthead / overline / 4 列元信息 / hero-foot 注记、右上角 `.theme-toggle`、`.toc-card` 目录卡、`.side-nav` 左侧细线侧栏、2px `.top-progress`、`.method-card` 发丝线方法卡、`.kpi-card` 顶线 KPI、发丝线数据表、`.risk-grid` 三列风险卡、`.insight-card` 盯什么卡、`.conclusion-wrap` 结论框、SWOT / 维度冲突 / 反共识 / 跟踪列表 / 免责声明、`.report-footer` 页脚（署名 + 可选品牌块）。暗色模式靠 11 个 `--p-*` token 反相，不新增色；打印样式强制回落亮色并隐藏装饰。
+**默认视觉架构**：暖纸网格 Hero + masthead / overline / 4 列元信息 / hero-foot 注记、右上角 `.theme-toggle`、`.toc-card` 目录卡、`.side-nav` 左侧细线侧栏、2px `.top-progress`、`.method-card` 发丝线方法卡、`.kpi-card` 顶线 KPI、发丝线数据表、`.risk-grid` 三列风险卡、`.insight-card` 盯什么卡、`.conclusion-wrap` 结论框、SWOT / 维度冲突 / 反共识 / 跟踪列表 / 免责声明、`.report-footer` 页脚（强制品牌溯源块：两行小码 + 点击放大）。暗色模式靠 11 个 `--p-*` token 反相，不新增色；打印样式强制回落亮色并隐藏装饰。
 
 > **内容五件套（P0-10 门禁强制，每维度必备）**：人话卡 `.human-term-card`、反面假设 `.reverse-note`、盯什么 `.insight-card` + 徽章体系——可信度档位 `.tier-badge`（rich/medium/lean/online）、评级 `.rating-badge`（buy/hold/sell）、状态 `.status-badge`（resolved/pending/gap/info）、数据来源框 `.source-box`。组件结构与 v2 相同，视觉由 `hydro-skin.css` 统一重绘。
 
@@ -870,6 +870,8 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 | 8 | **整段 CSS 与 `<html>` 丢失 / 皮肤检查被绕过 / JS 误报** | 模板注释里写了「head 结束标签」「script 起始标签」「样式 id 属性」三类**字面量**：`index()` 截断 head、JS 提取正则把注释当代码、P0-12 把注释里的样式 id 当成「皮肤已注入」 | 生成器改 `rfind()` 取最后一个 head 结束标签 + 切片后强制校验 `<html>`；`check_js.py` 与 `check_visual_skin()` **先剥离 HTML 注释**再判定；模板注释禁用这三类字面量 | 报告含 `<html>`、`id="hydro-skin"` 必须是真实 `<style>` 标签；`--legacy-skin` 会被 P0-12 明确阻断；`check_js.py` 退出码 0 |
 | 9 | **`charts` 是死字段、缺图报告能过门禁**（分享前审计发现） | 生成器文档声称「三图坐标由数值计算」，但 `build()` 从未调用 `render_c1/c2/c3`；三图实际手写在 `dims[].extra`；门禁没有三图检查 | `inject_charts()` 三路落位 + `validate_charts()` + **P0-15** 机械阻断 | 清空 `charts` 与删光三图分别被友好拒绝 / P0-15 拦下 |
 | 10 | **坏输入直接抛 traceback / Hero 升级吞内容 / head 注入重复**（分享前审计发现） | 缺字段、坏 JSON、文件不存在无校验；`upgrade_hero()` 把右边界取到 `.main-wrap` 起点会吞掉中间内容；`head.replace("</head>")` 是全局替换；P0-12 用 token 二选一可被绕过 | `validate_required_fields()` + 中文错误与退出码 2；Hero 按标签栈精确配对；head 用切片只插一次；P0-12 必须查 `<style id="hydro-skin">`；`capture.py` 同步 `rfind` | `scripts/selftest_all.py` 一键回归全绿 |
+| 11 | **报告多级转发后出处丢失** | v3.1.0 把品牌块做成 `branding.enabled` 可选，默认只有一行署名；报告转手两次后接收者找不到原始作者，不利于原创激励 | v3.2.0 取消开关，页脚强制输出署名 + 公众号 + 视频号 + 双二维码（内嵌 base64，离线 / 打印不丢图）；品牌常量集中在 `assets/brand.json`；门禁 **P0-16** 复核 | `selftest_all.py` 的「全关也关不掉 / 删块被拦 / 外链被拦」全绿 |
+| 12 | **页脚占版面太高、抢正文视觉**（用户截图反馈） | v3.2.1 把溯源块做成四段式内容卡：独立大标题 + 钴蓝 kicker、两行 88px 小码 space-between 拉到行末、底部两行说明、上下留白 26/60px；实测 479.7px，接近半屏 | v3.2.2 降级为版权条：标题与 kicker 同行、小码 52px 紧跟文字、底部说明合并一行、整块 560px、留白 14/22px；P0-16 加结构类与 ≤60px 尺寸双校验 | 页脚 221.8px（−54%）；`selftest_all.py` 的「拆单行署名」「放大回 88px」被拦截 |
 
 ### 三条执行铁律
 
@@ -898,6 +900,7 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 - [ ] **P0-13 动效安全**：入场关键帧无 opacity、`.reveal` 无 `opacity:0`、`<script>` 内无来源角标
 - [ ] **P0-14 / P1-7**：无占位符、无 `UNSOURCED`、body 内无旧三色 hex
 - [ ] **P0-15 三图齐全**：C1 柱状图 / C2 PE 条形图 / C3 评级雷达均在位，且 `charts` 数值与正文一致
+- [ ] **P0-16 紧凑溯源条**：单行署名 + 单行底部说明 + 两行渠道介绍（公众号「松幽舒苑」/ 视频号「松幽AI」）+ 两张内嵌 base64 小码均在位，小码 ≤60px、码下无图注、点击可放大，无旧名残留
 - [ ] **Phase 4.5 六项验收**：严格门禁 / 链接验活 0 失效 / `node --check` / 十章截图 / 明暗双主题首屏 / 占位符复查
 - [ ] **分享/改版前一键回归**：`python3 scripts/selftest_all.py` → 全部用例通过（含边界输入与故意破坏拦截）
 
@@ -992,4 +995,4 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 
 ## 作者
 
-**松幽** · 公众号「松幽舒苑」 · 视频号「松幽Ai提效」
+**松幽** · 公众号「松幽舒苑」 · 视频号「松幽AI」

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-八维行业分析报告 · 质量门禁机械校验脚本（v3.1.0）
+八维行业分析报告 · 质量门禁机械校验脚本（v3.2.2）
 ================================================
 读取生成的 HTML 报告，逐条执行 quality-gate.md 的 P0 / P1 校验。
 任一 P0 失败 → 退出码 1（阻断发布）；全部 P0 通过 → 退出码 0。
@@ -18,9 +18,12 @@ v3.0 新增 P0-11 ~ P0-14（对应 2026-11-09 两次返工，防复发）:
     P1-7  body 内旧三色 hex 残留提示
 v3.0.1 新增（分享前审计）:
     P0-15 C1/C2/C3 三张数据图齐全（charts 曾是死字段，缺图报告能过全部旧门禁）
+v3.2.0 新增:
+    P0-16 紧凑品牌溯源条 + 两行小码 + 点击放大强制在位（多级转发不丢出处）
 
-依赖: 仅标准库（re / sys / html / os）+ 同仓 scripts/html_helpers.py
+依赖: 仅标准库（re / sys / html / os / json）+ 同仓 scripts/html_helpers.py
 """
+import json
 import os
 import re
 import sys
@@ -374,13 +377,70 @@ def check_charts(text):
     return problems
 
 
+def check_brand(text):
+    """P0-16：紧凑品牌溯源条 + 两行小码 + 点击放大强制在位（v3.2.2）。
+
+    报告会被多级转发，页脚是唯一稳定的出处锚点，但不应抢正文版面：
+    v3.2.2 起页脚是「版权条」而非内容卡片，单行署名 + 两行渠道 +
+    单行说明、整块 560px、小码 52px 紧跟渠道文字。结构与尺寸一起校验，
+    防止以后生成报告时页脚重新膨胀。品牌名从 assets/brand.json 读取，
+    不把作者专名硬编码进门禁。二维码必须内嵌 base64：外链图片在离线
+    打开和打印时会失效，溯源块就形同虚设。小码必须能点开大图，因此
+    放大层与其脚本也在校验范围内（防「功能定义了却没接线」）。
+    """
+    body = extract_body(text)
+    cfg_path = os.path.join(ROOT, "assets", "brand.json")
+    try:
+        with open(cfg_path, encoding="utf-8") as f:
+            brand = json.load(f)
+    except (OSError, ValueError) as exc:
+        return ["P0-16 读取 assets/brand.json 失败：%s" % exc]
+    problems = []
+    for token, label in (('class="brand-block"', "品牌溯源块 .brand-block"),
+                         ('class="brand-head"', "单行署名 .brand-head"),
+                         ('class="brand-meta"', "单行底部说明 .brand-meta"),
+                         ('class="brand-qr"', "小二维码按钮 .brand-qr"),
+                         ('class="brand-channel"', "渠道行 .brand-channel"),
+                         ('class="report-attribution"', "方法论署名 .report-attribution"),
+                         ('id="qrLightbox"', "点击放大层 #qrLightbox")):
+        if token not in body:
+            problems.append("P0-16 缺少 %s" % label)
+    if body.count('class="brand-channel"') < 2:
+        problems.append("P0-16 渠道行不足 2 行（公众号 / 视频号各一行，不得并排）")
+    # v3.2.2 紧凑度：小码宽度必须 ≤60px，页脚不得退回「广告卡片」尺寸。
+    qr_w = re.search(r'\.brand-qr\{[^}]*?width:(\d+)px', text)
+    if not qr_w or int(qr_w.group(1)) > 60:
+        problems.append("P0-16 页脚不是紧凑条：.brand-qr 宽度应 ≤60px（当前 %s）"
+                        % (qr_w.group(1) + "px" if qr_w else "未声明"))
+    if "<figcaption" in body:
+        problems.append("P0-16 二维码下不得放图注文字")
+    if "getElementById('qrLightbox')" not in text:
+        problems.append("P0-16 缺少点击放大脚本（小码点开看不到大图）")
+    for key in ("wechat", "video"):
+        name = brand.get(key)
+        if not name or name not in body:
+            problems.append("P0-16 页脚未出现 brand.json 里的 %s 名称" % key)
+    for old in brand.get("retired_names", []):
+        if old in body:
+            problems.append("P0-16 残留旧品牌名「%s」" % old)
+    n_qr = len(re.findall(
+        r'<img[^>]+src="data:image/png;base64,[A-Za-z0-9+/=]{200,}"', body))
+    if n_qr < 2:
+        problems.append("P0-16 双二维码未内嵌 base64（检出 %d 张）" % n_qr)
+    return problems
+
+
 def check_placeholders(text):
     """P0-14 / P1-7：占位符与旧三色残留。"""
     body = extract_body(text)
     p0, p1 = [], []
     # head 也要查：{行业名称} / 标题占位符若没被替换，只在正文查会漏。
+    # 先剔除内嵌二维码的 base64：随机字符里可能偶然拼出 "TODO" 等字面量，
+    # 会造成 P0-14 误报（v3.2.0 起每份报告都带两张内嵌图）。
+    scan = re.sub(r"data:image/[a-z+]+;base64,[A-Za-z0-9+/=]+",
+                  "data:image;base64,", text)
     for tok in ("{R(", "{{C1}}", "{{C2}}", "{{C3}}", "{行业名称}", "{日期}", "TODO"):
-        if tok in text:
+        if tok in scan:
             p0.append("P0-14 残留占位符 %s" % tok)
     if "UNSOURCED" in body:
         p1.append("P1-7 正文残留 [UNSOURCED] 标记，需补来源或改写为降级署名")
@@ -525,6 +585,12 @@ def main():
         fails_p0.extend(charts)
     else:
         notes.append("P0-15 C1/C2/C3 三张数据图齐全 ✅")
+
+    brand_problems = check_brand(text)
+    if brand_problems:
+        fails_p0.extend(brand_problems)
+    else:
+        notes.append("P0-16 紧凑溯源条（单行署名 / 两行小码 ≤60px / 内嵌 base64 / 点击放大）齐全 ✅")
 
     # ---- P1 ----
     if not chapter_has(text, ["外部因素", "PEST", "政策"], ["事实", "传导", "对象", "量级", "时点"]):

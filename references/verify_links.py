@@ -5,7 +5,9 @@
 ================================================
 check_report.py 的 P0-4「链接邻近率」只判「数字邻近 120 字内有没有 <a>」，
 不判链接能否打开、页面里是否真有被引数字。本脚本补前者：HEAD 探活，
-列出明确失效（4xx/5xx）的 URL。
+列出明确失效（4xx/5xx）的 URL。HEAD 报 4xx/5xx 时再用 GET 复核一次：
+部分站点（如 yofc.com）对 HEAD / 自定义 UA 直接返 404，但 GET 正常，
+只信 HEAD 会把好链误报成坏链。
 
 网络不可达/超时、站点拒绝 HEAD（403/405/429）不计入失效，避免把环境
 问题误报成坏链。本脚本不验证页面内容是否含被引数字（仍需人工按
@@ -40,21 +42,37 @@ def collect(text):
     return out
 
 
-def probe(url, timeout):
-    """返回 (ok|dead|skip, 说明)。"""
-    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": UA})
+def _request_code(url, timeout, method, extra_headers=None):
+    """返回 HTTP 状态码；网络问题返回 None。"""
+    headers = {"User-Agent": UA}
+    if extra_headers:
+        headers.update(extra_headers)
+    req = urllib.request.Request(url, method=method, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
-            code = r.status
+            return r.status
     except urllib.error.HTTPError as e:
-        code = e.code
+        return e.code
     except (urllib.error.URLError, OSError, ValueError):
+        return None
+
+
+def probe(url, timeout):
+    """返回 (ok|dead|skip, 说明)。HEAD 失效时以 GET 复核为准。"""
+    code = _request_code(url, timeout, "HEAD")
+    if code is None:
         return "skip", "网络不可达 / 超时"
     if code in (403, 405, 429):
         return "skip", f"HTTP {code}（站点拒绝探活，非链接失效）"
     if 200 <= code < 400:
         return "ok", f"HTTP {code}"
-    return "dead", f"HTTP {code}"
+    # 站点对 HEAD / 自定义 UA 返 404 但 GET 正常 → 以 GET 为准，避免误删好链
+    code2 = _request_code(url, timeout, "GET", {"Range": "bytes=0-0"})
+    if code2 is None:
+        return "dead", f"HTTP {code}（GET 复核超时）"
+    if 200 <= code2 < 400:
+        return "ok", f"HTTP {code2}（HEAD {code} → GET 复核可达）"
+    return "dead", f"HTTP {code2}（HEAD {code}）"
 
 
 def main():

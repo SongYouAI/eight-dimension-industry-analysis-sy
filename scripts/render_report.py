@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-八维行业报告 · 数据驱动生成器（v3.1.0 · HYDRO PAPER 默认皮肤）
+八维行业报告 · 数据驱动生成器（v3.2.2 · HYDRO PAPER 默认皮肤）
 ================================================================
 把「来源池 → 片段结构校验 → 角标绑定 → 八维章节骨架 → v3 视觉皮肤
 → Hero 自动生成 → 三图 → 装饰符号清理 → 机械门禁」固化成一条链路。
@@ -30,10 +30,13 @@ v3.0 三条硬规则（对应 2026-11-09 两次返工）:
                      绝不允许「charts 改了、图还是旧坐标」：门禁 P0-15 查三图在位。
     hero             v3 Hero 配置（缺省时由 meta 自动生成，见 default_hero_cfg）
     link_patches     raw 片段补链锚点（可选）
+    branding         只认可选 url（延伸阅读）。页脚品牌溯源块为强制项，
+                     文案与双二维码在 assets/brand.json，数据 JSON 关不掉（P0-16）
 
 依赖: 仅标准库；门禁复用 references/check_report.py
 """
 import argparse
+import base64
 import html
 import json
 import math
@@ -396,44 +399,115 @@ def inject_charts(parts, data, sources, warnings=None):
     return parts
 
 
-# ── 页脚：方法论署名 / 可选品牌块 ───────────────────────────────────────
-# 分享版约束：生成器里只保留框架作者署名（方法论出处，不是导流位）；
-# 公众号 / 视频号 / 链接一律从数据 JSON 的 branding 字段读取，缺省不输出。
+# ── 页脚：紧凑品牌溯源条（v3.2.2） ──────────────────────────────────────
+# 单行署名 + 两行渠道 + 单行说明，整块 560px、小码 52px 紧跟渠道文字。
+# 报告会被多级转发，页脚是唯一稳定的出处锚点。品牌常量集中在
+# assets/brand.json，二维码内嵌 base64，离线打开 / 打印都不丢图。
 DEFAULT_ATTRIBUTION = "八维行业分析法 · 松幽"
+BRAND_JSON = os.path.join(ROOT, "assets", "brand.json")
 
 
 def _esc(s):
     return html.escape(str(s), quote=True)
 
 
-def render_footer(data):
-    """返回页脚 HTML；无任何内容时返回空串。
+def load_brand():
+    with open(BRAND_JSON, encoding="utf-8") as f:
+        b = json.load(f)
+    for key in ("wechat", "video", "qr_wechat", "qr_video"):
+        if not b.get(key):
+            raise ValueError("assets/brand.json 缺少必填字段 %s" % key)
+    return b
 
-    branding.attribution  默认 True：一行方法论署名；False 可完全关闭。
-    branding.enabled      默认 False：True 才渲染完整品牌块。
+
+def _qr_data_uri(filename):
+    path = os.path.join(os.path.dirname(BRAND_JSON), filename)
+    with open(path, "rb") as f:
+        return "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii")
+
+
+# 点击小码放大：复用同一份 base64，不重复内嵌图片，报告体积不翻倍。
+# 无外部依赖，离线打开 / 打印均可；ESC 或点击遮罩关闭。
+QR_LIGHTBOX_JS = """<script>
+(function(){
+  var box=document.getElementById('qrLightbox');
+  if(!box) return;
+  var big=box.querySelector('img');
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest && e.target.closest('.brand-qr');
+    if(!btn) return;
+    e.preventDefault();
+    big.src=btn.querySelector('img').src;
+    big.alt=btn.querySelector('img').alt;
+    box.hidden=false;
+  });
+  box.addEventListener('click',function(){box.hidden=true;});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape') box.hidden=true;
+  });
+})();
+</script>"""
+
+
+def render_footer(data):
+    """强制输出紧凑溯源条：每个渠道一行（左介绍 + 紧跟的小码，点击放大）。
+
+    v3.2.2：单行署名 / 两行渠道 / 单行说明，整块 560px、小码 52px。
+    二维码不并排、不附图注；点小码在 qrLightbox 里放大同一张图。
+    数据 JSON 的 branding 只认可选 url，其余一律忽略（P0-16 复核）。
     """
-    b = data.get("branding") or {}
-    if not isinstance(b, dict):
+    brand = load_brand()
+    override = data.get("branding") or {}
+    if not isinstance(override, dict):
         raise ValueError("branding 必须是对象，参照 README 的字段说明")
-    lines = []
-    if b.get("attribution", True):
-        lines.append('<p class="report-attribution">分析框架：%s</p>'
-                     % _esc(b.get("method") or DEFAULT_ATTRIBUTION))
-    if b.get("enabled"):
-        if b.get("title"):
-            lines.append('<p class="brand-title">%s</p>' % _esc(b["title"]))
-        chans = " · ".join(x for x in (
-            ("公众号「%s」" % _esc(b["wechat"])) if b.get("wechat") else "",
-            ("视频号「%s」" % _esc(b["video"])) if b.get("video") else "",
-        ) if x)
-        if chans:
-            lines.append('<p class="brand-channels">%s</p>' % chans)
-        if b.get("url"):
-            lines.append('<p class="brand-link"><a href="%s" target="_blank" '
-                         'rel="noopener">延伸阅读</a></p>' % _esc(b["url"]))
-    if not lines:
-        return ""
-    return '<footer class="report-footer">\n' + "\n".join(lines) + "\n</footer>\n"
+    hint = _esc(brand.get("hint", "点击二维码查看大图"))
+    channels = (
+        ("公众号", brand["wechat"], brand["qr_wechat"]),
+        ("视频号", brand["video"], brand["qr_video"]),
+    )
+    rows = []
+    for kind, name, filename in channels:
+        rows.append(
+            '<div class="brand-channel">'
+            '<div class="brand-channel-copy">'
+            '<p class="brand-channel-name">%s「%s」</p>'
+            '<p class="brand-channel-hint">%s</p>'
+            '</div>'
+            '<button class="brand-qr" type="button" aria-label="放大%s「%s」二维码">'
+            '<img src="%s" alt="%s「%s」二维码">'
+            '</button>'
+            '</div>'
+            % (_esc(kind), _esc(name), hint, _esc(kind), _esc(name),
+               _qr_data_uri(filename), _esc(kind), _esc(name))
+        )
+    meta = [
+        '<p class="brand-meta">',
+        '<span class="brand-note">%s</span>' % _esc(brand.get("note", "")),
+    ]
+    if override.get("url"):
+        meta.append('<span class="brand-link"><a href="%s" target="_blank" '
+                    'rel="noopener">延伸阅读</a></span>' % _esc(override["url"]))
+    meta.append('<span class="report-attribution">分析框架：%s</span>'
+                % _esc(brand.get("method") or DEFAULT_ATTRIBUTION))
+    meta.append('</p>')
+    lines = [
+        '<footer class="report-footer">',
+        '<div class="brand-block">',
+        '<p class="brand-head">'
+        '<span class="brand-kicker">%s</span>'
+        '<span class="brand-title">%s</span>'
+        '</p>' % (_esc(brand.get("kicker", "原创出品 · 欢迎溯源")),
+                  _esc(brand.get("title", ""))),
+        '<div class="brand-channels">',
+        "\n".join(rows),
+        '</div>',
+        "\n".join(meta),
+        '</div>',
+        '<div class="qr-lightbox" id="qrLightbox" hidden><img alt="二维码大图"></div>',
+        QR_LIGHTBOX_JS,
+        '</footer>',
+    ]
+    return "\n".join(lines) + "\n"
 
 
 # ── 组装 ──────────────────────────────────────────────────────────────
@@ -622,7 +696,7 @@ def build(data, legacy_skin=False, keep_emoji=False, warnings=None):
         if token not in top:
             warn("top_html 缺少%s（%s）；严格门禁 P1-3 会阻断，"
                  "请参照 scripts/example_data.json 的 top_html 补齐导航骨架" % (label, token))
-    # ③-d 页脚放在最后：方法论署名默认开，品牌块只在 branding.enabled 时出现
+    # ③-d 页脚放在最后：v3.2.2 起紧凑溯源条强制输出，无开关
     parts.append(render_footer(data))
     body = fix_axis_break("\n".join(parts))
     # 旧三色硬编码兜底：即便数据文件里仍写 #635bff / #c8943b，也统一换成
@@ -680,7 +754,7 @@ def selftest_charts():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="八维行业报告 · 数据驱动生成器 v3.1.0")
+    ap = argparse.ArgumentParser(description="八维行业报告 · 数据驱动生成器 v3.2.2")
     ap.add_argument("--data", help="数据 JSON 路径")
     ap.add_argument("--out", help="输出 HTML 路径")
     ap.add_argument("--no-gate", action="store_true", help="生成后不自动跑机械门禁")
@@ -721,7 +795,7 @@ def main():
         print("🔴 无法写入输出文件 %s：%s" % (args.out, e), file=sys.stderr)
         return 2
     print("已生成: %s | 字符数: %d | 皮肤: %s"
-          % (args.out, len(out), "legacy(对照)" if args.legacy_skin else "HYDRO PAPER v3.1.0"))
+          % (args.out, len(out), "legacy(对照)" if args.legacy_skin else "HYDRO PAPER v3.2.2"))
     if not args.no_gate:
         if not os.path.isfile(GATE):
             print("🔴 找不到门禁脚本 %s（skill 目录不完整）" % GATE, file=sys.stderr)

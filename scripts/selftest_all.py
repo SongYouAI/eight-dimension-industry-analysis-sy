@@ -130,7 +130,7 @@ def main():
             return 1
         text = good.read_text(encoding="utf-8")
         r = run([sys.executable, GATE, good, "--strict"])
-        check("严格门禁 P0-1~P0-15 / P1 全绿",
+        check("严格门禁 P0-1~P0-16 / P1 全绿",
               r.returncode == 0 and "全部门禁通过" in r.stdout, r=r)
         r = run([sys.executable, CHECKJS, good])
         check("内联 JS 验收", r.returncode == 0, r=r)
@@ -199,36 +199,52 @@ def main():
         r = run([sys.executable, RENDER, "--data", EXAMPLE, "--out", cn_out, "--no-gate"])
         check("中文/空格输出路径", r.returncode == 0 and cn_out.is_file(), r=r)
 
-        # 页脚：默认署名 / 可关闭 / 可选品牌块 / 公共模板不夹带导流
-        check("默认只出方法论署名（不带导流）",
-              'class="report-attribution"' in text
-              and 'class="brand-title"' not in text)
+        # 页脚：v3.2.2 紧凑溯源条，数据 JSON 关不掉、尺寸不能回胀
+        brand_cfg = json.loads((ROOT / "assets/brand.json").read_text(encoding="utf-8"))
+        qr_imgs = re.findall(
+            r'<img[^>]+src="data:image/png;base64,[A-Za-z0-9+/=]{200,}"', text)
+        qr_css_w = re.search(r'\.brand-qr\{[^}]*?width:(\d+)px', text)
+        check("默认强制输出紧凑溯源条（单行署名 / 两行小码 / 可放大）",
+              'class="brand-block"' in text and len(qr_imgs) == 2
+              and text.count('class="brand-channel"') == 2
+              and 'class="brand-head"' in text
+              and 'class="brand-meta"' in text
+              and bool(qr_css_w) and int(qr_css_w.group(1)) <= 60
+              and "<figcaption" not in text
+              and 'id="qrLightbox"' in text
+              and "getElementById('qrLightbox')" in text
+              and brand_cfg["wechat"] in text and brand_cfg["video"] in text,
+              "检出二维码 %d 张 / 渠道行 %d 行 / 小码 %spx"
+              % (len(qr_imgs), text.count('class="brand-channel"'),
+                 qr_css_w.group(1) if qr_css_w else "?"))
         off = dump("footer_off.json", {**base, "branding": {
-            "attribution": False, "enabled": False}})
+            "attribution": False, "enabled": False,
+            "wechat": "测试公众号", "video": "测试视频号"}})
         off_out = T / "footer_off.html"
-        r = run([sys.executable, RENDER, "--data", off, "--out", off_out, "--no-gate"])
+        r = run([sys.executable, RENDER, "--data", off, "--out", off_out])
         off_text = off_out.read_text(encoding="utf-8") if off_out.is_file() else ""
-        check("branding 全关时无页脚", r.returncode == 0
-              and '<footer class="report-footer">' not in off_text, r=r)
-        on = dump("footer_on.json", {**base, "branding": {
-            "enabled": True, "title": "测试品牌", "wechat": "测试公众号",
-            "video": "测试视频号"}})
-        on_out = T / "footer_on.html"
+        check("branding 全关也不能关掉品牌块（含门禁）",
+              r.returncode == 0 and 'class="brand-block"' in off_text
+              and brand_cfg["wechat"] in off_text
+              and "测试公众号" not in off_text, "rc=%d" % r.returncode, r)
+        on = dump("footer_url.json", {**base, "branding": {
+            "url": "https://example.com/post"}})
+        on_out = T / "footer_url.html"
         r = run([sys.executable, RENDER, "--data", on, "--out", on_out])
         on_text = on_out.read_text(encoding="utf-8") if on_out.is_file() else ""
-        check("branding.enabled 出品牌块且门禁通过",
-              r.returncode == 0 and 'class="brand-title"' in on_text
-              and "测试公众号" in on_text and "测试视频号" in on_text, r=r)
-        # 只查品牌专名，通用词「公众号」在代码里是渲染模板，不算夹带；
-        # 关键词拆开拼接，避免本文件自匹配。
-        brand_words = ("松幽" + "舒苑", "松幽" + "Ai提效")
+        check("branding.url 只补延伸阅读链接",
+              r.returncode == 0 and 'class="brand-link"' in on_text
+              and "https://example.com/post" in on_text, r=r)
+        assets_ok = all((ROOT / "assets" / p).is_file() for p in
+                        ("brand.json", brand_cfg["qr_wechat"], brand_cfg["qr_video"]))
+        brand_words = (brand_cfg["wechat"], brand_cfg["video"])
         leaks = []
-        for f in sorted(list((ROOT / "assets").glob("*")) + list(SCRIPTS.glob("*.py"))):
-            if f.is_file() and f.suffix in (".css", ".py", ".html"):
-                s = f.read_text(encoding="utf-8")
-                if any(w in s for w in brand_words):
-                    leaks.append(str(f.relative_to(ROOT)))
-        check("公共模板/脚本不夹带导流信息", not leaks, "; ".join(leaks[:3]))
+        for f in sorted(list(SCRIPTS.glob("*.py")) + [ROOT / "assets/template.html"]):
+            if f.is_file() and any(w in f.read_text(encoding="utf-8")
+                                   for w in brand_words):
+                leaks.append(str(f.relative_to(ROOT)))
+        check("品牌常量集中在 assets/brand.json，二维码资源在位",
+              assets_ok and not leaks, "; ".join(leaks[:3]))
 
         # 门禁文件不存在友好报错
         r = run([sys.executable, GATE, T / "missing.html"])
@@ -249,6 +265,20 @@ def main():
             "script 内混入角标 → P0-13":
                 text.replace("<script>",
                              '<script>var x=\'<a class="ref" href="https://a.com/b">x</a>\';', 1),
+            "删掉品牌块 → P0-16":
+                re.sub(r'<footer class="report-footer">.*?</footer>', '', text,
+                       count=1, flags=re.S),
+            "二维码改外链 → P0-16":
+                re.sub(r'src="data:image/png;base64,[A-Za-z0-9+/=]+"',
+                       'src="https://example.com/qr.png"', text, count=1),
+            "删掉点击放大层 → P0-16":
+                text.replace('id="qrLightbox"', 'id="qrLightboxX"', 1),
+            "二维码下加回图注 → P0-16":
+                text.replace("</footer>", "<figcaption>公众号</figcaption>\n</footer>", 1),
+            "拆掉单行署名 → P0-16":
+                text.replace('class="brand-head"', 'class="brand-head-legacy"', 1),
+            "小码放大回 88px → P0-16":
+                text.replace("width:52px;padding:4px", "width:88px;padding:4px", 1),
         }
         for label, broken_text in sabotage.items():
             p = T / ("sab_%d.html" % len(label))
@@ -266,6 +296,17 @@ def main():
                 if not (md.parent / t).exists():
                     missing.append("%s -> %s" % (md.relative_to(ROOT), t))
         check("文档内相对文件引用全部存在", not missing, "; ".join(missing[:3]))
+
+        # verify_links.py 回归：站点对 HEAD 返 404、GET 返 200 时不得误报坏链
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location(
+            "verify_links_probe", str(ROOT / "references" / "verify_links.py"))
+        vl = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(vl)
+        with mock.patch.object(vl, "_request_code", side_effect=[404, 200]):
+            st, msg = vl.probe("https://example.com/x.html", 3)
+        check("HEAD 404 / GET 200 不误报坏链", st == "ok", msg)
 
     total = len(RESULTS)
     failed = [x for x in RESULTS if not x[1]]

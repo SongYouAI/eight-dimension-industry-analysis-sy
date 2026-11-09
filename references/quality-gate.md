@@ -32,8 +32,9 @@
 | **P0-11** | **全文标签栈平衡** | `html_helpers.validate_document()`：div 开闭计数相等 + 块级容器栈无悬空。**渲染前另有一道逐片段校验**（`render_report.validate_data_fragments()`），不平衡直接拒绝出稿 |
 | **P0-12** | **v3 默认皮肤在位** | 必须存在 `<style id="hydro-skin">`（**不能**只用 `--p-paper` token 代替，否则皮肤被改名/部分注入会漏检）；Hero 含 `.hero-masthead / .hero-art / .hero-foot / .hero-content`；暗色 token `--p-paper:#0e1215` 存在；无旧 `<div class="hero">` 残留 |
 | **P0-13** | **入场动效安全** | `@keyframes hydroRise/hydroArt/reveal` 内不得出现 `opacity`（只允许 transform）；`.reveal` 无静态 `opacity:0`；`<script>` 内不得混入 `<a class="ref">` |
-| **P0-14** | **无占位符残留** | 全文（含 `<head>`）不得出现 `{R(` / `{{C1}}` / `{{C2}}` / `{{C3}}` / `{行业名称}` / `{日期}` / `TODO` |
+| **P0-14** | **无占位符残留** | 全文（含 `<head>`）不得出现 `{R(` / `{{C1}}` / `{{C2}}` / `{{C3}}` / `{行业名称}` / `{日期}` / `TODO`；扫描前先剔除 `data:image/*;base64,` 段，避免内嵌二维码随机字符误报 |
 | **P0-15** | **C1/C2/C3 三图齐全** | body 内 `.chart-card` ≥3；C1 有 `<svg>+<rect>+svg-bar-*`；C2 有 `.bar-chart+.bar-fill+.bar-row`；C3 有 `.svg-data+<polygon>`。**历史漏洞**：charts 曾是死字段、三图靠手写 SVG，删光三图也能过全部旧门禁 |
+| **P0-16** | **紧凑溯源条强制在位** | body 内 `.brand-block` / `.brand-head`（单行署名）/ `.brand-meta`（单行说明）/ `.brand-qr` / `.report-attribution` 齐全；`.brand-channel` 两行（公众号 / 视频号各一行，不并排）；`id="qrLightbox"` + `getElementById('qrLightbox')` 在位（小码点得开大图）；**无 `<figcaption>`**（码下不放字）；**`.brand-qr` 宽度 ≤60px**（v3.2.2，防页脚重新膨胀成广告卡）；`assets/brand.json` 的 `wechat` / `video` 名称出现；两张 `<img src="data:image/png;base64,...">` 内嵌二维码；无 `retired_names` 旧名残留。**无关闭开关**：报告多级转发后页脚是唯一出处锚点 |
 
 ---
 
@@ -74,7 +75,7 @@
 | P0-7 / P0-8 | `has_comparable_table()` / `chapter_has()` |
 | P0-9 / P0-10 | `check_nav()` / `check_five_pieces()` |
 | P1-1 ~ P1-6 | `chapter_has()` / `has_prosperity_board()` / `has_two_method_cross()` / `has_structure()` / `check_nav()` / `has_as_of_timestamp()` |
-| **P0-11 ~ P0-15 / P1-7** | `check_structure_balance()` / `check_visual_skin()` / `check_motion_safety()` / `check_placeholders()` / `check_charts()`（复用 `scripts/html_helpers.py`） |
+| **P0-11 ~ P0-16 / P1-7** | `check_structure_balance()` / `check_visual_skin()` / `check_motion_safety()` / `check_placeholders()` / `check_charts()` / `check_brand()`（复用 `scripts/html_helpers.py`） |
 | 生成器输入校验 | `render_report.validate_required_fields()` / `validate_charts()` / `validate_data_fragments()`：缺字段、图表数值错、标签不平衡 → 退出码 2 且中文提示，不出稿 |
 | 视觉验收 | `scripts/capture.py`（Chrome headless 裁剪页，锚点不滚动）+ 明暗双主题首屏截图 |
 | 链接验活 | `verify_links.py`（唯一链接数 / 可达 / 失效数） |
@@ -89,7 +90,7 @@
 1. **输入校验**：`render_report.validate_required_fields()` 查必填字段、`validate_charts()` 查图表数值结构；坏 JSON / 文件不存在 / 缺字段 → 中文提示 + 退出码 2，**不产出文件**。
 2. **渲染前**：`render_report.validate_data_fragments()` 逐片段查标签栈，不平衡 → 退出码 2 且**不产出文件**。构造器 `html_helpers.RISK/SWOT/CONFLICT/D` 从源头保证闭合。
 3. **渲染后**：`render_report.validate_document()` 全文复检；`inject_charts()` 保证 C1/C2/C3 落位。
-4. **交付前**：`render_report.py` 默认自动调 `check_report.py`（可用 `--no-gate` 显式关闭，但交付前必须补跑 `--strict`），P0-15 核对三图在位。
+4. **交付前**：`render_report.py` 默认自动调 `check_report.py`（可用 `--no-gate` 显式关闭，但交付前必须补跑 `--strict`），P0-15 核对三图在位，P0-16 核对紧凑溯源条（单行署名 / 单行说明 / 小码 ≤60px）与双二维码在位。
 
 流程：Phase 0~2 采集与分析 → Phase 3 结论 → **Phase 4 `render_report.py --data --out`（内含四卡）** → Phase 4.5 视觉/链接/JS 验收 → 交付。
 
