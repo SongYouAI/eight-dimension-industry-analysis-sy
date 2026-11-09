@@ -49,7 +49,7 @@
 **环境**：Python 3.8+（**仅标准库**）；`node` 可选（JS 语法验收）；Chrome/Chromium 可选（截图验收）。整个 skill 目录保持原结构即可，无安装步骤、无 API Key、无绝对路径依赖。
 
 ```bash
-# 0) 拿到 skill / 每次改版后：一键回归自检（27 项，含坏输入与故意破坏拦截）
+# 0) 拿到 skill / 每次改版后：一键回归自检（31 项，含坏输入与故意破坏拦截）
 python3 scripts/selftest_all.py
 
 # 1) 复制示例数据范本，改成你的行业内容（唯一需要手写的文件）
@@ -70,6 +70,28 @@ python3 scripts/capture.py 报告.html --all --outdir shots/
 **三图怎么出**：在片段里写 `{{C1}}` / `{{C2}}` / `{{C3}}` 占位符，生成器用 `charts` 里的数值算坐标并替换；已有手写精细图则保留手写图；两者都无时自动追加到默认章节。门禁 **P0-15** 会核对三图确实在位。详见 `SKILL.md` Phase 4。
 
 > 常见误区：只填 `charts` 却在片段里写死旧 SVG 坐标，改数据时图不会跟着变。请用占位符。
+
+**页脚署名与品牌块（可选）**：生成器默认在页脚输出一行方法论署名 `分析框架：八维行业分析法 · 松幽`。这是框架出处，不是导流位。要完全关闭，在数据 JSON 写 `"branding": {"attribution": false}`。
+
+自己对外发布报告时，可加完整品牌块：
+
+```json
+"branding": {
+  "attribution": true,
+  "enabled": true,
+  "title": "品牌名",
+  "wechat": "公众号名",
+  "video": "视频号名",
+  "url": "https://example.com/post"
+}
+```
+
+`url` 可选，缺省不渲染。规则：
+
+- 导流信息**只写在数据 JSON**。不要在 `scripts/example_data.json`、`assets/`、`scripts/`、CSS 里写死公众号 / 视频号 / 二维码。别人复制范本生成的报告会带上你的导流信息。
+- 品牌块固定放在页脚免责声明之后，不进 Hero、不进正文。投资分析内容里的导流 CTA 会削弱免责声明的独立性。
+- 二维码须内嵌 base64 data URI。报告是离线单文件 HTML，外链图片在离线打开和打印时会失效。
+- 打印时页脚保留，品牌块与署名字色强制回落墨色。
 
 **分享打包**：整个目录保持原结构复制即可，无绝对路径依赖、无密钥、无安装步骤；`.git/`、`__pycache__/`、`shots/` 都是缓存或产物（已列在 `.gitignore`），可安全删除。收件方跑一次 `python3 scripts/selftest_all.py` 即可确认环境可用。
 
@@ -375,7 +397,7 @@ eight-dimension-industry-analysis-sy/
 │   ├── html_helpers.py      # ★ 严格闭合构造器 + 标签栈校验 + HERO() 签名结构
 │   ├── example_data.json    # 示例数据（字段结构范本，内容取自真实报告）
 │   ├── capture.py           # 分段视觉验收截图（Chrome headless 裁剪页）
-│   └── selftest_all.py      # ★ 一键回归自检（27 项，分享/改版前必跑）
+│   └── selftest_all.py      # ★ 一键回归自检（31 项，分享/改版前必跑）
 ├── test-prompts.json        # 测试用例（触发/诱饵/边界）
 └── 示例_八维分析报告.html     # 示例报告（演示用途）
 ```
@@ -426,6 +448,7 @@ cp -r eight-dimension-industry-analysis-sy ~/.workbuddy/skills/
 | v2.0 | 2026-07-31 | SKILL.md 瘦身（骨架抽至 `assets/template.html`）；新增 Phase 0.5 假设前置+专家访谈、维2 付费意愿判定、维5 产业地图/颠覆者、维1 一级市场资本动向、综合结论 OIE 迭代待办、反共识检验；修复死资源引用、工具命名一致性、description 触发式；扩充测试用例 |
 | v2.2.0 | 2026-11-08 | 修 P0-6 全文误判与 `<5%` 漏检（改章节级 + `html.unescape`）；修模板侧栏遮挡/水印裁切/Hero 四列拥挤；补齐 P0-3、P1-2/3/4/6 门禁，导航改 P1-5 消歧；`--strict` 默认；新增 `render_report.py` / `capture.py` / `verify_links.py`；新增 Phase 0 数据源探活、数据截止时点规范、链接邻近率更名。发布前复检另修 5 项：C1 刻度/组距改由数据计算、来源 URL 做 HTML 转义、raw 片段补链 `link_patches`（示例报告 100%）、`capture.py` 跨平台探测 Chrome + `as_uri()` 编码路径、`verify_links.py` 实体解码 + 并发探活 |
 | **v3.0.0** | **2026-11-09** | **视觉整体换代的固化版**：把获奖级「水文纸本 / HYDRO PAPER」沉淀为默认皮肤 `assets/hydro-skin.css` + 规格 `references/hydro-design-spec.md`，生成器自动注入皮肤、自动生成/升级 Hero、自动映射旧三色、自动清理装饰 emoji（跳过 script/style），**取消外部注入脚本**。新增 `scripts/html_helpers.py`：严格闭合构造器 `RISK/SWOT/CONFLICT/D/HERO` + 标签栈校验；渲染前逐片段校验不平衡即拒稿（退出码 2）。门禁新增 **P0-11 标签栈平衡 / P0-12 皮肤在位 / P0-13 动效与 script 安全 / P0-14 占位符 / P1-7 旧三色**，并写入「历史事故与防复发规则」复盘。SKILL.md 加入「规格先行（DESIGN.md）」硬门槛与 Phase 4.5 六项验收；示例报告用新链路重生成 |
+| **v3.1.0** | **2026-11-09** | **可选页脚署名与品牌块**：生成器默认输出一行方法论署名（`branding.attribution`，可关）；`branding.enabled` 打开才渲染公众号 / 视频号 / 链接，导流信息只存数据 JSON。清理 `template.html` body 与 `example_data.json` 里遗留的硬编码品牌页脚（含错挂的来源链接）；新增 `.report-footer` 样式（亮 / 暗 / 响应式 / 打印）；`selftest_all.py` 扩到 31 项，新增「公共模板不夹带导流信息」检查 |
 | **v3.0.1** | **2026-11-09** | **分享前审计与防复发补强**（无视觉变化）：修复 `charts` 死字段——`render_c1/c2/c3` 从未被调用、三图靠手写 SVG、门禁也不查三图；新增 `inject_charts()` 三路落位 + `validate_charts()` + **P0-15 三图门禁**。修复坏 JSON / 缺字段 / 文件不存在直接抛 traceback（改中文提示 + 退出码 2）；`upgrade_hero()` 改按标签栈精确配对，不再吞掉 Hero 与 main-wrap 之间的内容；head 注入改切片只插一次；`capture.py` 同步 `rfind` 并放宽 step-card 匹配；P0-12 收紧为必须存在 `<style id="hydro-skin">`（原 token 二选一可被绕过）；P0-14 改为全文查占位符；`validate_fragment` 收紧跨片段闭合预算。新增 `scripts/selftest_all.py` 一键回归（27 项）、README 快速开始与最小字段清单、事故复盘第 9/10 条。**通用性修复**：Hero 标题旁的 `NO. 08` 原硬编码在公共 CSS 与默认配置里（别的行业也会显示 08），改由 `hero.note_no` / `meta.note_no` 驱动 `h1[data-note]` + CSS `attr()`；显式 `hero` 缺字段时由默认配置合并补齐；缺 `date/as_of` 不再编造 `2026-01-01 00:00`，改为拒稿并提示按 P1-6 给时点 |
 
 ---

@@ -140,6 +140,8 @@ v1 的深空蓝渐变 Hero、金色描边标题、紫色渐变卡、巨型实心
 
 - 触控目标 ≥40×40px；打印：隐藏导航/等高线/进度条，强制亮色，卡片去阴影。
 
+**页脚**：`.report-footer` 与 `.main-wrap` 同宽对齐（≥1200px 左留 248px），顶部 1px `--p-line` 发丝线。默认一行 `.report-attribution`（11px mono，`--p-ink-3`），是方法论出处，不是导流位。`branding.enabled` 时才出 `.brand-title`（21px 宋体）、`.brand-channels`（13px）与可选 `.brand-link`。品牌块固定位于免责声明之后，不进 Hero、不进正文。打印时页脚保留，字色强制回落 `#12181c`。
+
 ## Known Gaps
 
 - 等高线 SVG 是装饰性示意，不代表真实流域地理坐标（已在 Hero 标注 `SCHEMATIC`）。

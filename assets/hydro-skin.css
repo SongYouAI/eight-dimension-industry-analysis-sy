@@ -767,6 +767,29 @@ html[data-theme="dark"] .hero-foot{color:var(--p-ink-3);}
   .exec-summary h2 span{display:none;}
 }
 
+/* ── 页脚：方法论署名 / 可选品牌块 ───────────────────────── */
+.report-footer{
+  max-width:1180px;margin:0 auto;padding:26px 48px 60px;
+  border-top:1px solid var(--p-line);
+}
+.report-attribution{
+  margin:0;font-family:var(--font-mono);font-size:11px;
+  letter-spacing:.06em;color:var(--p-ink-3);
+}
+.brand-title{
+  margin:20px 0 8px;font-family:var(--font-serif);font-size:21px;
+  letter-spacing:-.01em;color:var(--p-ink);
+}
+.brand-channels{margin:0 0 8px;font-size:13px;color:var(--p-ink-2);}
+.brand-link{margin:0;font-size:12px;}
+.brand-link a{
+  color:var(--p-accent);text-decoration:none;
+  border-bottom:1px solid var(--p-accent);
+}
+html[data-theme="dark"] .report-attribution{color:var(--p-ink-2);}
+@media(min-width:1200px){.report-footer{max-width:1240px;padding-left:248px;}}
+@media(max-width:768px){.report-footer{padding:22px 18px 40px;}}
+
 /* ⑮ ── 打印 ─────────────────────────────────────────────── */
 @media print{
   html body{background:#ffffff !important;color:#12181c !important;}
@@ -801,4 +824,10 @@ html[data-theme="dark"] .hero-foot{color:var(--p-ink-3);}
   html[data-theme="dark"] body .step-body h3,
   html[data-theme="dark"] body .step-body p,
   html[data-theme="dark"] body .conclusion-wrap .ct{color:#12181c !important;}
+  html body .report-footer{border-top:1px solid #d8d3c7 !important;}
+  html body .report-attribution,
+  html body .brand-title,
+  html body .brand-channels,
+  html body .brand-link,
+  html body .brand-link a{color:#12181c !important;}
 }

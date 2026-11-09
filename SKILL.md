@@ -3,7 +3,7 @@ name: eight-dimension-industry-analysis
 slug: eight-dimension-industry-analysis-sy
 displayName: 八维行业分析
 display_name: 八维行业分析
-version: 3.0.1
+version: 3.1.0
 description: 当用户需要快速了解或深度分析一个行业（或某家公司所在的行业）时，使用本
   skill。输入行业名或公司名，自动产出覆盖产业生命周期、商业模式、市场规模、护城河、竞争格局、估值、外部因素、景气度八个维度的完整 HTML
   分析报告（默认 HTML；PDF / Markdown 按需）。v3 起默认输出「水文纸本 / HYDRO PAPER」编辑式获奖级版式，生成器自动注入皮肤、自动升级 Hero、自动查标签闭合，禁止手写大段 HTML。
@@ -638,7 +638,7 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 > **唯一交付路径（v3.0）**：
 > `python3 scripts/render_report.py --data <数据.json> --out <报告.html>`
 >
-> 生成器一次完成：必填字段 / `charts` 结构校验 → 片段标签栈校验 → 来源角标绑定与补链（P0-4）→ 八维章节骨架 → **注入 v3 皮肤** → **自动升级 Hero** → **三图注入（charts）** → 旧色映射 → 装饰符号清理 → 全文结构复检 → **自动跑门禁**。数据文件结构见 `scripts/example_data.json`，可选 `hero` 字段（缺省时由 `meta` 自动生成；显式 `hero` 只覆盖写了的字段，其余由默认配置补全）。`hero.note_no` / `meta.note_no` 控制首屏「RESEARCH NOTE · NO. xx」与标题旁编号，缺省 `01`，**不要把它硬编码进 CSS**。
+> 生成器一次完成：必填字段 / `charts` 结构校验 → 片段标签栈校验 → 来源角标绑定与补链（P0-4）→ 八维章节骨架 → **注入 v3 皮肤** → **自动升级 Hero** → **三图注入（charts）** → 旧色映射 → 装饰符号清理 → 全文结构复检 → **自动跑门禁**。数据文件结构见 `scripts/example_data.json`，可选 `hero` 字段（缺省时由 `meta` 自动生成；显式 `hero` 只覆盖写了的字段，其余由默认配置补全）。`hero.note_no` / `meta.note_no` 控制首屏「RESEARCH NOTE · NO. xx」与标题旁编号，缺省 `01`，**不要把它硬编码进 CSS**。页脚默认只有一行方法论署名（`branding.attribution`，可关）；`branding.enabled` 才渲染品牌块，公众号 / 视频号 / 链接只写在数据 JSON，**禁止写进模板、CSS 或生成器**，否则别人生成的报告会替你导流。
 >
 > 🔴 **禁止**：手写 `<div class="hero">`、复制 template.html 再手工填、写后处理注入脚本、直接编辑成品 HTML、用 `--no-gate` 出稿后不补门禁。这些正是两次返工的共同根因。
 >
@@ -725,7 +725,7 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 2. `html_helpers.HERO()` 生成 v3 Hero；数据文件给 `hero` 字段或由 `meta` 自动推导
 3. 每维度仍用 `.step-card`（`.step-head` 描边数字 + `.step-body`），`data-theme` 仅管明暗
 
-**默认视觉架构**：暖纸网格 Hero + masthead / overline / 4 列元信息 / hero-foot 注记、右上角 `.theme-toggle`、`.toc-card` 目录卡、`.side-nav` 左侧细线侧栏、2px `.top-progress`、`.method-card` 发丝线方法卡、`.kpi-card` 顶线 KPI、发丝线数据表、`.risk-grid` 三列风险卡、`.insight-card` 盯什么卡、`.conclusion-wrap` 结论框、SWOT / 维度冲突 / 反共识 / 跟踪列表 / 免责声明。暗色模式靠 11 个 `--p-*` token 反相，不新增色；打印样式强制回落亮色并隐藏装饰。
+**默认视觉架构**：暖纸网格 Hero + masthead / overline / 4 列元信息 / hero-foot 注记、右上角 `.theme-toggle`、`.toc-card` 目录卡、`.side-nav` 左侧细线侧栏、2px `.top-progress`、`.method-card` 发丝线方法卡、`.kpi-card` 顶线 KPI、发丝线数据表、`.risk-grid` 三列风险卡、`.insight-card` 盯什么卡、`.conclusion-wrap` 结论框、SWOT / 维度冲突 / 反共识 / 跟踪列表 / 免责声明、`.report-footer` 页脚（署名 + 可选品牌块）。暗色模式靠 11 个 `--p-*` token 反相，不新增色；打印样式强制回落亮色并隐藏装饰。
 
 > **内容五件套（P0-10 门禁强制，每维度必备）**：人话卡 `.human-term-card`、反面假设 `.reverse-note`、盯什么 `.insight-card` + 徽章体系——可信度档位 `.tier-badge`（rich/medium/lean/online）、评级 `.rating-badge`（buy/hold/sell）、状态 `.status-badge`（resolved/pending/gap/info）、数据来源框 `.source-box`。组件结构与 v2 相同，视觉由 `hydro-skin.css` 统一重绘。
 

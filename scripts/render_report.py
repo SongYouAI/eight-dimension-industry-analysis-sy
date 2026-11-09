@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-八维行业报告 · 数据驱动生成器（v3.0.1 · HYDRO PAPER 默认皮肤）
+八维行业报告 · 数据驱动生成器（v3.1.0 · HYDRO PAPER 默认皮肤）
 ================================================================
 把「来源池 → 片段结构校验 → 角标绑定 → 八维章节骨架 → v3 视觉皮肤
 → Hero 自动生成 → 三图 → 装饰符号清理 → 机械门禁」固化成一条链路。
@@ -396,6 +396,46 @@ def inject_charts(parts, data, sources, warnings=None):
     return parts
 
 
+# ── 页脚：方法论署名 / 可选品牌块 ───────────────────────────────────────
+# 分享版约束：生成器里只保留框架作者署名（方法论出处，不是导流位）；
+# 公众号 / 视频号 / 链接一律从数据 JSON 的 branding 字段读取，缺省不输出。
+DEFAULT_ATTRIBUTION = "八维行业分析法 · 松幽"
+
+
+def _esc(s):
+    return html.escape(str(s), quote=True)
+
+
+def render_footer(data):
+    """返回页脚 HTML；无任何内容时返回空串。
+
+    branding.attribution  默认 True：一行方法论署名；False 可完全关闭。
+    branding.enabled      默认 False：True 才渲染完整品牌块。
+    """
+    b = data.get("branding") or {}
+    if not isinstance(b, dict):
+        raise ValueError("branding 必须是对象，参照 README 的字段说明")
+    lines = []
+    if b.get("attribution", True):
+        lines.append('<p class="report-attribution">分析框架：%s</p>'
+                     % _esc(b.get("method") or DEFAULT_ATTRIBUTION))
+    if b.get("enabled"):
+        if b.get("title"):
+            lines.append('<p class="brand-title">%s</p>' % _esc(b["title"]))
+        chans = " · ".join(x for x in (
+            ("公众号「%s」" % _esc(b["wechat"])) if b.get("wechat") else "",
+            ("视频号「%s」" % _esc(b["video"])) if b.get("video") else "",
+        ) if x)
+        if chans:
+            lines.append('<p class="brand-channels">%s</p>' % chans)
+        if b.get("url"):
+            lines.append('<p class="brand-link"><a href="%s" target="_blank" '
+                         'rel="noopener">延伸阅读</a></p>' % _esc(b["url"]))
+    if not lines:
+        return ""
+    return '<footer class="report-footer">\n' + "\n".join(lines) + "\n</footer>\n"
+
+
 # ── 组装 ──────────────────────────────────────────────────────────────
 def fix_axis_break(s):
     """兼容已有 raw 片段：含「超轴」的 bar-row 给 bar-fill 加断轴斜纹类。"""
@@ -582,6 +622,8 @@ def build(data, legacy_skin=False, keep_emoji=False, warnings=None):
         if token not in top:
             warn("top_html 缺少%s（%s）；严格门禁 P1-3 会阻断，"
                  "请参照 scripts/example_data.json 的 top_html 补齐导航骨架" % (label, token))
+    # ③-d 页脚放在最后：方法论署名默认开，品牌块只在 branding.enabled 时出现
+    parts.append(render_footer(data))
     body = fix_axis_break("\n".join(parts))
     # 旧三色硬编码兜底：即便数据文件里仍写 #635bff / #c8943b，也统一换成
     # v3 的钴蓝 + 石灰色，避免「文字换了皮肤、图表还是紫金」的半吊子状态。
@@ -638,7 +680,7 @@ def selftest_charts():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="八维行业报告 · 数据驱动生成器 v3.0.1")
+    ap = argparse.ArgumentParser(description="八维行业报告 · 数据驱动生成器 v3.1.0")
     ap.add_argument("--data", help="数据 JSON 路径")
     ap.add_argument("--out", help="输出 HTML 路径")
     ap.add_argument("--no-gate", action="store_true", help="生成后不自动跑机械门禁")
@@ -679,7 +721,7 @@ def main():
         print("🔴 无法写入输出文件 %s：%s" % (args.out, e), file=sys.stderr)
         return 2
     print("已生成: %s | 字符数: %d | 皮肤: %s"
-          % (args.out, len(out), "legacy(对照)" if args.legacy_skin else "HYDRO PAPER v3.0.1"))
+          % (args.out, len(out), "legacy(对照)" if args.legacy_skin else "HYDRO PAPER v3.1.0"))
     if not args.no_gate:
         if not os.path.isfile(GATE):
             print("🔴 找不到门禁脚本 %s（skill 目录不完整）" % GATE, file=sys.stderr)

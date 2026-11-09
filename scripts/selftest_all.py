@@ -199,6 +199,37 @@ def main():
         r = run([sys.executable, RENDER, "--data", EXAMPLE, "--out", cn_out, "--no-gate"])
         check("中文/空格输出路径", r.returncode == 0 and cn_out.is_file(), r=r)
 
+        # 页脚：默认署名 / 可关闭 / 可选品牌块 / 公共模板不夹带导流
+        check("默认只出方法论署名（不带导流）",
+              'class="report-attribution"' in text
+              and 'class="brand-title"' not in text)
+        off = dump("footer_off.json", {**base, "branding": {
+            "attribution": False, "enabled": False}})
+        off_out = T / "footer_off.html"
+        r = run([sys.executable, RENDER, "--data", off, "--out", off_out, "--no-gate"])
+        off_text = off_out.read_text(encoding="utf-8") if off_out.is_file() else ""
+        check("branding 全关时无页脚", r.returncode == 0
+              and '<footer class="report-footer">' not in off_text, r=r)
+        on = dump("footer_on.json", {**base, "branding": {
+            "enabled": True, "title": "测试品牌", "wechat": "测试公众号",
+            "video": "测试视频号"}})
+        on_out = T / "footer_on.html"
+        r = run([sys.executable, RENDER, "--data", on, "--out", on_out])
+        on_text = on_out.read_text(encoding="utf-8") if on_out.is_file() else ""
+        check("branding.enabled 出品牌块且门禁通过",
+              r.returncode == 0 and 'class="brand-title"' in on_text
+              and "测试公众号" in on_text and "测试视频号" in on_text, r=r)
+        # 只查品牌专名，通用词「公众号」在代码里是渲染模板，不算夹带；
+        # 关键词拆开拼接，避免本文件自匹配。
+        brand_words = ("松幽" + "舒苑", "松幽" + "Ai提效")
+        leaks = []
+        for f in sorted(list((ROOT / "assets").glob("*")) + list(SCRIPTS.glob("*.py"))):
+            if f.is_file() and f.suffix in (".css", ".py", ".html"):
+                s = f.read_text(encoding="utf-8")
+                if any(w in s for w in brand_words):
+                    leaks.append(str(f.relative_to(ROOT)))
+        check("公共模板/脚本不夹带导流信息", not leaks, "; ".join(leaks[:3]))
+
         # 门禁文件不存在友好报错
         r = run([sys.executable, GATE, T / "missing.html"])
         check("门禁文件不存在友好报错",
