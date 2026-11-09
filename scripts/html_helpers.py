@@ -96,8 +96,11 @@ def validate_fragment(frag, name="fragment", allow_cross_class=None):
                     errors.append("[%s] 未闭合 <%s> @%d（被 </%s> 强制回滚）" % (name, t, p, tag))
                 if stack:
                     stack.pop()
-            elif tag == "div" and cross_close_budget > 0:
-                cross_close_budget -= 1  # 跨片段容器的闭合落在别的片段里
+            elif tag == "div" and not stack and cross_close_budget > 0:
+                # 仅当本片段自身栈已清空时才容忍孤立 </div>——那必然是
+                # .main-wrap 的跨片段闭合。若栈里还有别的未闭合容器，
+                # 这个多余的 </div> 属于真实结构错误，不能被预算吞掉。
+                cross_close_budget -= 1
             else:
                 errors.append("[%s] 孤立闭合标签 </%s> @%d；上下文: %s" % (name, tag, pos, ctx))
         else:
@@ -210,6 +213,8 @@ HERO_ART = """<svg class="hero-art" viewBox="0 0 720 520" preserveAspectRatio="x
 def HERO(cfg, R=None):
     """生成 v3「水文纸本」Hero。cfg 字段见 render_report.default_hero_cfg()。
 
+    `cfg["note_no"]` 同时用于 masthead 的「RESEARCH NOTE · NO. xx」与
+    h1 的 data-note 装饰（CSS 用 attr() 读取），两份编号始终一致。
     R 是 `lambda key: ref_html` 的来源角标函数；缺省时不出角标。
     """
     R = R or (lambda k: "")
@@ -226,7 +231,7 @@ def HERO(cfg, R=None):
         + '<div class="hero-masthead"><span class="mh-left">RESEARCH NOTE · NO. %s</span>'
           '<span>数据截至 %s</span></div>\n' % (cfg.get("note_no", "08"), cfg.get("as_of", ""))
         + '<div class="hero-overline">%s</div>\n' % cfg.get("overline", "INDUSTRY ANALYSIS")
-        + '<h1>%s</h1>\n' % title
+        + '<h1 data-note="%s">%s</h1>\n' % (cfg.get("note_no", ""), title)
         + '<div class="badge">%s</div>\n' % cfg.get("badge", "")
         + '<p class="subtitle">%s %s</p>\n' % (cfg.get("subtitle", ""), R(cfg.get("subtitle_src", "")))
         + '<div class="meta-row">\n' + "\n".join(metas) + '\n</div>\n'

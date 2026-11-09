@@ -40,7 +40,38 @@
 八维行业分析 / 行业分析 / 分析XX行业 / 分析XX公司所在行业 / 八维分析 / 行业深度研究
 ```
 
-**在 WorkBuddy / 其他 Agent 中说**：「分析 {行业名}」或「分析 {公司名} 所在行业」即可触发。
+**在 WorkBuddy / 其他 Agent 中说**：「分析 {行业名}」或「分析 {公司名} 所在行业」即可触发，Agent 会按 `SKILL.md` 的流程跑完全链路。
+
+---
+
+## 🚀 快速开始（命令行 / 分享后自检）
+
+**环境**：Python 3.8+（**仅标准库**）；`node` 可选（JS 语法验收）；Chrome/Chromium 可选（截图验收）。整个 skill 目录保持原结构即可，无安装步骤、无 API Key、无绝对路径依赖。
+
+```bash
+# 0) 拿到 skill / 每次改版后：一键回归自检（27 项，含坏输入与故意破坏拦截）
+python3 scripts/selftest_all.py
+
+# 1) 复制示例数据范本，改成你的行业内容（唯一需要手写的文件）
+cp scripts/example_data.json my_data.json
+
+# 2) 一步出稿：输入校验 → 片段标签栈 → 皮肤/Hero → 三图 → 全文复检 → 自动门禁
+python3 scripts/render_report.py --data my_data.json --out 报告.html
+
+# 3) 交付前验收（生成器默认已跑一次门禁，这里是复跑 + 补充项）
+python3 references/check_report.py 报告.html --strict
+python3 references/check_js.py 报告.html
+python3 references/verify_links.py 报告.html
+python3 scripts/capture.py 报告.html --all --outdir shots/
+```
+
+**数据 JSON 最少要有**：`meta`（含 `industry`）、`sources`、`dims`（8 个维度）、`top_html`（含 `themeToggle` / `side-nav` / `toc-card` 导航骨架）、`conclusion_html`、`sources_html`、`charts`（c1/c2/c3）。字段范本与完整示例见 `scripts/example_data.json`；缺字段、坏 JSON、`charts` 数值不合法都会给出中文提示并以退出码 2 拒稿，不会抛 traceback。
+
+**三图怎么出**：在片段里写 `{{C1}}` / `{{C2}}` / `{{C3}}` 占位符，生成器用 `charts` 里的数值算坐标并替换；已有手写精细图则保留手写图；两者都无时自动追加到默认章节。门禁 **P0-15** 会核对三图确实在位。详见 `SKILL.md` Phase 4。
+
+> 常见误区：只填 `charts` 却在片段里写死旧 SVG 坐标，改数据时图不会跟着变。请用占位符。
+
+**分享打包**：整个目录保持原结构复制即可，无绝对路径依赖、无密钥、无安装步骤；`.git/`、`__pycache__/`、`shots/` 都是缓存或产物（已列在 `.gitignore`），可安全删除。收件方跑一次 `python3 scripts/selftest_all.py` 即可确认环境可用。
 
 ---
 
@@ -283,11 +314,11 @@ Phase 4.5  交付验收（check_report.py --strict / verify_links.py / node --ch
 
 | 级别 | 含义 | 关键规则 |
 |------|------|---------|
-| **P0** | 阻断发布 | P0-1 八章方法卡齐全 / P0-2 八章推导齐全 / P0-3 关键数字可复算 / P0-4 链接邻近率≥90% 且非纯域名 / P0-5 护城河用 5×4 矩阵+三问 / P0-6 生命周期阈值用正确表（仅维度一校验）/ P0-7 可比公司表≥3家 / P0-8 估值双视角+排除陷阱 / P0-9 章节锚点 / P0-10 内容五件套 |
-| **P1** | 发布前必改 | P1-1 PEST 五段链 / P1-2 景气指标看板（五维+频率+表格）/ P1-3 规模两法交叉 / P1-4 结构完整可解析 / P1-5 导航模块 / P1-6 数据截止时点 |
+| **P0** | 阻断发布 | P0-1 八章方法卡齐全 / P0-2 八章推导齐全 / P0-3 关键数字可复算 / P0-4 链接邻近率≥90% 且非纯域名 / P0-5 护城河用 5×4 矩阵+三问 / P0-6 生命周期阈值用正确表（仅维度一校验）/ P0-7 可比公司表≥3家 / P0-8 估值双视角+排除陷阱 / P0-9 章节锚点 / P0-10 内容五件套 / **P0-11 标签栈平衡 / P0-12 v3 皮肤在位 / P0-13 动效与 script 安全 / P0-14 无占位符 / P0-15 C1·C2·C3 三图齐全** |
+| **P1** | 发布前必改 | P1-1 PEST 五段链 / P1-2 景气指标看板（五维+频率+表格）/ P1-3 规模两法交叉 / P1-4 结构完整可解析 / P1-5 导航模块 / P1-6 数据截止时点 / P1-7 无旧三色与 UNSOURCED |
 | **P2** | 优化项 | 小白翻译+章末一句话 / 打印样式 / 来源汇总表 |
 
-> **元原则**：凡是重要规则，必须能被程序检查；不能被检查的规则等于建议。v3 门禁**硬卡两道**：渲染前逐片段查标签闭合（不平衡拒稿）+ 渲染后 `check_report.py` 全量校验，不是写完再自检。
+> **元原则**：凡是重要规则，必须能被程序检查；不能被检查的规则等于建议。v3.0.1 门禁**硬卡四道**：① 输入字段与 `charts` 数值校验 → ② 渲染前逐片段查标签闭合（不平衡拒稿且不产出文件）→ ③ 渲染后全文复检 → ④ `check_report.py --strict` 全量校验（生成器默认已跑一次）。改版后跑 `python3 scripts/selftest_all.py` 可一次性验证这四道防线是否仍有效。
 
 ---
 
@@ -332,18 +363,19 @@ eight-dimension-industry-analysis-sy/
 │   ├── data-sources.md      # 数据源配置与调用示例
 │   ├── output-spec.md       # 输出格式与链接颗粒度规范
 │   ├── plain-language.md    # 小白化规范（人话卡/术语首现注释库/类比）
-│   ├── quality-gate.md      # 质量门禁规则（P0-1~P0-14 / P1 / P2）
-│   ├── check_report.py      # 机械门禁脚本（含 P0-11~14 防复发校验）
+│   ├── quality-gate.md      # 质量门禁规则（P0-1~P0-15 / P1 / P2）
+│   ├── check_report.py      # 机械门禁脚本（含 P0-11~15 防复发校验）
 │   ├── locate_uncovered.py  # P0-4 未覆盖数字返工定位器
 │   ├── verify_links.py      # 来源链接 HEAD 验活（只提示，不阻断）
 │   ├── check_js.py          # 内联 JS 语法验收（先剥离注释再交给 node --check）
 │   ├── hydro-design-spec.md # ★ v3 视觉规格（唯一权威：hex/px + 禁项 + token）
 │   └── visual-design-system.md # ⚠️ 已废弃（v2 三色存档，禁止取色）
 ├── scripts/
-│   ├── render_report.py     # ★ 生成器 v3：片段校验/皮肤/Hero/三图/自动门禁一条链路
+│   ├── render_report.py     # ★ 生成器 v3：输入校验/片段校验/皮肤/Hero/三图/自动门禁一条链路
 │   ├── html_helpers.py      # ★ 严格闭合构造器 + 标签栈校验 + HERO() 签名结构
 │   ├── example_data.json    # 示例数据（字段结构范本，内容取自真实报告）
-│   └── capture.py           # 分段视觉验收截图（Chrome headless 裁剪页）
+│   ├── capture.py           # 分段视觉验收截图（Chrome headless 裁剪页）
+│   └── selftest_all.py      # ★ 一键回归自检（27 项，分享/改版前必跑）
 ├── test-prompts.json        # 测试用例（触发/诱饵/边界）
 └── 示例_八维分析报告.html     # 示例报告（演示用途）
 ```
@@ -394,6 +426,7 @@ cp -r eight-dimension-industry-analysis-sy ~/.workbuddy/skills/
 | v2.0 | 2026-07-31 | SKILL.md 瘦身（骨架抽至 `assets/template.html`）；新增 Phase 0.5 假设前置+专家访谈、维2 付费意愿判定、维5 产业地图/颠覆者、维1 一级市场资本动向、综合结论 OIE 迭代待办、反共识检验；修复死资源引用、工具命名一致性、description 触发式；扩充测试用例 |
 | v2.2.0 | 2026-11-08 | 修 P0-6 全文误判与 `<5%` 漏检（改章节级 + `html.unescape`）；修模板侧栏遮挡/水印裁切/Hero 四列拥挤；补齐 P0-3、P1-2/3/4/6 门禁，导航改 P1-5 消歧；`--strict` 默认；新增 `render_report.py` / `capture.py` / `verify_links.py`；新增 Phase 0 数据源探活、数据截止时点规范、链接邻近率更名。发布前复检另修 5 项：C1 刻度/组距改由数据计算、来源 URL 做 HTML 转义、raw 片段补链 `link_patches`（示例报告 100%）、`capture.py` 跨平台探测 Chrome + `as_uri()` 编码路径、`verify_links.py` 实体解码 + 并发探活 |
 | **v3.0.0** | **2026-11-09** | **视觉整体换代的固化版**：把获奖级「水文纸本 / HYDRO PAPER」沉淀为默认皮肤 `assets/hydro-skin.css` + 规格 `references/hydro-design-spec.md`，生成器自动注入皮肤、自动生成/升级 Hero、自动映射旧三色、自动清理装饰 emoji（跳过 script/style），**取消外部注入脚本**。新增 `scripts/html_helpers.py`：严格闭合构造器 `RISK/SWOT/CONFLICT/D/HERO` + 标签栈校验；渲染前逐片段校验不平衡即拒稿（退出码 2）。门禁新增 **P0-11 标签栈平衡 / P0-12 皮肤在位 / P0-13 动效与 script 安全 / P0-14 占位符 / P1-7 旧三色**，并写入「历史事故与防复发规则」复盘。SKILL.md 加入「规格先行（DESIGN.md）」硬门槛与 Phase 4.5 六项验收；示例报告用新链路重生成 |
+| **v3.0.1** | **2026-11-09** | **分享前审计与防复发补强**（无视觉变化）：修复 `charts` 死字段——`render_c1/c2/c3` 从未被调用、三图靠手写 SVG、门禁也不查三图；新增 `inject_charts()` 三路落位 + `validate_charts()` + **P0-15 三图门禁**。修复坏 JSON / 缺字段 / 文件不存在直接抛 traceback（改中文提示 + 退出码 2）；`upgrade_hero()` 改按标签栈精确配对，不再吞掉 Hero 与 main-wrap 之间的内容；head 注入改切片只插一次；`capture.py` 同步 `rfind` 并放宽 step-card 匹配；P0-12 收紧为必须存在 `<style id="hydro-skin">`（原 token 二选一可被绕过）；P0-14 改为全文查占位符；`validate_fragment` 收紧跨片段闭合预算。新增 `scripts/selftest_all.py` 一键回归（27 项）、README 快速开始与最小字段清单、事故复盘第 9/10 条。**通用性修复**：Hero 标题旁的 `NO. 08` 原硬编码在公共 CSS 与默认配置里（别的行业也会显示 08），改由 `hero.note_no` / `meta.note_no` 驱动 `h1[data-note]` + CSS `attr()`；显式 `hero` 缺字段时由默认配置合并补齐；缺 `date/as_of` 不再编造 `2026-01-01 00:00`，改为拒稿并提示按 P1-6 给时点 |
 
 ---
 

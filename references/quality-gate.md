@@ -30,9 +30,10 @@
 | P0-9 | 章节锚点齐全 | `id="dim1"~"dim8" / conclusion / src-summary` 共 10 个，导航契约不可破 |
 | P0-10 | 内容五件套 | 每维度含人话卡 / 反面假设 / 盯什么 + 评级 / 档位 / 来源框徽章，结论框在位 |
 | **P0-11** | **全文标签栈平衡** | `html_helpers.validate_document()`：div 开闭计数相等 + 块级容器栈无悬空。**渲染前另有一道逐片段校验**（`render_report.validate_data_fragments()`），不平衡直接拒绝出稿 |
-| **P0-12** | **v3 默认皮肤在位** | 存在 `id="hydro-skin"` 或 `--p-paper` token；Hero 含 `.hero-masthead / .hero-art / .hero-foot / .hero-content`；暗色 token `--p-paper:#0e1215` 存在；无旧 `<div class="hero">` 残留 |
+| **P0-12** | **v3 默认皮肤在位** | 必须存在 `<style id="hydro-skin">`（**不能**只用 `--p-paper` token 代替，否则皮肤被改名/部分注入会漏检）；Hero 含 `.hero-masthead / .hero-art / .hero-foot / .hero-content`；暗色 token `--p-paper:#0e1215` 存在；无旧 `<div class="hero">` 残留 |
 | **P0-13** | **入场动效安全** | `@keyframes hydroRise/hydroArt/reveal` 内不得出现 `opacity`（只允许 transform）；`.reveal` 无静态 `opacity:0`；`<script>` 内不得混入 `<a class="ref">` |
-| **P0-14** | **无占位符残留** | body 内不得出现 `{R(` / `{{C1}}` / `{{C2}}` / `{{C3}}` / `{行业名称}` / `{日期}` / `TODO` |
+| **P0-14** | **无占位符残留** | 全文（含 `<head>`）不得出现 `{R(` / `{{C1}}` / `{{C2}}` / `{{C3}}` / `{行业名称}` / `{日期}` / `TODO` |
+| **P0-15** | **C1/C2/C3 三图齐全** | body 内 `.chart-card` ≥3；C1 有 `<svg>+<rect>+svg-bar-*`；C2 有 `.bar-chart+.bar-fill+.bar-row`；C3 有 `.svg-data+<polygon>`。**历史漏洞**：charts 曾是死字段、三图靠手写 SVG，删光三图也能过全部旧门禁 |
 
 ---
 
@@ -73,20 +74,25 @@
 | P0-7 / P0-8 | `has_comparable_table()` / `chapter_has()` |
 | P0-9 / P0-10 | `check_nav()` / `check_five_pieces()` |
 | P1-1 ~ P1-6 | `chapter_has()` / `has_prosperity_board()` / `has_two_method_cross()` / `has_structure()` / `check_nav()` / `has_as_of_timestamp()` |
-| **P0-11 ~ P0-14 / P1-7** | `check_structure_balance()` / `check_visual_skin()` / `check_motion_safety()` / `check_placeholders()`（复用 `scripts/html_helpers.py`） |
+| **P0-11 ~ P0-15 / P1-7** | `check_structure_balance()` / `check_visual_skin()` / `check_motion_safety()` / `check_placeholders()` / `check_charts()`（复用 `scripts/html_helpers.py`） |
+| 生成器输入校验 | `render_report.validate_required_fields()` / `validate_charts()` / `validate_data_fragments()`：缺字段、图表数值错、标签不平衡 → 退出码 2 且中文提示，不出稿 |
 | 视觉验收 | `scripts/capture.py`（Chrome headless 裁剪页，锚点不滚动）+ 明暗双主题首屏截图 |
 | 链接验活 | `verify_links.py`（唯一链接数 / 可达 / 失效数） |
 | JS 语法 | `references/check_js.py`（先剥离 HTML 注释再提取内联脚本，再跑 `node --check`；不要手写提取正则） |
 
 ---
 
-## 执行时点（v3 双卡）
+## 执行时点（v3.0.1 四道卡）
 
-门禁**硬卡两道**，不是写完再自检：
+门禁**硬卡四道**，不是写完再自检：
 
-1. **渲染前**（第一道）：`render_report.validate_data_fragments()` 逐片段查标签栈，不平衡 → 退出码 2，**不产出文件**。构造器 `html_helpers.RISK/SWOT/CONFLICT/D` 从源头保证闭合。
-2. **渲染后**（第二道）：`render_report.py` 默认自动调 `check_report.py`（可用 `--no-gate` 显式关闭，但交付前必须补跑 `--strict`）。
+1. **输入校验**：`render_report.validate_required_fields()` 查必填字段、`validate_charts()` 查图表数值结构；坏 JSON / 文件不存在 / 缺字段 → 中文提示 + 退出码 2，**不产出文件**。
+2. **渲染前**：`render_report.validate_data_fragments()` 逐片段查标签栈，不平衡 → 退出码 2 且**不产出文件**。构造器 `html_helpers.RISK/SWOT/CONFLICT/D` 从源头保证闭合。
+3. **渲染后**：`render_report.validate_document()` 全文复检；`inject_charts()` 保证 C1/C2/C3 落位。
+4. **交付前**：`render_report.py` 默认自动调 `check_report.py`（可用 `--no-gate` 显式关闭，但交付前必须补跑 `--strict`），P0-15 核对三图在位。
 
-流程：Phase 0~2 采集与分析 → Phase 3 结论 → **Phase 4 `render_report.py --data --out`（内含双卡）** → Phase 4.5 视觉/链接/JS 验收 → 交付。
+流程：Phase 0~2 采集与分析 → Phase 3 结论 → **Phase 4 `render_report.py --data --out`（内含四卡）** → Phase 4.5 视觉/链接/JS 验收 → 交付。
+
+> 每次改版或分享前跑 `python3 scripts/selftest_all.py`：它会故意破坏成品并确认四道防线仍能拦截。
 
 > ⚠️ **不要绕过门禁去手工修 HTML**：历史上所有排版事故都发生在「直接编辑成品 HTML」或「手写大段片段」时。要改内容就改数据 JSON，重新走生成器。

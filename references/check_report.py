@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-八维行业分析报告 · 质量门禁机械校验脚本（v3.0）
+八维行业分析报告 · 质量门禁机械校验脚本（v3.0.1）
 ================================================
 读取生成的 HTML 报告，逐条执行 quality-gate.md 的 P0 / P1 校验。
 任一 P0 失败 → 退出码 1（阻断发布）；全部 P0 通过 → 退出码 0。
@@ -16,6 +16,8 @@ v3.0 新增 P0-11 ~ P0-14（对应 2026-11-09 两次返工，防复发）:
     P0-13 入场动效不得含 opacity:0 初始态 / 角标不得插进 <script>
     P0-14 占位符残留
     P1-7  body 内旧三色 hex 残留提示
+v3.0.1 新增（分享前审计）:
+    P0-15 C1/C2/C3 三张数据图齐全（charts 曾是死字段，缺图报告能过全部旧门禁）
 
 依赖: 仅标准库（re / sys / html / os）+ 同仓 scripts/html_helpers.py
 """
@@ -44,7 +46,9 @@ def find_section(text, *keywords, window=4000):
     旧实现只取首个命中位置向后 window 字符，但关键词（护城河/估值/外部因素）
     常在导航/TOC/摘要处先出现，导致正文深处的真实章节被窗口截断 → 误杀（假阴性）。
     新实现：扫描所有命中位置，合并间隔 < window 的邻近命中为「章节段」，返回
-    覆盖关键词最多的那一段，确保能扫到正文深处的真实章节。
+    跨度最长的那一段，确保能扫到正文深处的真实章节。
+    注：当前门禁使用 chapter_has() / section_by_anchor()，本函数保留供扩展，
+    不是 P0 判定路径。
     """
     hits = []
     for kw in keywords:
@@ -123,6 +127,8 @@ def pure_domain_urls(urls):
 
 
 def count_numbers(text):
+    # 旧版口径，仅供扩展参考：当前 P0-4 使用 compute_key_coverage()，
+    # 两者分母定义不同，不要把本函数的结果拿去和门禁输出对照。
     # 仅统计「叙述文本」中的数字（排除 svg 坐标、table 表格单元格、script 内的海量重复数字，
     # 否则真实报告分母被坐标/表格拉爆，覆盖率阈值失去意义）。
     body = text
@@ -136,10 +142,10 @@ def count_numbers(text):
 
 
 def compute_proximity_coverage(text):
-    """覆盖率 = 叙述文本中「邻近 90 字符内有 http 链接」的数字数 / 叙述数字总数。
+    """旧版覆盖率口径（near=90 / href 起点 / 全部数字），保留供扩展，不在 P0 判定路径。
 
-    设计意图对齐 P0-4 精神：关键数字必须可核查。只要某数字附近（前后 90 字符）
-    存在来源链接，即视为已覆盖；SVG/表格数字不计入分母。
+    当前 P0-4 使用 compute_key_coverage()：near=120、整段 <a> 锚点、只算关键数字。
+    两个函数的分母与窗口都不同，切勿混用或据此返工。
     """
     body = text
     m = re.search(r"<body.*?>(.*)</body>", body, re.S | re.I)
@@ -303,8 +309,11 @@ def check_visual_skin(text):
     """
     t = re.sub(r"<!--.*?-->", "", text, flags=re.S)
     problems = []
-    if not re.search(r'<style[^>]*id=["\']hydro-skin["\']', t, re.I) and "--p-paper:" not in t:
-        problems.append("P0-12 未注入 v3 默认皮肤（assets/hydro-skin.css / --p-paper token）")
+    # 必须查 style 块的 id，不能用「CSS 里有没有 --p-paper」代替：
+    # 后者只要残留任一 token 就会放行，皮肤被改名/部分注入时查不出来。
+    if not re.search(r'<style[^>]*id=["\']hydro-skin["\']', t, re.I):
+        problems.append("P0-12 未注入 v3 默认皮肤（缺少 <style id=\"hydro-skin\">，"
+                        "应由 render_report.py 自动注入 assets/hydro-skin.css）")
     for token, label in [("hero-masthead", "Hero 报头"), ("hero-art", "等高线签名图"),
                          ("hero-foot", "Hero 脚注区"), ("hero-content", "Hero 内容区")]:
         if token not in t:
@@ -339,12 +348,39 @@ def check_motion_safety(text):
     return problems
 
 
+def check_charts(text):
+    """P0-15：C1/C2/C3 三张数据图必须真实出现在成品 body 中。
+
+    2026-11-09 审计发现：生成器文档声称三图由 charts 数据算坐标，但
+    render_c1/c2/c3 从未被 build() 调用，charts 是死字段；门禁也不查三图。
+    于是「删光三张图」的报告照样能通过全部 P0/P1。此检查堵住该缺口。
+    """
+    body = extract_body(text)
+    problems = []
+    n_card = len(re.findall(r'class="[^"]*chart-card', body))
+    if n_card < 3:
+        problems.append("P0-15 .chart-card 仅 %d 个，要求 C1/C2/C3 共 3 个" % n_card)
+    specs = [
+        ("C1 市场规模双序列柱状图",
+         "<svg" in body and "<rect" in body
+         and ("svg-bar-primary" in body or "svg-bar-energy" in body)),
+        ("C2 可比公司 PE 条形图",
+         "bar-chart" in body and "bar-fill" in body and "bar-row" in body),
+        ("C3 八维评级雷达图", "svg-data" in body and "<polygon" in body),
+    ]
+    for label, ok in specs:
+        if not ok:
+            problems.append("P0-15 缺少 %s（或图元不完整）" % label)
+    return problems
+
+
 def check_placeholders(text):
     """P0-14 / P1-7：占位符与旧三色残留。"""
     body = extract_body(text)
     p0, p1 = [], []
+    # head 也要查：{行业名称} / 标题占位符若没被替换，只在正文查会漏。
     for tok in ("{R(", "{{C1}}", "{{C2}}", "{{C3}}", "{行业名称}", "{日期}", "TODO"):
-        if tok in body:
+        if tok in text:
             p0.append("P0-14 残留占位符 %s" % tok)
     if "UNSOURCED" in body:
         p1.append("P1-7 正文残留 [UNSOURCED] 标记，需补来源或改写为降级署名")
@@ -357,12 +393,25 @@ def check_placeholders(text):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("用法: python3 check_report.py <报告.html> [--strict]")
+    argv = sys.argv[1:]
+    flags = {a for a in argv if a.startswith("--")}
+    paths = [a for a in argv if not a.startswith("--")]
+    unknown = flags - {"--strict", "--no-strict"}
+    if len(paths) != 1 or unknown:
+        print("用法: python3 check_report.py <报告.html> [--strict|--no-strict]",
+              file=sys.stderr)
+        if unknown:
+            print("未知参数: %s" % ", ".join(sorted(unknown)), file=sys.stderr)
         sys.exit(2)
-    path = sys.argv[1]
-    strict = "--no-strict" not in sys.argv   # 默认严格；--no-strict 可退回「P1 仅提示」
-    text = load(path)
+    path = paths[0]
+    if not os.path.isfile(path):
+        print("🔴 报告文件不存在或不是文件：%s" % path, file=sys.stderr)
+        sys.exit(2)
+    try:
+        text = load(path)
+    except (OSError, UnicodeDecodeError) as e:
+        print("🔴 无法读取报告：%s" % e, file=sys.stderr)
+        sys.exit(2)
     plain = strip_tags(text)
 
     fails_p0 = []
@@ -470,6 +519,12 @@ def main():
     else:
         notes.append("P0-14 无占位符残留 ✅")
     fails_p1.extend(ph_p1)
+
+    charts = check_charts(text)
+    if charts:
+        fails_p0.extend(charts)
+    else:
+        notes.append("P0-15 C1/C2/C3 三张数据图齐全 ✅")
 
     # ---- P1 ----
     if not chapter_has(text, ["外部因素", "PEST", "政策"], ["事实", "传导", "对象", "量级", "时点"]):

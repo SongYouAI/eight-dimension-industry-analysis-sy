@@ -4,8 +4,9 @@
   ⚠️ 只读基底（v3.0）：本文件只提供 HTML 骨架、组件结构与 JS 行为。
   可见视觉一律由 assets/hydro-skin.css 覆盖（scripts/render_report.py 自动注入到 head 结束标签之前，样式块以 hydro-skin 标识）。
   注意：本注释内禁止出现 head 结束标签、script 起始标签、样式 id 属性等字面量——
-  生成器用第一个切分 head，JS 检查脚本用第二个提取代码块，门禁用第三个判定皮肤是否在位；
-  注释里的同名字符串会造成误切与误放行。
+  生成器用 rfind 取最后一个 head 结束标签（不是第一个）切分 head，
+  JS 检查脚本用 script 起始标签提取代码块，门禁用样式 id 判定皮肤是否在位；
+  注释里的同名字符串依然会造成误切与误放行，故一律不写。
   不要在本文件里改颜色 / 渐变 / Hero 样式；改样式请改 hydro-skin.css，并同步 references/hydro-design-spec.md。
   本文件保留的深空蓝/紫金规则是 v2 遗留基底，会被皮肤覆盖；单独打开本文件看到的是旧版式，属正常现象。
   用法：由 render_report.py 复制 head 区段与尾部脚本，body 完全由数据 JSON 生成；不要手工复制填充。
@@ -544,8 +545,10 @@ html[data-theme="dark"] .hero{
   letter-spacing:-.025em;color:var(--p-ink);text-shadow:none;
   margin:16px 0 0;
 }
+/* 编号由 HERO() 写进 h1 的 data-note（取自 hero.note_no / meta.note_no），
+   不再硬编码某一份报告的期号；缺省为空时不显示装饰。 */
 .hero h1::after{
-  content:'08';font-family:var(--font-mono);font-size:13px;font-weight:500;
+  content:attr(data-note);font-family:var(--font-mono);font-size:13px;font-weight:500;
   letter-spacing:.08em;color:var(--p-accent);vertical-align:super;margin-left:14px;
 }
 .hero .badge{
@@ -1253,9 +1256,9 @@ html[data-theme="dark"] .hero-foot{color:var(--p-ink-3);}
 <line class="tick" x1="560" y1="42" x2="560" y2="58"/><line class="tick" x1="560" y1="362" x2="560" y2="378"/>
 </svg>
 <div class="hero-content">
-<div class="hero-masthead"><span class="mh-left">RESEARCH NOTE · NO. 08</span><span>数据截至 2026-11-08 22:27</span></div>
+<div class="hero-masthead"><span class="mh-left">RESEARCH NOTE · NO. 01</span><span>数据截至 2026-11-08 22:27</span></div>
 <div class="hero-overline">INDUSTRY ANALYSIS / 中国市场为主 + 全球对照</div>
-<h1>光纤光缆行业<br>八维行业分析报告</h1>
+<h1 data-note="01">光纤光缆行业<br>八维行业分析报告</h1>
 <div class="badge">中国传统盘存量博弈 · AI 高端光纤成长期启动 · 案例锚点 长飞光纤（601869.SH / 06869.HK）</div>
 <p class="subtitle">产业生命周期驱动 · 八维自适应权重 · 本报告以行业为分析主体、公司为案例锚点，不构成投资建议。 </p>
 <div class="meta-row">
@@ -1267,6 +1270,7 @@ html[data-theme="dark"] .hero-foot{color:var(--p-ink-3);}
 <div class="hero-foot"><span>SCROLL TO EXPLORE · 10 SECTIONS</span><span class="hero-note">CONTOUR ART · SCHEMATIC / NOT TO SCALE</span><span class="scroll-line"></span></div>
 </div>
 </header>
+
 <div class="main-wrap">
 <div class="toc-card">
 <div class="toc-title">报告导航 · 点击跳转</div>

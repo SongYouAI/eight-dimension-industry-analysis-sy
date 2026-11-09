@@ -4,8 +4,9 @@
   ⚠️ 只读基底（v3.0）：本文件只提供 HTML 骨架、组件结构与 JS 行为。
   可见视觉一律由 assets/hydro-skin.css 覆盖（scripts/render_report.py 自动注入到 head 结束标签之前，样式块以 hydro-skin 标识）。
   注意：本注释内禁止出现 head 结束标签、script 起始标签、样式 id 属性等字面量——
-  生成器用第一个切分 head，JS 检查脚本用第二个提取代码块，门禁用第三个判定皮肤是否在位；
-  注释里的同名字符串会造成误切与误放行。
+  生成器用 rfind 取最后一个 head 结束标签（不是第一个）切分 head，
+  JS 检查脚本用 script 起始标签提取代码块，门禁用样式 id 判定皮肤是否在位；
+  注释里的同名字符串依然会造成误切与误放行，故一律不写。
   不要在本文件里改颜色 / 渐变 / Hero 样式；改样式请改 hydro-skin.css，并同步 references/hydro-design-spec.md。
   本文件保留的深空蓝/紫金规则是 v2 遗留基底，会被皮肤覆盖；单独打开本文件看到的是旧版式，属正常现象。
   用法：由 render_report.py 复制 head 区段与尾部脚本，body 完全由数据 JSON 生成；不要手工复制填充。

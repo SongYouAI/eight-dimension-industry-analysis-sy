@@ -98,7 +98,7 @@ v1 的深空蓝渐变 Hero、金色描边标题、紫色渐变卡、巨型实心
 
 ## Components
 
-**Hero**：暖纸底 + 96px 双向 1px 网格；右侧等高线流域 SVG（`z-index:0`，文字 `z-index:2`）；顶部 masthead 显示 `RESEARCH NOTE · NO. 08` 与 `数据截至 2026-11-09 06:44`；大标题下挂 08 上标；元信息 4 列以 1px 竖线分隔；底部 2px `--p-accent` 线。
+**Hero**：暖纸底 + 96px 双向 1px 网格；右侧等高线流域 SVG（`z-index:0`，文字 `z-index:2`）；顶部 masthead 显示 `RESEARCH NOTE · NO. {note_no}` 与 `数据截至 {as_of}`，大标题挂同一编号上标——两者都由数据 JSON 的 `hero.note_no` / `meta.note_no` 与 `meta.as_of` 注入（`h1[data-note]` + CSS `attr()`），**禁止把某份报告的期号或日期写死在 CSS / 生成器里**；元信息 4 列以 1px 竖线分隔；底部 2px `--p-accent` 线。
 **`.step-head`**：白底、1px 底线、左上 48px×2px `--p-accent` 短线；`.step-num` 为 mono 10.5px 大写；`.step-num-watermark` 为 132px 空心描边数字（`color:transparent; -webkit-text-stroke:1px rgba(42,75,215,.18)`），右 `28px`，不裁切。
 **`.risk-card`**：白底 + 1px 线，顶部 2px 严重度色（红/琥珀/钴蓝），卡内 `risk-idx` mono 序号 + `risk-sev` 标签 + serif 17px 标题 + 13px 说明；三卡 `align-items:stretch` 等高，禁止 emoji 圆点、禁止彩色渐变底、禁止左粗边。
 **`.swot-cell`**：白底 + 1px 线 + 顶部 2px 分类色，`h4` 14px，正文 13px。

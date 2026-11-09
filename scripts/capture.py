@@ -55,16 +55,29 @@ def find_chrome(explicit=None):
 
 
 def slice_section(text, sid):
-    """裁出 id=sid 的 step-card（到下一个 step-card 或 body 结尾）。"""
-    m = re.search(r'<div class="step-card"\s+id="%s"' % re.escape(sid), text)
+    """裁出 id=sid 的 step-card（到下一个 step-card 或 body 结尾）。
+
+    与 render_report.py 一致用 rfind 取最后一个 head 结束标签；旧版用 index()
+    会在模板注释含同名字符串时截断 CSS。开标签匹配也放宽到任意属性顺序。
+    """
+    m = re.search(r'id=["\']%s["\']' % re.escape(sid), text)
     if not m:
         return None
-    start = m.start()
-    nxt = re.search(r'<div class="step-card"\s+id="', text[start + 10:])
+    start = text.rfind("<div", 0, m.start())
+    if start < 0:
+        return None
+    tag_end = text.find(">", m.start())
+    open_tag = text[start:tag_end + 1] if tag_end > 0 else ""
+    if "step-card" not in open_tag:
+        return None
+    nxt = re.search(r'<div\b[^>]*\bclass=["\'][^"\']*\bstep-card\b', text[start + 10:])
     end = start + 10 + nxt.start() if nxt else text.rfind("</body>")
     if end < 0:
         end = len(text)
-    head = text[:text.index("</head>") + len("</head>")]
+    h_end = text.rfind("</head>")
+    if h_end < 0:
+        return None
+    head = text[:h_end + len("</head>")]
     body = text[start:end]
     return (head + '\n<body>\n<div class="main-wrap" style="padding:20px 30px;">\n'
             + body + "\n</div>\n</body>\n</html>\n")
@@ -80,8 +93,13 @@ def shot(page_path, out_path, chrome, width, height, timeout_ms):
         r = subprocess.run(cmd, capture_output=True, text=True,
                            timeout=max(30, timeout_ms / 1000 + 30))
     except subprocess.TimeoutExpired:
+        print("Chrome 截图超时：%s" % out_path, file=sys.stderr)
         return False
-    return r.returncode == 0 and os.path.isfile(out_path) and os.path.getsize(out_path) > 0
+    ok = r.returncode == 0 and os.path.isfile(out_path) and os.path.getsize(out_path) > 0
+    if not ok:
+        print("Chrome 截图失败 (rc=%d)：%s"
+              % (r.returncode, (r.stderr or "").strip()[-300:]), file=sys.stderr)
+    return ok
 
 
 def main():

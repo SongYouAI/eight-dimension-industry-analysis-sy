@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-八维行业报告 · 数据驱动生成器（v3.0 · HYDRO PAPER 默认皮肤）
+八维行业报告 · 数据驱动生成器（v3.0.1 · HYDRO PAPER 默认皮肤）
 ================================================================
 把「来源池 → 片段结构校验 → 角标绑定 → 八维章节骨架 → v3 视觉皮肤
 → Hero 自动生成 → 三图 → 装饰符号清理 → 机械门禁」固化成一条链路。
@@ -21,8 +21,16 @@ v3.0 三条硬规则（对应 2026-11-09 两次返工）:
        禁止回落到深空蓝 Hero；门禁 P0-12 会再查一次。
     3. 入场动效只允许 transform，不允许 opacity:0 静态初始态（P0-13）。
 
-数据文件新增可选字段:
+数据文件字段:
+    meta / sources / dims / top_html / conclusion_html / sources_html  见 example_data.json
+    charts           c1/c2/c3 图表数据（**唯一推荐的图表数据源**）
+                     · 在片段里写 {{C1}} / {{C2}} / {{C3}} 占位符 → 由 render_c1/c2/c3 按数值渲染
+                     · 片段里已有手写精细图 → 保留手写图，charts 仍用于数值一致性校验
+                     · 两者都无 → 自动把 charts 渲染结果追加到 dim3 / dim6 / 综合结论
+                     绝不允许「charts 改了、图还是旧坐标」：门禁 P0-15 查三图在位。
     hero             v3 Hero 配置（缺省时由 meta 自动生成，见 default_hero_cfg）
+    link_patches     raw 片段补链锚点（可选）
+
 依赖: 仅标准库；门禁复用 references/check_report.py
 """
 import argparse
@@ -251,6 +259,143 @@ def render_c3(c, sources):
             % (c["title"], ref(sources, c.get("ref", "")), " ".join(pts)))
 
 
+# ── 图表数据校验与注入（v3.0.1 修复：charts 曾是死字段）─────────────────
+# 历史缺陷：render_c1/c2/c3 定义了却从未被 build() 调用，三图实际由数据作者
+# 把 SVG 硬编码进 dims[].extra；文档却声称「坐标由数值计算，禁止硬编码」。
+# 结果：按文档只填 charts 会得到一份没有图的报告，而门禁也查不出来。
+CHART_SLOTS = (
+    # key, 占位符, 目标 dim 序号(1-based), 手写图识别标志
+    ("c1", "{{C1}}", 3, ("svg-bar-primary", "svg-bar-energy")),
+    ("c2", "{{C2}}", 6, ("bar-chart", "bar-fill")),
+    ("c3", "{{C3}}", None, ("svg-data",)),
+)
+
+
+def validate_charts(charts):
+    """校验 charts 结构，把 KeyError/IndexError/ZeroDivisionError 变成可读提示。
+
+    只在 charts 存在时做；缺字段由门禁 P0-15 判「三图是否在位」。
+    """
+    errs = []
+    if not isinstance(charts, dict):
+        return ["charts 必须是对象（含 c1/c2/c3），实际为 %s" % type(charts).__name__]
+    for key, _tok, _dim, _markers in CHART_SLOTS:
+        c = charts.get(key)
+        if not isinstance(c, dict):
+            errs.append("charts.%s 缺失或不是对象" % key)
+            continue
+        if not c.get("title"):
+            errs.append("charts.%s.title 缺失" % key)
+        if key == "c1":
+            labels = c.get("labels") or []
+            series = c.get("series") or []
+            try:
+                amax = float(c.get("axis_max", 0))
+            except (TypeError, ValueError):
+                amax = 0
+            if amax <= 0:
+                errs.append("charts.c1.axis_max 必须是正数（实际 %r）" % c.get("axis_max"))
+            if not labels:
+                errs.append("charts.c1.labels 为空")
+            if not series:
+                errs.append("charts.c1.series 为空")
+            for i, s in enumerate(series):
+                vals = s.get("values") if isinstance(s, dict) else None
+                if not isinstance(vals, list) or len(vals) != len(labels):
+                    errs.append("charts.c1.series[%d].values 长度 %s 与 labels 长度 %d 不符"
+                                % (i, len(vals) if isinstance(vals, list) else "非数组", len(labels)))
+                    continue
+                for v in vals:
+                    try:
+                        float(v)
+                    except (TypeError, ValueError):
+                        errs.append("charts.c1.series[%d].values 含非数值 %r" % (i, v))
+                        break
+        elif key == "c2":
+            try:
+                amax = float(c.get("axis_max", 0))
+            except (TypeError, ValueError):
+                amax = 0
+            if amax <= 0:
+                errs.append("charts.c2.axis_max 必须是正数（实际 %r）" % c.get("axis_max"))
+            rows = c.get("rows") or []
+            if not rows:
+                errs.append("charts.c2.rows 为空")
+            for i, r in enumerate(rows):
+                try:
+                    float(r.get("pe"))
+                except (TypeError, ValueError):
+                    errs.append("charts.c2.rows[%d].pe 非数值 %r" % (i, r.get("pe")))
+        else:
+            axes = c.get("axes") or []
+            if not axes:
+                errs.append("charts.c3.axes 为空")
+            for i, a in enumerate(axes):
+                try:
+                    score = float(a.get("score"))
+                except (TypeError, ValueError):
+                    errs.append("charts.c3.axes[%d].score 非数值 %r" % (i, a.get("score")))
+                    continue
+                if not 0 <= score <= 3:
+                    errs.append("charts.c3.axes[%d].score=%s 超出 0~3" % (i, score))
+    return errs
+
+
+def render_charts(charts, sources):
+    """按 charts 数值渲染三图；缺某张就返回已能渲染的部分。"""
+    out = {}
+    if isinstance(charts.get("c1"), dict):
+        out["c1"] = render_c1(charts["c1"], sources)
+    if isinstance(charts.get("c2"), dict):
+        out["c2"] = render_c2(charts["c2"], sources)
+    if isinstance(charts.get("c3"), dict):
+        out["c3"] = render_c3(charts["c3"], sources)
+    return out
+
+
+def inject_charts(parts, data, sources, warnings=None):
+    """把 charts 渲染结果放进报告；返回（是否已处理全部三图）。
+
+    优先级：占位符替换 > 已有手写精细图（保留，不降级）> 自动追加到默认章节。
+    `parts` 已是渲染后的字符串列表：[top, dim1..dimN, conclusion, sources]。
+    """
+    warn = warnings.append if warnings is not None else (lambda _m: None)
+    charts = data.get("charts") or {}
+    if not charts:
+        warn("数据文件未声明 charts：三图只能靠手写 HTML，门禁 P0-15 会核对三图是否在位")
+        return parts
+    errs = validate_charts(charts)
+    if errs:
+        raise ValueError("charts 数据结构有误：\n  - " + "\n  - ".join(errs[:10]))
+    rendered = render_charts(charts, sources)
+    n_dim = len(data.get("dims", []))
+    concl_idx = 1 + n_dim  # parts[-2] 的显式写法
+
+    used = set()
+    for key, token, _dim, _markers in CHART_SLOTS:
+        if key not in rendered:
+            continue
+        for i, part in enumerate(parts):
+            if token in part:
+                parts[i] = part.replace(token, rendered[key])
+                used.add(key)
+
+    for key, _token, dim_no, markers in CHART_SLOTS:
+        if key in used or key not in rendered:
+            continue
+        idx = (1 + dim_no - 1) if dim_no and dim_no <= n_dim else concl_idx
+        idx = min(idx, len(parts) - 1)
+        target = parts[idx]
+        if any(m in target for m in markers):
+            # 已有手写精细图（例如 C3 带多层网格/轴标签的定制 SVG）属于正常兼容路径，
+            # 不降级替换、也不打扰使用者；charts 此时作为图表数值声明参与结构校验。
+            continue
+        parts[idx] = target + "\n" + rendered[key]
+        warn("%s：数据文件未写占位符且无手写图，已按 charts.%s 自动追加到默认章节"
+             % (key.upper(), key))
+    return parts
+
+
 # ── 组装 ──────────────────────────────────────────────────────────────
 def fix_axis_break(s):
     """兼容已有 raw 片段：含「超轴」的 bar-row 给 bar-fill 加断轴斜纹类。"""
@@ -277,11 +422,15 @@ def default_hero_cfg(data):
     meta = data.get("meta", {})
     region = meta.get("region", "中国市场")
     company = meta.get("company", "")
-    as_of = meta.get("as_of") or (meta.get("date", "2026-01-01") + " 00:00")
+    # 不编造时点：缺 date / as_of 时留空，由 validate_required_fields() 拒稿。
+    date = meta.get("date", "")
+    as_of = meta.get("as_of") or ((date + " 00:00") if date else "")
     badge = " · ".join(x for x in [meta.get("lifecycle", ""),
                                   ("案例锚点 " + company) if company else ""] if x)
     return {
-        "note_no": "08",
+        # 期号由数据文件给（meta.note_no / hero.note_no），缺省 "01"；
+        # 旧版把某一份报告的 "08" 硬编码进公共生成器，别的行业也会显示 NO. 08。
+        "note_no": meta.get("note_no", "01"),
         "as_of": as_of,
         "overline": "INDUSTRY ANALYSIS / " + region,
         "title_lines": [meta.get("industry", ""), "八维行业分析报告"],
@@ -299,12 +448,34 @@ def default_hero_cfg(data):
 
 
 def upgrade_hero(top, hero_html):
-    """把旧版 Hero 整段换成 v3 签名结构；旧 Hero 的右边界取 .main-wrap 起点。"""
-    m = re.search(r'<(?:div|header)\b[^>]*class="hero"', top)
+    """把旧版 Hero 元素换成 v3 签名结构。
+
+    旧实现把右边界取到 `.main-wrap` 起点，会连带吞掉 Hero 与 main-wrap 之间的
+    任何内容（导航、提示条、打印按钮等）。现在按标签栈精确找 Hero 自身的配对
+    闭合标签；找不到配对时才回退到 main-wrap 策略。
+    """
+    m = re.search(r'<(?:div|header)\b[^>]*class\s*=\s*["\'][^"\']*\bhero\b[^"\']*["\']',
+                  top, re.I)
     if not m:
         return hero_html + "\n" + top
-    mw = re.search(r'<div class="main-wrap"', top[m.start():])
-    end = m.start() + mw.start() if mw else len(top)
+    tm = re.match(r"<\s*([A-Za-z][\w-]*)", m.group(0))
+    tag = tm.group(1).lower() if tm else "div"
+    end = None
+    depth = 0
+    for t in re.finditer(r"<\s*(/?)\s*(div|header)\b[^>]*>", top[m.start():], re.I):
+        closing, name = t.group(1), t.group(2).lower()
+        if name != tag:
+            continue
+        if closing:
+            depth -= 1
+            if depth <= 0:
+                end = m.start() + t.end()
+                break
+        else:
+            depth += 1
+    if end is None:
+        mw = re.search(r'<div class="main-wrap"', top[m.start():])
+        end = m.start() + mw.start() if mw else len(top)
     return top[:m.start()] + hero_html + "\n" + top[end:]
 
 
@@ -321,7 +492,47 @@ def validate_data_fragments(data):
     return errs
 
 
-def build(data, legacy_skin=False, keep_emoji=False):
+def validate_required_fields(data):
+    """⓪ 必填字段校验：把 KeyError traceback 变成可操作的中文提示。"""
+    errs = []
+    meta = data.get("meta")
+    if not isinstance(meta, dict):
+        errs.append("缺少 meta 对象（至少要有 industry）")
+    elif not meta.get("industry"):
+        errs.append("meta.industry（行业名称）为空")
+    if isinstance(meta, dict) and not (meta.get("as_of") or meta.get("date")):
+        errs.append("meta.as_of 或 meta.date（数据截止时点）为空；"
+                    "生成器不会替你编造日期，请按 P1-6 给出 YYYY-MM-DD HH:MM")
+    if not isinstance(data.get("sources"), dict):
+        errs.append("缺少 sources 对象（来源池 {key: {url, title}}）")
+    dims = data.get("dims")
+    if not isinstance(dims, list):
+        errs.append("缺少 dims 数组（8 个维度）")
+    elif not dims:
+        errs.append("dims 数组为空——只会生成一份没有章节的废报告")
+    elif len(dims) != 8:
+        errs.append("dims 应有 8 个维度，实际 %d 个" % len(dims))
+    for k in ("top_html", "conclusion_html", "sources_html"):
+        if not data.get(k):
+            errs.append("%s 为空（导航/Hero/结论/来源章节需要它）" % k)
+    for i, d in enumerate(dims if isinstance(dims, list) else [], 1):
+        if not isinstance(d, dict):
+            errs.append("dims[%d] 不是对象" % i)
+            continue
+        for f in ("id", "n", "src", "title", "sub", "conclusion", "tier",
+                  "rating", "method", "kpis", "paras", "term", "reverse",
+                  "insight", "watch"):
+            if f not in d:
+                errs.append("dims[%d] 缺字段 %s（参照 example_data.json）" % (i, f))
+                break
+    return errs
+
+
+def build(data, legacy_skin=False, keep_emoji=False, warnings=None):
+    # ⓪ 必填字段
+    ferrs = validate_required_fields(data)
+    if ferrs:
+        raise ValueError("数据文件字段不完整：\n  - " + "\n  - ".join(ferrs[:12]))
     # ① 结构门禁前置：任何一个片段标签不平衡，直接拒绝出稿
     errs = validate_data_fragments(data)
     if errs:
@@ -334,13 +545,15 @@ def build(data, legacy_skin=False, keep_emoji=False):
     h_end = tpl.rfind("</head>")
     if h_end < 0:
         raise ValueError("template.html 缺少 head 结束标签")
-    head = tpl[:h_end + len("</head>")]
+    head = tpl[:h_end]  # 不含 head 结束标签，注入后只补一次
     head = head.replace("{行业名称}", data["meta"]["industry"])
     if "<html" not in head:
         raise ValueError("head 切片不含 <html> 标签，模板结构可能已损坏")
-    # ② 默认注入 v3 皮肤；AXIS_BREAK_CSS 在前，皮肤在后取得最高优先级
+    # ② 默认注入 v3 皮肤；AXIS_BREAK_CSS 在前，皮肤在后取得最高优先级。
+    #    用切片拼接而非 str.replace：后者会把注释里的同名字符串也替换掉，
+    #    导致皮肤被注入多次。
     inject = AXIS_BREAK_CSS if legacy_skin else AXIS_BREAK_CSS + skin_block()
-    head = head.replace("</head>", inject + "</head>")
+    head = head + inject + "</head>"
     m = re.search(r"(<script>\s*/\* 入场动效.*?)</body>", tpl, re.S)
     tail = m.group(1) if m else ""
 
@@ -348,7 +561,10 @@ def build(data, legacy_skin=False, keep_emoji=False):
     top = data.get("top_html", "")
     # ③ Hero 自动生成 / 自动升级：数据文件不再需要手写 Hero HTML
     if not legacy_skin:
-        cfg = data.get("hero") or default_hero_cfg(data)
+        # 显式 hero 只覆盖它写了的字段，其余由 meta 推导补全，
+        # 避免「数据文件给了 hero 但漏了 note_no / foot_left」导致首屏留白。
+        cfg = default_hero_cfg(data)
+        cfg.update(data.get("hero") or {})
         top = upgrade_hero(top, hh.HERO(cfg, lambda k: ref(sources, k) if k else ""))
 
     parts = [top]
@@ -356,6 +572,16 @@ def build(data, legacy_skin=False, keep_emoji=False):
         parts.append(auto_link(render_dim(d, sources), sources, d["src"]))
     parts.append(data.get("conclusion_html", ""))
     parts.append(data.get("sources_html", ""))
+    # ③-b 三图实例化：charts 占位符 / 手写图保留 / 自动追加（见 inject_charts）
+    inject_charts(parts, data, sources, warnings)
+    # ③-c 导航骨架缺失只提示不静默：P1-3 会因此阻断严格门禁
+    warn = warnings.append if warnings is not None else (lambda _m: None)
+    for token, label in (('id="themeToggle"', "深色切换按钮"),
+                         ('class="side-nav"', "侧栏导航"),
+                         ('class="toc-card"', "目录卡")):
+        if token not in top:
+            warn("top_html 缺少%s（%s）；严格门禁 P1-3 会阻断，"
+                 "请参照 scripts/example_data.json 的 top_html 补齐导航骨架" % (label, token))
     body = fix_axis_break("\n".join(parts))
     # 旧三色硬编码兜底：即便数据文件里仍写 #635bff / #c8943b，也统一换成
     # v3 的钴蓝 + 石灰色，避免「文字换了皮肤、图表还是紫金」的半吊子状态。
@@ -412,7 +638,7 @@ def selftest_charts():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="八维行业报告 · 数据驱动生成器 v3.0")
+    ap = argparse.ArgumentParser(description="八维行业报告 · 数据驱动生成器 v3.0.1")
     ap.add_argument("--data", help="数据 JSON 路径")
     ap.add_argument("--out", help="输出 HTML 路径")
     ap.add_argument("--no-gate", action="store_true", help="生成后不自动跑机械门禁")
@@ -428,18 +654,36 @@ def main():
         return hh.selftest()
     if not args.data or not args.out:
         ap.error("需要 --data 与 --out")
-    with open(args.data, encoding="utf-8") as f:
-        data = json.load(f)
     try:
-        out = build(data, legacy_skin=args.legacy_skin, keep_emoji=args.keep_emoji)
-    except ValueError as e:
-        print("🔴 渲染中止（结构校验未通过）:\n" + str(e), file=sys.stderr)
+        with open(args.data, encoding="utf-8") as f:
+            data = json.load(f)
+    except OSError as e:
+        print("🔴 无法读取数据文件 %s：%s" % (args.data, e), file=sys.stderr)
         return 2
-    with open(args.out, "w", encoding="utf-8") as f:
-        f.write(out)
+    except (ValueError, UnicodeDecodeError) as e:
+        print("🔴 数据文件不是合法 UTF-8 JSON（%s）：%s" % (args.data, e), file=sys.stderr)
+        return 2
+    warnings = []
+    try:
+        out = build(data, legacy_skin=args.legacy_skin,
+                    keep_emoji=args.keep_emoji, warnings=warnings)
+    except (ValueError, KeyError, TypeError, IndexError, OSError) as e:
+        print("🔴 渲染中止：\n" + str(e), file=sys.stderr)
+        return 2
+    for w in warnings:
+        print("🟠 " + w, file=sys.stderr)
+    try:
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(out)
+    except OSError as e:
+        print("🔴 无法写入输出文件 %s：%s" % (args.out, e), file=sys.stderr)
+        return 2
     print("已生成: %s | 字符数: %d | 皮肤: %s"
-          % (args.out, len(out), "legacy(对照)" if args.legacy_skin else "HYDRO PAPER v3.0"))
+          % (args.out, len(out), "legacy(对照)" if args.legacy_skin else "HYDRO PAPER v3.0.1"))
     if not args.no_gate:
+        if not os.path.isfile(GATE):
+            print("🔴 找不到门禁脚本 %s（skill 目录不完整）" % GATE, file=sys.stderr)
+            return 2
         r = subprocess.run([sys.executable, GATE, args.out], capture_output=True, text=True)
         print(r.stdout.rstrip())
         if r.stderr.strip():

@@ -3,7 +3,7 @@ name: eight-dimension-industry-analysis
 slug: eight-dimension-industry-analysis-sy
 displayName: 八维行业分析
 display_name: 八维行业分析
-version: 3.0.0
+version: 3.0.1
 description: 当用户需要快速了解或深度分析一个行业（或某家公司所在的行业）时，使用本
   skill。输入行业名或公司名，自动产出覆盖产业生命周期、商业模式、市场规模、护城河、竞争格局、估值、外部因素、景气度八个维度的完整 HTML
   分析报告（默认 HTML；PDF / Markdown 按需）。v3 起默认输出「水文纸本 / HYDRO PAPER」编辑式获奖级版式，生成器自动注入皮肤、自动升级 Hero、自动查标签闭合，禁止手写大段 HTML。
@@ -638,24 +638,33 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 > **唯一交付路径（v3.0）**：
 > `python3 scripts/render_report.py --data <数据.json> --out <报告.html>`
 >
-> 生成器一次完成：片段标签栈校验 → 来源角标绑定与补链（P0-4）→ 八维章节骨架 → **注入 v3 皮肤** → **自动升级 Hero** → 旧色映射 → 装饰符号清理 → 三图坐标计算 → 全文结构复检 → **自动跑门禁**。数据文件结构见 `scripts/example_data.json`，新增可选 `hero` 字段（缺省时由 `meta` 自动生成）。
+> 生成器一次完成：必填字段 / `charts` 结构校验 → 片段标签栈校验 → 来源角标绑定与补链（P0-4）→ 八维章节骨架 → **注入 v3 皮肤** → **自动升级 Hero** → **三图注入（charts）** → 旧色映射 → 装饰符号清理 → 全文结构复检 → **自动跑门禁**。数据文件结构见 `scripts/example_data.json`，可选 `hero` 字段（缺省时由 `meta` 自动生成；显式 `hero` 只覆盖写了的字段，其余由默认配置补全）。`hero.note_no` / `meta.note_no` 控制首屏「RESEARCH NOTE · NO. xx」与标题旁编号，缺省 `01`，**不要把它硬编码进 CSS**。
 >
 > 🔴 **禁止**：手写 `<div class="hero">`、复制 template.html 再手工填、写后处理注入脚本、直接编辑成品 HTML、用 `--no-gate` 出稿后不补门禁。这些正是两次返工的共同根因。
 >
-> 三道防线：① 渲染前 `validate_data_fragments()` 逐片段查闭合，不平衡退出码 2 且**不产出文件**；② 渲染后 `validate_document()` 全文复检；③ 交付前 `check_report.py --strict`（生成器默认已跑一次）。
+> 四道防线：① 输入校验 `validate_required_fields()` / `validate_charts()`，坏数据退出码 2 且**不产出文件**；② 渲染前 `validate_data_fragments()` 逐片段查闭合；③ 渲染后 `validate_document()` 全文复检；④ 交付前 `check_report.py --strict`（生成器默认已跑一次，含 **P0-15 三图**）。
 
-三图坐标由 `render_c1/c2/c3` 按数值计算，**禁止硬编码 `<rect>` 坐标或从零造图**（这正是历史 v1→重做 图表全丢的根因）。
+**三图唯一数据源是数据 JSON 的 `charts` 字段**，由 `render_c1/c2/c3` 按数值算坐标，`inject_charts()` 负责落位。**禁止硬编码 `<rect>` 坐标或从零造图**（历史 v1→重做 图表全丢的根因）。
 
-| 图表 | 组件位置（template 内） | 实例化动作 | 取数口径 |
-|------|------------------------|-----------|---------|
-| **C1** 市场规模双序列图 + 数据表 | dim3「三、市场规模」TAM 表之后 | 按坐标公式算柱高，替换 `{y*/h*/v*}` 占位；配套 `calc-table` 填真实数 | 与 dim3 KPI/正文同源 |
-| **C2** 可比公司 PE 对比条形图 | dim6「六、估值」kpi-grid 之后 | 条形宽度 = PE/同行最大值×100%，锚点公司行加 `gold` 类；`{pe*}` 填真实值 | 与 dim6 正文估值口径一致 |
-| **C3** 八维评级雷达图 | conclusion 信号快照表之后 | 按评分改 `svg-data` 多边形顶点（公式见组件注释），弱信号顶点加 `weak` 类 | 严格对齐信号快照表评级 |
+> ⚠️ **v3.0.1 修复的真实缺陷**：`charts` 曾是**死字段**——`render_c1/c2/c3` 定义了却从未被 `build()` 调用，三图实际靠数据作者把 SVG 手写进 `dims[].extra`；门禁也不查三图。结果「按文档只填 charts」会产出没有图的报告，「删光三张图」还能通过全部旧门禁。现在 `charts` 会参与结构校验与渲染，并由 **P0-15** 机械兜底。
+
+| 图表 | 默认落位 | `charts` 键 | 渲染函数 |
+|------|---------|------------|---------|
+| **C1** 市场规模双序列柱状图 | dim3「三、市场规模」 | `charts.c1`（labels / series / axis_max） | `render_c1()`：刻度、组距、柱高、数值标签全由数值算 |
+| **C2** 可比公司 PE 条形图 | dim6「六、估值」 | `charts.c2`（rows / axis_max） | `render_c2()`：宽度 = PE ÷ axis_max，超轴加断轴斜纹 |
+| **C3** 八维评级雷达图 | 综合结论 | `charts.c3`（axes / score 0~3） | `render_c3()`：顶点由评分与角度公式算 |
+
+**落位规则（`inject_charts()`，优先级从高到低）**：
+1. 片段里写 `{{C1}}` / `{{C2}}` / `{{C3}}` 占位符 → 用 `charts` 数值渲染后替换。**推荐写法**，改数据即改图。
+2. 片段里已有手写精细图（如 C3 带多层网格与轴标签的定制 SVG）→ **保留手写图**，不降级替换；此时 `charts` 作为图表数值声明参与结构校验，两者口径必须一致。
+3. 两者都无 → 自动把 `charts` 渲染结果追加到默认章节（dim3 / dim6 / 综合结论），并给出提示。
+
+`validate_charts()` 会校验 `axis_max > 0`、`series[].values` 长度与 `labels` 一致、PE / score 为数值、score 在 0~3；不合法 → 退出码 2 + 中文提示，不出稿。
 
 **铁律**：
 - 三图数据必须与正文 KPI / 表格 / 信号表**完全一致**，禁止图表与文字口径冲突
 - 图表配色一律用 `hydro-skin.css` 内的 class（`svg-bar-primary` / `svg-bar-energy` / `svg-data` / `bar-fill` 等），**禁止写死 hex**（v3：主序列钴蓝 `#2a4bd7` + 次序列石灰色 `#a8a293`；数据文件里残留旧 `#635bff` / `#c8943b` 由生成器自动映射）
-- C1 / C2 / C3 缺一不可，否则视为交付不完整（见下方自检清单图表门禁）
+- C1 / C2 / C3 缺一不可，由门禁 **P0-15** 机械阻断（不再是人工勾选项）
 
 ---
 
@@ -663,7 +672,7 @@ Phase 1 完成后，8 个维度**独立并行展开深度分析**。每个维度
 
 | # | 检查 | 命令 / 判据 |
 |---|------|------------|
-| 1 | 严格门禁 | `python3 references/check_report.py <报告.html> --strict` → 退出码 0，P0-11~P0-14 全绿 |
+| 1 | 严格门禁 | `python3 references/check_report.py <报告.html> --strict` → 退出码 0，P0-1~P0-15 全绿（默认已严格；`--no-strict` 才放宽 P1） |
 | 2 | 链接验活 | `python3 references/verify_links.py <报告.html>` → 0 失效；返回 500 的第三方 PDF 必须换成稳定摘要页 |
 | 3 | JS 语法 | `python3 references/check_js.py <报告.html>` → 退出码 0（**必须走脚本**：手写正则会把 HTML 注释里的 script 起始标签字面量当成脚本，误报 SyntaxError） |
 | 4 | 十章截图 | `python3 scripts/capture.py <报告.html> --all --outdir shots/` → 逐章目检，重点看风险卡三列等宽、来源表满宽、水印数字完整 |
@@ -855,10 +864,12 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 | 2 | **沿用旧深空蓝 Hero 被判 low** | 直接抄 `template.html` 默认 token，设计规格没有独立评审；v2 规格里写了旧三色 | v3 默认皮肤 `hydro-skin.css` 由生成器自动注入；Hero 由 `HERO()` 自动生成；旧三色自动映射；门禁 **P0-12**（缺皮肤/缺签名元素/残留旧 Hero 直接阻断）+ **P1-7** | 报告含 `id="hydro-skin"`、body 旧三色为 0 |
 | 3 | **暗色首屏文字整块消失** | 入场关键帧 `opacity:0→1` + `animation-fill-mode:both`，截图工具在 t=0 抓帧 / 禁用动效时可见性为 0 | 入场改为**纯 transform**；门禁 **P0-13** 扫描 `@keyframes` 内 opacity 与 `.reveal{opacity:0}` | 禁用动效 + 延长虚拟时间两种截图都可读 |
 | 4 | **SVG 注记压住 masthead / 元信息** | 在 `.hero-art` 里写了 `<text>` 注记，`slice` 截图裁切后位置漂移 | 注记一律放 `.hero-foot`；`HERO()` 生成的 SVG 只含线条与圆点，无 `<text>` | 首屏截图无文字重叠 |
-| 5 | **图表全丢 / 图表与正文口径冲突** | 「全新重做」时没走生成器，硬编码 `<rect>` 坐标 | 三图由 `render_c1/c2/c3` 按数值算坐标，C1/C2/C3 缺一不可 | `--selftest-charts` 5 项全 OK |
+| 5 | **图表全丢 / 图表与正文口径冲突** | 「全新重做」时没走生成器，硬编码 `<rect>` 坐标；v3.0 又出现 `charts` 死字段（渲染函数从不调用）且门禁不查三图 | `charts` 成为唯一数据源：`inject_charts()` 占位符替换 / 手写图兼容 / 自动追加三路；`validate_charts()` 校验数值；门禁 **P0-15** 查三图在位 | `--selftest-charts` 5 项全 OK；故意删光三图会被 P0-15 阻断 |
 | 6 | **`<script>` 崩溃导致内容不显示** | 覆盖率补链脚本把 `<a class="ref">` 插进 JS 代码 | `auto_link()` 只扫 `<p>`；`clean_decorative_symbols()` 跳过 script/style/注释；门禁 **P0-13** 检查 script 内角标 | `node --check` 通过 |
 | 7 | **第三方 PDF 链接返回 500** | 来源池没验活就出稿 | `verify_links.py` 验活，失效源换成稳定摘要页；无链接项走 L4 降级署名 | 0 失效 |
 | 8 | **整段 CSS 与 `<html>` 丢失 / 皮肤检查被绕过 / JS 误报** | 模板注释里写了「head 结束标签」「script 起始标签」「样式 id 属性」三类**字面量**：`index()` 截断 head、JS 提取正则把注释当代码、P0-12 把注释里的样式 id 当成「皮肤已注入」 | 生成器改 `rfind()` 取最后一个 head 结束标签 + 切片后强制校验 `<html>`；`check_js.py` 与 `check_visual_skin()` **先剥离 HTML 注释**再判定；模板注释禁用这三类字面量 | 报告含 `<html>`、`id="hydro-skin"` 必须是真实 `<style>` 标签；`--legacy-skin` 会被 P0-12 明确阻断；`check_js.py` 退出码 0 |
+| 9 | **`charts` 是死字段、缺图报告能过门禁**（分享前审计发现） | 生成器文档声称「三图坐标由数值计算」，但 `build()` 从未调用 `render_c1/c2/c3`；三图实际手写在 `dims[].extra`；门禁没有三图检查 | `inject_charts()` 三路落位 + `validate_charts()` + **P0-15** 机械阻断 | 清空 `charts` 与删光三图分别被友好拒绝 / P0-15 拦下 |
+| 10 | **坏输入直接抛 traceback / Hero 升级吞内容 / head 注入重复**（分享前审计发现） | 缺字段、坏 JSON、文件不存在无校验；`upgrade_hero()` 把右边界取到 `.main-wrap` 起点会吞掉中间内容；`head.replace("</head>")` 是全局替换；P0-12 用 token 二选一可被绕过 | `validate_required_fields()` + 中文错误与退出码 2；Hero 按标签栈精确配对；head 用切片只插一次；P0-12 必须查 `<style id="hydro-skin">`；`capture.py` 同步 `rfind` | `scripts/selftest_all.py` 一键回归全绿 |
 
 ### 三条执行铁律
 
@@ -886,7 +897,9 @@ template.html 已内置完整导航套件，**复制模板即自带，无需额�
 - [ ] **P0-12 v3 皮肤在位**：`id="hydro-skin"` + Hero 四签名元素 + 暗色 token 齐全，无旧深空蓝 Hero 残留
 - [ ] **P0-13 动效安全**：入场关键帧无 opacity、`.reveal` 无 `opacity:0`、`<script>` 内无来源角标
 - [ ] **P0-14 / P1-7**：无占位符、无 `UNSOURCED`、body 内无旧三色 hex
+- [ ] **P0-15 三图齐全**：C1 柱状图 / C2 PE 条形图 / C3 评级雷达均在位，且 `charts` 数值与正文一致
 - [ ] **Phase 4.5 六项验收**：严格门禁 / 链接验活 0 失效 / `node --check` / 十章截图 / 明暗双主题首屏 / 占位符复查
+- [ ] **分享/改版前一键回归**：`python3 scripts/selftest_all.py` → 全部用例通过（含边界输入与故意破坏拦截）
 
 **视觉与结构项**
 - [ ] **首现括注**：专业术语/英文缩写在正文中首次出现时紧跟大白话括注（例：「UE（单位经济，卖一个能赚多少）」），方法卡/推导/来源区可省略。术语表见 [references/plain-language.md](references/plain-language.md) 术语首现注释库
