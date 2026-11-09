@@ -421,9 +421,20 @@ def load_brand():
 
 
 def _qr_data_uri(filename):
-    path = os.path.join(os.path.dirname(BRAND_JSON), filename)
-    with open(path, "rb") as f:
-        return "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii")
+    """返回二维码 data URI：优先读 brand.json 的 qr_*_data，回退读源图 PNG。
+
+    SkillHub 等分发渠道只允许 .md/.py/.json/.html 等文本文件，PNG 会被
+    平台 400 拒绝；图片数据放 brand.json 后，商店版不依赖 PNG 也能离线出图。
+    """
+    with open(BRAND_JSON, encoding="utf-8") as f:
+        cfg = json.load(f)
+    field = "qr_wechat_data" if filename == cfg.get("qr_wechat") else "qr_video_data"
+    b64 = cfg.get(field)
+    if not b64:
+        path = os.path.join(os.path.dirname(BRAND_JSON), filename)
+        with open(path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("ascii")
+    return "data:image/png;base64," + b64
 
 
 # 点击小码放大：复用同一份 base64，不重复内嵌图片，报告体积不翻倍。

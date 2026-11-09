@@ -10,7 +10,7 @@
   3. 用 scripts/example_data.json 跑完整出稿链路 + 严格门禁 + JS 验收 + 幂等性
   4. 边界输入：坏 JSON / 缺字段 / charts 数值错 / 标签不平衡 / 占位符替换 / 中文路径
   5. 故意破坏拦截：删 </div> / 去皮肤 / 删三图 / 静态 opacity / script 内角标
-  6. 文档中的相对文件引用是否都存在
+  6. 文档中的相对文件引用是否都存在 + 商店版（无 PNG）离线出图兼容
 
 用法:
     python3 scripts/selftest_all.py
@@ -235,8 +235,11 @@ def main():
         check("branding.url 只补延伸阅读链接",
               r.returncode == 0 and 'class="brand-link"' in on_text
               and "https://example.com/post" in on_text, r=r)
-        assets_ok = all((ROOT / "assets" / p).is_file() for p in
-                        ("brand.json", brand_cfg["qr_wechat"], brand_cfg["qr_video"]))
+        # 商店版（SkillHub）不允许 PNG，二维码数据必须在 brand.json 里自带
+        b64_ok = all(brand_cfg.get(k) for k in ("qr_wechat_data", "qr_video_data"))
+        assets_ok = (ROOT / "assets" / "brand.json").is_file() and (
+            b64_ok or all((ROOT / "assets" / p).is_file()
+                          for p in (brand_cfg["qr_wechat"], brand_cfg["qr_video"])))
         brand_words = (brand_cfg["wechat"], brand_cfg["video"])
         leaks = []
         for f in sorted(list(SCRIPTS.glob("*.py")) + [ROOT / "assets/template.html"]):
@@ -245,6 +248,23 @@ def main():
                 leaks.append(str(f.relative_to(ROOT)))
         check("品牌常量集中在 assets/brand.json，二维码资源在位",
               assets_ok and not leaks, "; ".join(leaks[:3]))
+
+        # 商店版兼容：SkillHub 不允许 PNG，移走源图后仍须能离线出图
+        import shutil
+        shop = T / "shop_skill"
+        if shop.exists():
+            shutil.rmtree(shop)
+        shutil.copytree(ROOT, shop, ignore=shutil.ignore_patterns(
+            ".git", "__pycache__", "shots*", "*.png", "*.pyc"))
+        shop_out = T / "shop_report.html"
+        r = run([sys.executable, shop / "scripts" / "render_report.py",
+                 "--data", shop / "scripts" / "example_data.json",
+                 "--out", shop_out])
+        shop_text = shop_out.read_text(encoding="utf-8") if shop_out.is_file() else ""
+        check("商店版无 PNG 仍能离线出图（brand.json 自带 base64）",
+              r.returncode == 0 and len(re.findall(
+                  r'src="data:image/png;base64,[A-Za-z0-9+/=]{200,}"', shop_text)) == 2,
+              "rc=%d" % r.returncode, r)
 
         # 门禁文件不存在友好报错
         r = run([sys.executable, GATE, T / "missing.html"])
