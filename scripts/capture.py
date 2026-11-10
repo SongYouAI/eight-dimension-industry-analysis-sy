@@ -91,6 +91,7 @@ def shot(page_path, out_path, chrome, width, height, timeout_ms):
            "--screenshot=" + out_path, Path(page_path).resolve().as_uri()]
     try:
         r = subprocess.run(cmd, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace",
                            timeout=max(30, timeout_ms / 1000 + 30))
     except subprocess.TimeoutExpired:
         print("Chrome 截图超时：%s" % out_path, file=sys.stderr)

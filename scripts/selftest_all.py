@@ -45,6 +45,7 @@ def run(cmd, cwd=None, timeout=180):
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"  # 自检不在 skill 目录留 __pycache__
     return subprocess.run([str(x) for x in cmd], capture_output=True, text=True,
+                          encoding="utf-8", errors="replace",
                           cwd=str(cwd or ROOT), timeout=timeout, env=env)
 
 

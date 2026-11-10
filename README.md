@@ -48,6 +48,8 @@
 
 **环境**：Python 3.8+（**仅标准库**）；`node` 可选（JS 语法验收）；Chrome/Chromium 可选（截图验收）。整个 skill 目录保持原结构即可，无安装步骤、无 API Key、无绝对路径依赖。
 
+> **Windows 同学**：命令示例里的 `python3` 换成 `python` 或 `py`；`cp` 换成 `Copy-Item`；skills 安装目录是 `%USERPROFILE%\.workbuddy\skills\`。所有命令在 skill 根目录执行，脚本一律用相对路径 `scripts/`。代码块是 bash 语法，PowerShell 请把带反斜杠折行的命令写成单行。截图验收需要本机安装 Google Chrome，或用 `scripts/capture.py --chrome <chrome.exe 路径>` 指定。
+
 ```bash
 # 0) 拿到 skill / 每次改版后：一键回归自检（39 项，含坏输入与故意破坏拦截）
 python3 scripts/selftest_all.py
@@ -448,6 +450,7 @@ cp -r eight-dimension-industry-analysis-sy ~/.workbuddy/skills/
 | **v3.2.0** | **2026-11-09** | **强制品牌溯源块**：视频号更名「松幽AI」；新增 `assets/brand.json` + 公众号/视频号双二维码（图床直链同步记录），生成器页脚强制输出署名、品牌名、双二维码（内嵌 base64，离线 / 打印不丢图），取消 `branding.attribution` / `branding.enabled` 开关；新增门禁 **P0-16**（品牌块、两个渠道名、两张内嵌二维码、旧名残留）；`check_placeholders()` 剔除 base64 避免 P0-14 误报；`selftest_all.py` 扩到 33 项，新增「关不掉」「删块被拦」「外链被拦」用例 |
 | **v3.2.1** | **2026-11-09** | **页脚二维码改两行小码**：应用户反馈，双码不再并排、去掉码下图注，改成「左渠道介绍 + 右 88px 小码」两行（窄屏 78px）；新增点击放大层 `qrLightbox`（复用同一 base64，ESC / 点遮罩关闭，离线可用）；P0-16 扩到「两行渠道 / 无 figcaption / 放大层与脚本在位」；`selftest_all.py` 扩到 35 项，新增「删放大层」「加回图注」两项破坏用例 |
 | **v3.2.2** | **2026-11-09** | **页脚压成紧凑溯源条**：应用户反馈「页脚占版面太高」，把四段式内容卡降级为版权条：kicker 与标题合并为一行灰色小署名、小码 88px → 52px 且紧跟介绍文字（不再 space-between 拉到行末）、底部两行说明合并为一行、整块 760px → 560px、上下留白 26/60px → 14/22px；实测页脚 479.7px → 221.8px（−54%）。P0-16 扩到「单行署名 / 单行说明 / 小码 ≤60px」；`selftest_all.py` 扩到 39 项，新增「拆单行署名」「小码放大回 88px」「HEAD 404 / GET 200 不误报」「商店版无 PNG 仍出图」四项；**分享前全量审计**：修正 `SKILL.md` frontmatter 版本（3.1.0 → 3.2.2）、门禁编号与自检项数，修复 `verify_links.py` 对 yofc.com 的 HEAD 误报（HEAD 404 / GET 200）；**SkillHub 兼容**：平台拒收 `.png`，改由 `assets/brand.json` 的 `qr_*_data` 自带二维码 base64，商店版无源图也能离线出图 |
+| **v3.2.3** | **2026-11-10** | **Windows / macOS / Linux 三平台兼容**：4 处子进程显式指定 UTF-8 解码（避免 cp936 乱码）；README 补 Windows 安装与 `python` / PowerShell 说明；新增 `.gitattributes` 锁 LF 换行 |
 | **v3.0.1** | **2026-11-09** | **分享前审计与防复发补强**（无视觉变化）：修复 `charts` 死字段——`render_c1/c2/c3` 从未被调用、三图靠手写 SVG、门禁也不查三图；新增 `inject_charts()` 三路落位 + `validate_charts()` + **P0-15 三图门禁**。修复坏 JSON / 缺字段 / 文件不存在直接抛 traceback（改中文提示 + 退出码 2）；`upgrade_hero()` 改按标签栈精确配对，不再吞掉 Hero 与 main-wrap 之间的内容；head 注入改切片只插一次；`capture.py` 同步 `rfind` 并放宽 step-card 匹配；P0-12 收紧为必须存在 `<style id="hydro-skin">`（原 token 二选一可被绕过）；P0-14 改为全文查占位符；`validate_fragment` 收紧跨片段闭合预算。新增 `scripts/selftest_all.py` 一键回归（27 项）、README 快速开始与最小字段清单、事故复盘第 9/10 条。**通用性修复**：Hero 标题旁的 `NO. 08` 原硬编码在公共 CSS 与默认配置里（别的行业也会显示 08），改由 `hero.note_no` / `meta.note_no` 驱动 `h1[data-note]` + CSS `attr()`；显式 `hero` 缺字段时由默认配置合并补齐；缺 `date/as_of` 不再编造 `2026-01-01 00:00`，改为拒稿并提示按 P1-6 给时点 |
 
 ---

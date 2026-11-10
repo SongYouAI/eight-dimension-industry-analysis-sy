@@ -3,7 +3,7 @@ name: eight-dimension-industry-analysis
 slug: eight-dimension-industry-analysis-sy
 displayName: 八维行业分析
 display_name: 八维行业分析
-version: 3.2.2
+version: 3.2.3
 description: 当用户需要快速了解或深度分析一个行业（或某家公司所在的行业）时，使用本
   skill。输入行业名或公司名，自动产出覆盖产业生命周期、商业模式、市场规模、护城河、竞争格局、估值、外部因素、景气度八个维度的完整 HTML
   分析报告（默认 HTML；PDF / Markdown 按需）。v3 起默认输出「水文纸本 / HYDRO PAPER」编辑式获奖级版式，生成器自动注入皮肤、自动升级 Hero、自动查标签闭合，禁止手写大段 HTML。页脚固定输出紧凑作者溯源块（公众号 / 视频号 + 双二维码，点击可放大），报告可自由转发但保留出处。

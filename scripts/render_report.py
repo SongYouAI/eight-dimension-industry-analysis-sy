@@ -811,7 +811,8 @@ def main():
         if not os.path.isfile(GATE):
             print("🔴 找不到门禁脚本 %s（skill 目录不完整）" % GATE, file=sys.stderr)
             return 2
-        r = subprocess.run([sys.executable, GATE, args.out], capture_output=True, text=True)
+        r = subprocess.run([sys.executable, GATE, args.out], capture_output=True, text=True,
+                              encoding="utf-8", errors="replace")
         print(r.stdout.rstrip())
         if r.stderr.strip():
             print(r.stderr.rstrip(), file=sys.stderr)
